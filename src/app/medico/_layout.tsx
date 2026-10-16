@@ -12,6 +12,7 @@ export default function MedicoLayout() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="hijo/[id]" options={{ title: 'Ficha' }} />
       <Stack.Screen name="familia/[id]" options={{ title: 'Familia' }} />
+      <Stack.Screen name="paciente/nuevo" options={{ title: 'Nuevo paciente' }} />
       <Stack.Screen name="consulta/[id]" options={{ title: 'Consulta' }} />
       <Stack.Screen name="seguimiento/[id]" options={{ title: 'Seguimiento' }} />
       <Stack.Screen name="fiebre/[id]" options={{ title: 'Fiebre' }} />

@@ -129,3 +129,8 @@ export function duracion(horas: number): string {
   if (abs < 48) return `${Math.round(abs)} h`;
   return `${Math.round(abs / 24)} días`;
 }
+
+/** "dd/mm/aaaa" → 'AAAA-MM-DD', o null si no es una fecha válida. */
+export function deFecha(texto: string): string | null {
+  return deCampos(texto, '12:00')?.slice(0, 10) ?? null;
+}

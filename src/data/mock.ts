@@ -5,6 +5,7 @@
  */
 import type { Database, Base } from './types';
 import { enDias, hoyISO, sumarDias, sumarHoras } from '@/lib/fechas';
+import { pacientesExtra } from './mockPacientes';
 
 export const DOCTOR_ID = 'dr';
 const hoy = hoyISO();
@@ -16,7 +17,7 @@ const b = (id: string, createdAt: string, createdBy = DOCTOR_ID): Base => ({ id,
 const consBenjaminAyer = enDias(-1, '20:30');
 const consMateo = enDias(-3, '10:00');
 
-export const datosDeEjemplo: Database = {
+const base: Database = {
   doctor: {
     id: DOCTOR_ID,
     name: 'Dr. Alan Hughes',
@@ -233,4 +234,15 @@ export const datosDeEjemplo: Database = {
     { id: 'au-2', at: enDias(-1, '07:35'), actorId: 'g-martin', action: 'login' },
     { id: 'au-3', at: enDias(-1, '18:25'), actorId: 'g-carolina', action: 'login' },
   ],
+};
+
+// Suma los pacientes extra (lista de unos 40 pacientes).
+const extra = pacientesExtra();
+export const datosDeEjemplo: Database = {
+  ...base,
+  families: [...base.families, ...extra.families],
+  guardians: [...base.guardians, ...extra.guardians],
+  addresses: [...base.addresses, ...extra.addresses],
+  patients: [...base.patients, ...extra.patients],
+  relationships: [...base.relationships, ...extra.relationships],
 };

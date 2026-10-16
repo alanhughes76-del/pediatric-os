@@ -10,7 +10,7 @@ export function abrirPacienteX() {
 }
 
 export function BotonPacienteX() {
-  return <Boton titulo="Contactame por PacienteX" icono="chatbubbles-outline" onPress={abrirPacienteX} />;
+  return <Boton titulo="Contactá al Dr. por PacienteX" icono="chatbubbles-outline" onPress={abrirPacienteX} />;
 }
 
 /** Barra fija al pie de las pantallas de la familia: el contacto directo siempre a mano. */

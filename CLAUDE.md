@@ -21,15 +21,16 @@ src/
   app/            Pantallas (Expo Router)
     index.tsx       Selector de rol (modo prueba; reemplaza al login hasta tener backend)
     familia/        Portal de la familia: (tabs) Inicio, Pedir visita, Fiebre, Membresía; hijo/[id], fiebre/, urgencia
-    medico/         Médico: (tabs) Hoy, Familias, Fiebre, Membresías; hijo/[id], consulta/[id], seguimiento/[id], fiebre/, familia/[id]
+    medico/         Médico: (tabs) Hoy, Pacientes, Fiebre, Membresías; hijo/[id], paciente/nuevo, consulta/[id], seguimiento/[id], fiebre/, familia/[id]
   components/     Componentes de interfaz (consulta/, fiebre/, ficha, formularios)
   data/
     types.ts        Modelo de datos (una interfaz = una tabla)
     mock.ts         Datos de ejemplo ficticios
+    mockPacientes.ts  33 pacientes ficticios más (40 en total) para la lista
     store.tsx       Estado en memoria + sesión simulada; escrituras con auditoría
     selectores.ts   Lecturas y reglas de visibilidad para la familia
     referencias/    oms_lms.json, argentina_lms.json, hitos_desarrollo.json
-  lib/            Lógica pura: percentiles (LMS), edad, fechas, hitos, fiebre, notaIA (borrador de ejemplo)
+  lib/            Lógica pura: percentiles (LMS), busqueda (lista de pacientes), edad, fechas, hitos, fiebre, notaIA (borrador de ejemplo)
   config.ts       Links de PacienteX y Cal.com
   theme.ts        Colores, tipografías, tamaños
 ```
@@ -65,4 +66,6 @@ Doctor, Family, Guardian (acceso habilitado sí/no), PatientRelationship (tipo, 
 ## Estado
 
 - Hecho: dos roles con selector de prueba; Inicio de la familia; consulta (antropometría con percentilos LMS, hitos CDC/AAP + PRUNAPE, nota clínica versionada con borrador de ejemplo); seguimientos pendientes; registro de fiebre de los dos lados; plan de cuidado con tildado y "Vacunas aplicadas".
-- En curso: pedido de etapas A a F (lista de pacientes, ficha completa, crecimiento, portal, certificados, verificación final).
+- Etapa A (lista de pacientes) hecha: solapas por ámbito con conteo, orden por apellido, búsqueda sin tildes (nombre, iniciales, fecha) y alta con aviso de duplicado.
+- Pendiente: etapas B (ficha completa), C (crecimiento), D (portal), E (certificados) y F (verificación final).
+- Preguntas abiertas del Dr.: DNI opcional (E), qué pasa en "Pedir visita" con la membresía vencida (D), alcance del formato de edad "2a 3m 5d" (B).

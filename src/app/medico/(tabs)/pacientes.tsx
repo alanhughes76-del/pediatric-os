@@ -1,0 +1,103 @@
+/**
+ * Lista de pacientes: solapas por ámbito con su cantidad, orden alfabético por apellido
+ * y buscador (sin distinguir mayúsculas ni tildes) dentro de la solapa activa.
+ */
+import { useMemo, useState } from 'react';
+import { View, ScrollView, Pressable, Text, StyleSheet } from 'react-native';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useApp } from '@/data/store';
+import { fiebreDe, sinRevisar } from '@/data/selectores';
+import { SOLAPAS, TEXTO_AMBITO, contarPorSolapa, filtrarPacientes, type Solapa } from '@/lib/busqueda';
+import { edades } from '@/lib/edad';
+import { fechaCorta } from '@/lib/fechas';
+import { Pantalla } from '@/components/Pantalla';
+import { Campo } from '@/components/Formulario';
+import { Boton } from '@/components/Boton';
+import { Tarjeta } from '@/components/Tarjeta';
+import { Etiqueta } from '@/components/Etiqueta';
+import { Texto, TextoFuerte, TextoChico } from '@/components/Texto';
+import { colors, fonts } from '@/theme';
+
+export default function Pacientes() {
+  const { db } = useApp();
+  const [solapa, setSolapa] = useState<Solapa>('todos');
+  const [busqueda, setBusqueda] = useState('');
+
+  const conteo = useMemo(() => contarPorSolapa(db.patients), [db.patients]);
+  const lista = useMemo(() => filtrarPacientes(db.patients, solapa, busqueda), [db.patients, solapa, busqueda]);
+
+  return (
+    <Pantalla>
+      <Boton titulo="+ Nuevo paciente" onPress={() => router.push('/medico/paciente/nuevo')} />
+
+      <Campo
+        value={busqueda}
+        onChangeText={setBusqueda}
+        placeholder="Nombre, iniciales o dd/mm/aaaa"
+        autoCorrect={false}
+        autoCapitalize="none"
+        clearButtonMode="while-editing"
+        accessibilityLabel="Buscar paciente"
+      />
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.solapas} accessibilityRole="tablist">
+        {SOLAPAS.map((x) => {
+          const activa = x.clave === solapa;
+          return (
+            <Pressable
+              key={x.clave}
+              onPress={() => setSolapa(x.clave)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: activa }}
+              style={[s.solapa, activa && s.solapaActiva]}
+            >
+              <Text style={[s.solapaTexto, activa && { color: colors.white }]}>{x.texto}</Text>
+              <Text style={[s.solapaNumero, activa && { color: colors.bgSoft }]}>{conteo[x.clave]}</Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      <TextoChico>
+        {busqueda.trim() ? `${lista.length} ${lista.length === 1 ? 'resultado' : 'resultados'}` : `${lista.length} ${lista.length === 1 ? 'paciente' : 'pacientes'}`}
+      </TextoChico>
+
+      {lista.length === 0 ? (
+        <Texto color={colors.textMuted}>No encontramos pacientes{busqueda.trim() ? ` con «${busqueda.trim()}»` : ''} en esta solapa.</Texto>
+      ) : null}
+
+      {lista.map((p) => {
+        const fiebre = fiebreDe(db, p.id).filter(sinRevisar).length;
+        return (
+          <Tarjeta key={p.id} onPress={() => router.push(`/medico/hijo/${p.id}`)} accessibilityLabel={`Abrir la ficha de ${p.firstName} ${p.lastName}`} style={s.fila}>
+            <View style={{ flex: 1, gap: 2 }}>
+              <TextoFuerte style={{ fontSize: 19 }}>{p.lastName}, {p.firstName}</TextoFuerte>
+              <TextoChico>{edades(p).cronologica} · {fechaCorta(p.birthDate)}</TextoChico>
+              {solapa === 'todos' || fiebre > 0 ? (
+                <View style={s.etiquetas}>
+                  {solapa === 'todos' ? <Etiqueta texto={TEXTO_AMBITO[p.scope]} tono={p.scope === 'sin-asignar' ? 'neutro' : 'celeste'} /> : null}
+                  {fiebre > 0 ? <Etiqueta texto={`${fiebre} de fiebre sin revisar`} tono="azul" /> : null}
+                </View>
+              ) : null}
+            </View>
+            <Ionicons name="chevron-forward" size={24} color={colors.primary3} />
+          </Tarjeta>
+        );
+      })}
+    </Pantalla>
+  );
+}
+
+const s = StyleSheet.create({
+  solapas: { gap: 8, paddingVertical: 2 },
+  solapa: {
+    minHeight: 48, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1.5, borderColor: colors.primary3,
+    backgroundColor: colors.white, flexDirection: 'row', alignItems: 'center', gap: 6,
+  },
+  solapaActiva: { backgroundColor: colors.primary, borderColor: colors.primary },
+  solapaTexto: { fontFamily: fonts.bodySemi, fontSize: 16, color: colors.primary },
+  solapaNumero: { fontFamily: fonts.body, fontSize: 15, color: colors.textMuted },
+  fila: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 },
+  etiquetas: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
+});
