@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useApp } from '@/data/store';
-import { paciente as buscarPaciente, alergiasDe, nombreCompleto, TEXTO_MODALIDAD, TEXTO_VISITA } from '@/data/selectores';
+import { paciente as buscarPaciente, alergiasDe, adultosDe, domicilioDe, nombreCompleto, textoDomicilio, TEXTO_MODALIDAD, TEXTO_VISITA } from '@/data/selectores';
 import type { Consultation, Modality, VisitType } from '@/data/types';
 import { edades, textoEG } from '@/lib/edad';
 import { aCampos, deCampos, diasEntre } from '@/lib/fechas';
@@ -31,7 +31,7 @@ export default function ConsultaMedico() {
 
   const fecha = consulta.occurredAt.slice(0, 10);
   const nacioDespues = diasEntre(p.birthDate, fecha) < 0;
-  const e = nacioDespues ? null : edades(p, fecha);
+  const e = nacioDespues ? null : edades(p, fecha, 'abreviado');
 
   return (
     <Pantalla>
@@ -69,7 +69,11 @@ export default function ConsultaMedico() {
 }
 
 function DatosConsulta({ consulta }: { consulta: Consultation }) {
-  const { actualizar } = useApp();
+  const { db, actualizar } = useApp();
+  // Domicilios de los adultos del paciente: la visita va al que corresponda.
+  const domicilios = adultosDe(db, consulta.patientId).flatMap(({ guardian, domicilios: ds }) =>
+    ds.map((a) => ({ valor: a.id, texto: textoDomicilio(a), detalle: `${guardian.firstName} ${guardian.lastName}` })));
+  const domicilioActual = domicilioDe(db, consulta);
   const inicial = aCampos(consulta.occurredAt);
   const [fecha, setFecha] = useState(inicial.fecha);
   const [horaTxt, setHora] = useState(inicial.hora);
@@ -96,6 +100,19 @@ function DatosConsulta({ consulta }: { consulta: Consultation }) {
         valor={consulta.modality}
         onCambio={(v) => actualizar('consultations', consulta.id, { modality: v }, 'consulta.modalidad')}
       />
+      {consulta.modality === 'domicilio' ? (
+        domicilios.length > 0 ? (
+          <Opciones
+            etiqueta="Domicilio de la visita"
+            columna
+            opciones={domicilios}
+            valor={consulta.addressId ?? domicilioActual?.id}
+            onCambio={(v) => actualizar('consultations', consulta.id, { addressId: v }, 'consulta.domicilio')}
+          />
+        ) : (
+          <TextoChico>Sin domicilios cargados: agregalos en la ficha del adulto.</TextoChico>
+        )
+      ) : null}
       <Opciones<VisitType>
         etiqueta="Tipo de visita"
         opciones={(Object.keys(TEXTO_VISITA) as VisitType[]).map((v) => ({ valor: v, texto: TEXTO_VISITA[v] }))}

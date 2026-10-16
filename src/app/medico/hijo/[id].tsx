@@ -2,7 +2,7 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { useApp } from '@/data/store';
 import { paciente } from '@/data/selectores';
 import { Pantalla } from '@/components/Pantalla';
-import { FichaHijo } from '@/components/FichaHijo';
+import { FichaPaciente } from '@/components/ficha/FichaPaciente';
 
 export default function FichaMedico() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -11,7 +11,7 @@ export default function FichaMedico() {
   return (
     <Pantalla>
       <Stack.Screen options={{ title: p ? p.firstName : 'Ficha' }} />
-      <FichaHijo hijoId={id} vista="medico" />
+      <FichaPaciente patientId={id} />
     </Pantalla>
   );
 }

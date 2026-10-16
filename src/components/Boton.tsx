@@ -2,7 +2,7 @@ import { Pressable, Text, View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, fonts, size } from '@/theme';
 
-type Variante = 'principal' | 'secundario' | 'contorno' | 'alerta';
+type Variante = 'principal' | 'secundario' | 'contorno' | 'alerta' | 'contacto';
 
 interface P {
   titulo: string;
@@ -20,6 +20,7 @@ const estilos: Record<Variante, { bg: string; fg: string; border: string }> = {
   secundario: { bg: colors.bgSoft, fg: colors.primary, border: colors.bgSoft },
   contorno: { bg: colors.white, fg: colors.primary, border: colors.primary3 },
   alerta: { bg: colors.alert, fg: colors.white, border: colors.alert },
+  contacto: { bg: colors.contacto, fg: colors.white, border: colors.contacto },
 };
 
 export function Boton({ titulo, onPress, variante = 'principal', icono, detalle, deshabilitado, compacto }: P) {

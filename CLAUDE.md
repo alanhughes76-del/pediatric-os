@@ -21,8 +21,9 @@ src/
   app/            Pantallas (Expo Router)
     index.tsx       Selector de rol (modo prueba; reemplaza al login hasta tener backend)
     familia/        Portal de la familia: (tabs) Inicio, Pedir visita, Fiebre, Membresía; hijo/[id], fiebre/, urgencia
-    medico/         Médico: (tabs) Hoy, Pacientes, Fiebre, Membresías; hijo/[id], paciente/nuevo, consulta/[id], seguimiento/[id], fiebre/, familia/[id]
-  components/     Componentes de interfaz (consulta/, fiebre/, ficha, formularios)
+    medico/         Médico: (tabs) Hoy, Pacientes, Fiebre, Membresías; hijo/[id] (ficha), paciente/nuevo, adulto/[id], adulto/vincular, consulta/[id], seguimiento/[id], fiebre/, familia/[id]
+  components/     Componentes de interfaz: ficha/ (ficha completa del médico), consulta/, fiebre/, formularios.
+                  FichaHijo.tsx es la ficha del portal de la familia (se limpia en la etapa D).
   data/
     types.ts        Modelo de datos (una interfaz = una tabla)
     mock.ts         Datos de ejemplo ficticios
@@ -58,6 +59,7 @@ Doctor, Family, Guardian (acceso habilitado sí/no), PatientRelationship (tipo, 
 - Interfaz en español rioplatense con voseo ("Cargá", "Tocá"). Nunca "tú" ni "vosotros".
 - Marca: "Dr. Alan Hughes · Pediatría a domicilio" (logotipo tipográfico).
 - Colores: #1B4D7E (principal), #2E6FA8, #3C87BE, #6FB3DA, #E8F3FA y #F4F9FC (fondos), #22415A (texto). Solo azules y celestes; rojo únicamente para alertas.
+- Única excepción: el botón de PacienteX es verde (#1F7A4D, `colors.contacto`), a pedido del Dr.
 - Tipografías: Playfair Display (títulos) y Source Sans 3 (resto).
 - Tono cálido y profesional, nada comercial. Botones grandes y pocos pasos (padres con un bebé en brazos).
 - Contacto: **no hay WhatsApp en ningún lado**. Botón "Contactá al Dr. por PacienteX", que abre `CONFIG.pacienteXUrl` en el navegador del teléfono.
@@ -67,5 +69,6 @@ Doctor, Family, Guardian (acceso habilitado sí/no), PatientRelationship (tipo, 
 
 - Hecho: dos roles con selector de prueba; Inicio de la familia; consulta (antropometría con percentilos LMS, hitos CDC/AAP + PRUNAPE, nota clínica versionada con borrador de ejemplo); seguimientos pendientes; registro de fiebre de los dos lados; plan de cuidado con tildado y "Vacunas aplicadas".
 - Etapa A (lista de pacientes) hecha: solapas por ámbito con conteo, orden por apellido, búsqueda sin tildes (nombre, iniciales, fecha) y alta con aviso de duplicado.
-- Pendiente: etapas B (ficha completa), C (crecimiento), D (portal), E (certificados) y F (verificación final).
-- Preguntas abiertas del Dr.: DNI opcional (E), qué pasa en "Pedir visita" con la membresía vencida (D), alcance del formato de edad "2a 3m 5d" (B).
+- Etapa B (ficha completa) hecha: encabezado con ámbito y alergias, Contacto, Adultos responsables (pantalla de adulto con domicilios y hermanos; vincular existente o nuevo), Problemas ("Lo ve la familia", resolver y reabrir), Alergias, Plan (vencidos resaltados), Crecimiento, Consultas, Fiebre y Documentos. Domicilio de la visita elegible en la consulta. Edad abreviada ("2a 3m 5d") solo del lado del médico.
+- Pendiente: etapas C (crecimiento), D (portal), E (certificados) y F (verificación final).
+- Preguntas abiertas del Dr.: DNI opcional (E), qué pasa en "Pedir visita" con la membresía vencida (D).

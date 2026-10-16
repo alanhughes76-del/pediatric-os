@@ -89,9 +89,9 @@ const base: Database = {
   problems: [
     { ...b('pr-t1', '2026-02-20T10:00:00-03:00'), patientId: 'p-tomas', description: 'Dermatitis atópica leve', status: 'activo', since: '2024-01-10', visibleToFamily: true },
     { ...b('pr-t2', '2025-11-18T12:00:00-03:00'), patientId: 'p-tomas', description: 'Soplo cardíaco en estudio (probablemente funcional)', status: 'activo', since: '2025-11-18', visibleToFamily: false },
-    { ...b('pr-t3', '2026-06-09T22:00:00-03:00'), patientId: 'p-tomas', description: 'Otitis media aguda derecha', status: 'resuelto', since: '2026-06-09', visibleToFamily: true },
+    { ...b('pr-t3', '2026-06-09T22:00:00-03:00'), patientId: 'p-tomas', description: 'Otitis media aguda derecha', status: 'resuelto', since: '2026-06-09', resolvedDate: '2026-06-20', visibleToFamily: true },
     { ...b('pr-e1', '2026-02-20T10:00:00-03:00'), patientId: 'p-emma', description: 'Prematurez (34 semanas)', status: 'activo', since: '2026-01-20', visibleToFamily: true },
-    { ...b('pr-e2', '2026-08-20T12:00:00-03:00'), patientId: 'p-emma', description: 'Sospecha de alergia a la proteína de leche de vaca', status: 'resuelto', since: '2026-08-20', visibleToFamily: false },
+    { ...b('pr-e2', '2026-08-20T12:00:00-03:00'), patientId: 'p-emma', description: 'Sospecha de alergia a la proteína de leche de vaca', status: 'resuelto', since: '2026-08-20', resolvedDate: '2026-09-22', visibleToFamily: false },
   ],
 
   allergies: [

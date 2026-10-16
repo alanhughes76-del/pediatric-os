@@ -33,7 +33,7 @@ export default function DetalleFamilia() {
               <View style={s.fila}>
                 <View style={{ flex: 1, gap: 4 }}>
                   <TextoFuerte style={{ fontSize: 20 }}>{h.firstName} {h.lastName}</TextoFuerte>
-                  <Texto color={colors.textMuted}>{edades(h).cronologica}</Texto>
+                  <Texto color={colors.textMuted}>{edades(h, undefined, 'abreviado').cronologica}</Texto>
                   {fiebre > 0 ? <Etiqueta texto={`${fiebre} de fiebre sin revisar`} tono="azul" /> : null}
                 </View>
                 <Ionicons name="chevron-forward" size={26} color={colors.primary3} />

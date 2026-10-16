@@ -9,6 +9,8 @@ export const colors = {
   textMuted: '#5A7389',
   white: '#FFFFFF',
   border: '#D3E4F0',
+  // Verde: solo para el botón de contacto por PacienteX (pedido del Dr.).
+  contacto: '#1F7A4D',
   // Rojo: solo para alertas (alergias, signos de alarma, vencimientos).
   alert: '#B42318',
   alertBg: '#FDECEA',

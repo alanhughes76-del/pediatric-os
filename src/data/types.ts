@@ -52,13 +52,13 @@ export interface Guardian extends Base {
   accessEnabled: boolean;
 }
 
-export type RelationshipType = 'madre' | 'padre' | 'abuela' | 'abuelo' | 'tutor legal' | 'otro';
+export type RelationshipType = 'madre' | 'padre' | 'otro';
 
 export interface PatientRelationship extends Base {
   patientId: ID;
   guardianId: ID;
   type: RelationshipType;
-  typeDetail?: string; // si type = 'otro'
+  typeDetail?: string; // si type = 'otro' ("abuela", "tutora legal"...)
   isPrimary: boolean; // contacto principal
   validFrom: ISODate;
   validTo?: ISODate;
@@ -123,6 +123,8 @@ export interface ClinicalProblem extends Base {
   description: string;
   status: 'activo' | 'resuelto';
   since?: ISODate;
+  /** Fecha de resolución (si está resuelto). */
+  resolvedDate?: ISODate;
   /** Apagado por defecto. El médico lo prende después de hablarlo con la familia. */
   visibleToFamily: boolean;
 }

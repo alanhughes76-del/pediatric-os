@@ -50,7 +50,7 @@ export default function Hoy() {
 
               <View style={{ gap: 2 }}>
                 <TextoFuerte style={{ fontSize: 21 }}>{nombreCompleto(p)}</TextoFuerte>
-                <Texto color={colors.textMuted}>{edades(p).cronologica}{familia ? ` · ${familia.name}` : ''}</Texto>
+                <Texto color={colors.textMuted}>{edades(p, undefined, 'abreviado').cronologica}{familia ? ` · ${familia.name}` : ''}</Texto>
                 {alergias.length > 0 ? (
                   <View style={{ marginTop: 4 }}>
                     <Etiqueta tono="alerta" texto={`Alergia: ${alergias.map((a) => a.allergen).join(', ')}`} />

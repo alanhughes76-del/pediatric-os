@@ -73,7 +73,7 @@ export default function Pacientes() {
           <Tarjeta key={p.id} onPress={() => router.push(`/medico/hijo/${p.id}`)} accessibilityLabel={`Abrir la ficha de ${p.firstName} ${p.lastName}`} style={s.fila}>
             <View style={{ flex: 1, gap: 2 }}>
               <TextoFuerte style={{ fontSize: 19 }}>{p.lastName}, {p.firstName}</TextoFuerte>
-              <TextoChico>{edades(p).cronologica} · {fechaCorta(p.birthDate)}</TextoChico>
+              <TextoChico>{edades(p, undefined, 'abreviado').cronologica} · {fechaCorta(p.birthDate)}</TextoChico>
               {solapa === 'todos' || fiebre > 0 ? (
                 <View style={s.etiquetas}>
                   {solapa === 'todos' ? <Etiqueta texto={TEXTO_AMBITO[p.scope]} tono={p.scope === 'sin-asignar' ? 'neutro' : 'celeste'} /> : null}

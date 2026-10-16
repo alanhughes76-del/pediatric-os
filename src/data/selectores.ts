@@ -8,7 +8,7 @@
  * - Plan de cuidado: los ítems pendientes ("Plan vigente").
  * - Si la membresía vence, conserva acceso de lectura a todo lo anterior.
  */
-import type { Database, Patient, Consultation, ClinicalNote, FeverEntry, VisitType, Modality, ID, Address } from './types';
+import type { Database, Patient, Consultation, ClinicalNote, FeverEntry, VisitType, Modality, ID, Address, PatientRelationship } from './types';
 import { hoyISO, diasEntre, horasEntre } from '@/lib/fechas';
 
 export type Vista = 'medico' | 'familia';
@@ -40,13 +40,15 @@ export function paciente(db: Database, id: ID): Patient | undefined {
 /** Relaciones vigentes de un paciente. */
 function relacionesVigentes(db: Database, patientId: ID) {
   const hoy = hoyISO();
-  return db.relationships.filter((r) => r.patientId === patientId && activo(r) && (!r.validTo || r.validTo >= hoy));
+  return db.relationships.filter((r) => r.patientId === patientId && activo(r) && (!r.validTo || r.validTo > hoy));
 }
+
+/** Un vínculo está vigente si no tiene fecha de fin, o si termina después de hoy. "Quitar vínculo" pone hoy como fin. */
 
 /** Pacientes que puede ver un adulto en el portal. */
 export function pacientesDeAdulto(db: Database, guardianId: ID): Patient[] {
   const hoy = hoyISO();
-  const ids = new Set(db.relationships.filter((r) => r.guardianId === guardianId && activo(r) && (!r.validTo || r.validTo >= hoy)).map((r) => r.patientId));
+  const ids = new Set(db.relationships.filter((r) => r.guardianId === guardianId && activo(r) && (!r.validTo || r.validTo > hoy)).map((r) => r.patientId));
   return db.patients.filter((p) => ids.has(p.id) && activo(p)).sort((a, b) => a.birthDate.localeCompare(b.birthDate));
 }
 
@@ -64,6 +66,29 @@ export function adultosDe(db: Database, patientId: ID) {
     }))
     .filter((x) => x.guardian)
     .sort((a, b) => Number(b.rel.isPrimary) - Number(a.rel.isPrimary));
+}
+
+/** "Madre", "Padre" o el detalle que se cargó para "otro" ("Abuela"). */
+export function textoRelacion(rel: Pick<PatientRelationship, 'type' | 'typeDetail'>): string {
+  if (rel.type === 'madre') return 'Madre';
+  if (rel.type === 'padre') return 'Padre';
+  const d = rel.typeDetail?.trim();
+  return d ? d[0].toUpperCase() + d.slice(1) : 'Otro';
+}
+
+/** Adulto marcado como contacto principal (o el primero, si ninguno está marcado). */
+export function adultoPrincipal(db: Database, patientId: ID) {
+  const adultos = adultosDe(db, patientId);
+  return adultos.find((a) => a.rel.isPrimary) ?? adultos[0];
+}
+
+/** Pacientes vinculados (vigentes) a un adulto, con su relación. */
+export function pacientesVinculados(db: Database, guardianId: ID) {
+  const hoy = hoyISO();
+  return db.relationships
+    .filter((r) => r.guardianId === guardianId && activo(r) && (!r.validTo || r.validTo > hoy))
+    .map((rel) => ({ rel, paciente: db.patients.find((p) => p.id === rel.patientId) }))
+    .filter((x): x is { rel: PatientRelationship; paciente: Patient } => !!x.paciente && !x.paciente.archivedAt);
 }
 
 export function domicilioDe(db: Database, c: Pick<Consultation, 'addressId' | 'patientId'>): Address | undefined {

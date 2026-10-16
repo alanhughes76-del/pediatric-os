@@ -41,6 +41,18 @@ export function formatearEdad(d: Diferencia): string {
   return d.meses > 0 ? `${a} y ${plural(d.meses, 'mes', 'meses')}` : a;
 }
 
+/**
+ * Formato del lado del médico: desde los 12 meses abreviado ("2a 3m 5d");
+ * antes, escrito ("10 meses y 9 días", "18 días").
+ */
+export function formatearEdadAbreviada(d: Diferencia): string {
+  if (d.totalMeses < 12) return formatearEdad(d);
+  return `${d.anios}a ${d.meses}m ${d.dias}d`;
+}
+
+/** 'escrito' para las familias; 'abreviado' para el médico. */
+export type FormatoEdad = 'escrito' | 'abreviado';
+
 type ConEG = Pick<Patient, 'birthDate' | 'gestationalWeeks' | 'gestationalDays'>;
 
 /** Edad gestacional al nacer en días. Si quedó vacía, se toma como de término (40 semanas). */
@@ -68,9 +80,10 @@ export function usaEdadCorregida(p: ConEG, fecha = hoyISO()): boolean {
   return esPrematuro(p) && diferencia(p.birthDate, fecha).anios < 2;
 }
 
-export function edades(p: ConEG, hoy = hoyISO()): Edades {
+export function edades(p: ConEG, hoy = hoyISO(), formato: FormatoEdad = 'escrito'): Edades {
+  const formatear = formato === 'abreviado' ? formatearEdadAbreviada : formatearEdad;
   const crono = diferencia(p.birthDate, hoy);
-  const res: Edades = { cronologica: formatearEdad(crono) };
+  const res: Edades = { cronologica: formatear(crono) };
   if (!usaEdadCorregida(p, hoy)) return res;
 
   const fechaTermino = sumarDias(p.birthDate, 280 - egEnDias(p));
@@ -79,7 +92,7 @@ export function edades(p: ConEG, hoy = hoyISO()): Edades {
     const egHoy = egEnDias(p) + crono.totalDias;
     res.corregida = `${Math.floor(egHoy / 7)}+${egHoy % 7} semanas de edad gestacional`;
   } else {
-    res.corregida = formatearEdad(diferencia(fechaTermino, hoy));
+    res.corregida = formatear(diferencia(fechaTermino, hoy));
   }
   return res;
 }
