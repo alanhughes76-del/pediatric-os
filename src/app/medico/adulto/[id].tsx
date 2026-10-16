@@ -12,7 +12,7 @@ import { ahoraISO } from '@/lib/fechas';
 import { Pantalla } from '@/components/Pantalla';
 import { Seccion } from '@/components/Seccion';
 import { Tarjeta } from '@/components/Tarjeta';
-import { Campo } from '@/components/Formulario';
+import { Campo, Interruptor, Aviso } from '@/components/Formulario';
 import { Titulo, Texto, TextoFuerte, TextoChico } from '@/components/Texto';
 import { Agregar, BotonTexto, CampoEditable, validarEmail } from '@/components/ficha/piezas';
 import { colors } from '@/theme';
@@ -63,6 +63,23 @@ export default function Adulto() {
             onGuardar={(v) => actualizar('guardians', g.id, { email: v }, 'adulto.email')} />
           <CampoEditable etiqueta="WhatsApp" valor={g.phone} keyboardType="phone-pad"
             onGuardar={(v) => actualizar('guardians', g.id, { phone: v || undefined }, 'adulto.telefono')} />
+        </Tarjeta>
+      </Seccion>
+
+      <Seccion titulo="Portal de la familia" bajada="Nadie se registra solo: lo habilitás vos, sea del ámbito que sea">
+        <Tarjeta style={{ gap: 10 }}>
+          {g.email ? (
+            <>
+              <Interruptor
+                texto="Puede entrar al portal"
+                activo={g.accessEnabled}
+                onCambio={(v) => actualizar('guardians', g.id, { accessEnabled: v }, v ? 'adulto.habilitar-portal' : 'adulto.deshabilitar-portal')}
+              />
+              <TextoChico>{g.accessEnabled ? `Entra con un enlace que le llega a ${g.email}.` : 'No puede entrar al portal.'}</TextoChico>
+            </>
+          ) : (
+            <Aviso tono="alerta" texto="Sin email no se puede habilitar el portal. Cargalo arriba." />
+          )}
         </Tarjeta>
       </Seccion>
 

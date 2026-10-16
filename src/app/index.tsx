@@ -1,7 +1,7 @@
 /**
- * Selector de rol (modo prueba).
- * En la etapa del backend se reemplaza por el ingreso con enlace mágico al email
- * (vale 15 minutos y se usa una sola vez). Nadie se registra solo: el médico habilita a cada adulto.
+ * Selector de rol (modo prueba) e ingreso de familias con enlace mágico simulado (/ingresar).
+ * En la etapa del backend queda solo el ingreso por email (vale 15 minutos y se usa una sola vez).
+ * Nadie se registra solo: el médico habilita a cada adulto.
  */
 import { View, StyleSheet } from 'react-native';
 import { Redirect, router } from 'expo-router';
@@ -34,6 +34,8 @@ export default function SelectorDeRol() {
         <Boton titulo="Entrar como Dr. Hughes" icono="medkit-outline" onPress={() => { entrarComoMedico(); router.replace('/medico'); }} />
 
         <Subtitulo style={{ marginTop: 12 }}>Adultos responsables</Subtitulo>
+        <Boton titulo="Ingresar con mi email" icono="mail-outline" variante="secundario" onPress={() => router.push('/ingresar')} />
+        <TextoChico>O entrá directo como uno de los adultos de ejemplo:</TextoChico>
         {db.families.map((f) => (
           <View key={f.id} style={{ gap: 8 }}>
             <Texto color={colors.textMuted}>{f.name}</Texto>

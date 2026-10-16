@@ -30,6 +30,8 @@ export default function Hoy() {
         <SeguimientosPendientes />
       </Seccion>
 
+      <Boton titulo="Registro de accesos al portal" icono="log-in-outline" variante="contorno" onPress={() => router.push('/medico/accesos')} />
+
       <Seccion titulo="Visitas del día">
         {visitas.map((v) => {
           const p = paciente(db, v.patientId);

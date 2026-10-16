@@ -114,6 +114,18 @@ export function membresiaDeFamilia(db: Database, familyId?: ID) {
   return { membership, estado, diasRestantes };
 }
 
+/**
+ * ¿Puede pedir visitas como miembro? No, si la membresía de su familia está vencida.
+ * (Las familias sin membresía —otros ámbitos— siguen pidiendo como hasta ahora.)
+ */
+export function puedePedirVisitas(db: Database, guardianId: ID): boolean {
+  const g = db.guardians.find((x) => x.id === guardianId);
+  const familyId = pacientesDeAdulto(db, guardianId)[0]?.familyId ?? g?.familyId;
+  return membresiaDeFamilia(db, familyId).estado !== 'vencida';
+}
+
+export const TEXTO_MEMBRESIA_VENCIDA = 'Tu membresía venció. Para pedir una visita, contactame por PacienteX.';
+
 // ---------- Consultas y notas ----------
 
 export function consultasDe(db: Database, patientId: ID, estado: Consultation['status'] = 'realizada') {

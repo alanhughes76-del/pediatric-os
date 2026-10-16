@@ -17,7 +17,7 @@ export default function FichaFamilia() {
   return (
     <Pantalla pie={<BarraPacienteX conInsetInferior />}>
       <Stack.Screen options={{ title: p && propio ? p.firstName : 'Ficha' }} />
-      {propio ? <FichaHijo hijoId={id} vista="familia" /> : <Texto>No encontramos esta ficha.</Texto>}
+      {propio ? <FichaHijo hijoId={id} /> : <Texto>No encontramos esta ficha.</Texto>}
     </Pantalla>
   );
 }
