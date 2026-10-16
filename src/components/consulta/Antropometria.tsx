@@ -1,6 +1,7 @@
 /**
  * Antropometría de la consulta: peso, talla y PC con percentilo y Z en vivo.
- * Se guarda sola en la GrowthMeasurement de la consulta.
+ * Usa el mismo motor que la tarjeta Crecimiento (lib/crecimiento.ts → lib/percentiles.ts).
+ * Se guarda sola en la GrowthMeasurement de la consulta, con la posición de la talla.
  */
 import { useRef, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
@@ -8,7 +9,8 @@ import { useApp } from '@/data/store';
 import { medicionDeConsulta } from '@/data/selectores';
 import type { Consultation, Patient } from '@/data/types';
 import { edadParaCalculo } from '@/lib/edad';
-import { calcular, imc, leerNumero, formatoPercentil, formatoZ, TEXTO_MOTIVO, type Indicador, type ResultadoPercentil } from '@/lib/percentiles';
+import { leerNumero, formatoPercentil, formatoZ, posicionPorEdad, TEXTO_AVISO, TEXTO_MOTIVO, type Posicion, type ResultadoPercentil } from '@/lib/percentiles';
+import { filaDeCrecimiento, sexoDeReferencia } from '@/lib/crecimiento';
 import { useAutoguardado } from '@/lib/useAutoguardado';
 import { Campo, Opciones, Aviso, EstadoGuardado } from '../Formulario';
 import { Texto, TextoChico, TextoFuerte } from '../Texto';
@@ -23,26 +25,26 @@ export function Antropometria({ consulta, paciente }: { consulta: Consultation; 
   const [peso, setPeso] = useState(aTexto(medicion?.weightKg));
   const [talla, setTalla] = useState(aTexto(medicion?.heightCm));
   const [pc, setPc] = useState(aTexto(medicion?.headCm));
+  const edad = edadParaCalculo(paciente, consulta.occurredAt.slice(0, 10));
+  const [posicion, setPosicion] = useState<Posicion>(medicion?.position ?? posicionPorEdad(edad.ok ? edad.meses : 0));
 
-  const valores = { weightKg: leerNumero(peso), heightCm: leerNumero(talla), headCm: leerNumero(pc) };
+  const valores = { weightKg: leerNumero(peso), heightCm: leerNumero(talla), headCm: leerNumero(pc), position: posicion };
 
   const pendiente = useAutoguardado(valores, (v) => {
     if (idMedicion.current) {
       actualizar('measurements', idMedicion.current, { ...v, measuredAt: consulta.occurredAt.slice(0, 10) }, 'medicion.editar');
     } else if (v.weightKg != null || v.heightCm != null || v.headCm != null) {
+      // La posición sola no crea la medición: hace falta al menos una medida.
       idMedicion.current = agregar('measurements', { patientId: paciente.id, consultationId: consulta.id, measuredAt: consulta.occurredAt.slice(0, 10), ...v }, 'medicion.agregar');
     }
   });
 
-  const edad = edadParaCalculo(paciente, consulta.occurredAt.slice(0, 10));
-  const sexo = paciente.sex === 'X' ? paciente.growthReferenceSex : paciente.sex;
-
-  const res = (ind: Indicador, valor?: number, t?: number): ResultadoPercentil | undefined => {
-    if (valor == null || !edad.ok || !sexo) return undefined;
-    return calcular(ind, sexo, valor, edad.meses, t);
-  };
-
-  const indiceMasa = valores.weightKg && valores.heightCm ? imc(valores.weightKg, valores.heightCm) : undefined;
+  const sexo = sexoDeReferencia(paciente);
+  // Mismo cálculo que la tarjeta Crecimiento.
+  const fila = filaDeCrecimiento(paciente, sexo, {
+    id: 'borrador', createdAt: '', createdBy: '', patientId: paciente.id, measuredAt: consulta.occurredAt.slice(0, 10),
+    weightKg: valores.weightKg, heightCm: valores.heightCm, headCm: valores.headCm, position: posicion,
+  });
 
   return (
     <View style={{ gap: 14 }}>
@@ -63,14 +65,23 @@ export function Antropometria({ consulta, paciente }: { consulta: Consultation; 
         <Aviso texto={`Prematuro: los percentilos se calculan con la edad corregida (${formatearMeses(edad.meses)}).`} />
       ) : null}
 
-      <FilaMedida etiqueta="Peso (kg)" valor={peso} onCambio={setPeso} resultado={res('peso', valores.weightKg)} />
-      <FilaMedida etiqueta="Talla (cm)" valor={talla} onCambio={setTalla} resultado={res('talla', valores.heightCm)} />
-      <FilaMedida etiqueta="Perímetro cefálico (cm)" valor={pc} onCambio={setPc} resultado={res('pc', valores.headCm)} />
+      <FilaMedida etiqueta="Peso (kg)" valor={peso} onCambio={setPeso} resultado={fila.peso?.resultado} />
+      <FilaMedida etiqueta="Talla (cm)" valor={talla} onCambio={setTalla} resultado={fila.talla?.resultado} />
+      <Opciones<Posicion>
+        etiqueta="Posición de la talla"
+        opciones={[{ valor: 'acostado', texto: 'Acostado' }, { valor: 'de_pie', texto: 'De pie' }]}
+        valor={posicion}
+        onCambio={setPosicion}
+      />
+      {fila.talla?.resultado.ok && fila.talla.resultado.valorUsado !== fila.talla.valor ? (
+        <TextoChico>Medida {posicion === 'de_pie' ? 'de pie' : 'acostado'}: se corrige a {aTexto(Number(fila.talla.resultado.valorUsado.toFixed(1)))} cm para comparar con la referencia.</TextoChico>
+      ) : null}
+      <FilaMedida etiqueta="Perímetro cefálico (cm)" valor={pc} onCambio={setPc} resultado={fila.pc?.resultado} />
 
-      {indiceMasa ? (
+      {fila.imc ? (
         <View style={s.derivados}>
-          <Derivado titulo={`IMC ${indiceMasa.toFixed(1).replace('.', ',')}`} resultado={res('imc', indiceMasa)} />
-          <Derivado titulo="Peso para la talla" resultado={res('peso-talla', valores.weightKg, valores.heightCm)} />
+          <Derivado titulo={`IMC ${fila.imc.valor.toFixed(1).replace('.', ',')}`} resultado={fila.imc.resultado} />
+          <Derivado titulo="Peso para la talla" resultado={fila.pesoTalla?.resultado} />
         </View>
       ) : null}
 
@@ -92,14 +103,14 @@ function FilaMedida({ etiqueta, valor, onCambio, resultado }: { etiqueta: string
           <Percentil resultado={resultado} />
         </View>
       </View>
-      <AvisoTipeo resultado={resultado} />
+      <AvisoCarga resultado={resultado} />
     </View>
   );
 }
 
 function Percentil({ resultado }: { resultado?: ResultadoPercentil }) {
   if (!resultado) return <TextoChico>—</TextoChico>;
-  if (!resultado.ok) return resultado.motivo === 'imposible' ? null : <TextoChico>{TEXTO_MOTIVO[resultado.motivo]}</TextoChico>;
+  if (!resultado.ok) return <TextoChico>{TEXTO_MOTIVO[resultado.motivo]}</TextoChico>;
   const extremo = !!resultado.aviso;
   return (
     <View>
@@ -111,11 +122,9 @@ function Percentil({ resultado }: { resultado?: ResultadoPercentil }) {
   );
 }
 
-function AvisoTipeo({ resultado }: { resultado?: ResultadoPercentil }) {
-  if (!resultado) return null;
-  if (!resultado.ok && resultado.motivo === 'imposible') return <Aviso tono="alerta" texto="Medida imposible para la edad: revisá si hay un error de tipeo." />;
-  if (resultado.ok && resultado.aviso) return <Aviso tono="alerta" texto={`Z ${formatoZ(resultado.z)}: valor extremo. ¿Posible error de tipeo?`} />;
-  return null;
+function AvisoCarga({ resultado }: { resultado?: ResultadoPercentil }) {
+  if (!resultado || !resultado.ok || !resultado.aviso) return null;
+  return <Aviso tono="alerta" texto={`Z ${formatoZ(resultado.z)}: ${TEXTO_AVISO[resultado.aviso]}`} />;
 }
 
 function Derivado({ titulo, resultado }: { titulo: string; resultado?: ResultadoPercentil }) {
@@ -123,7 +132,7 @@ function Derivado({ titulo, resultado }: { titulo: string; resultado?: Resultado
     <View style={{ flex: 1, gap: 4 }}>
       <TextoFuerte>{titulo}</TextoFuerte>
       <Percentil resultado={resultado} />
-      <AvisoTipeo resultado={resultado} />
+      <AvisoCarga resultado={resultado} />
     </View>
   );
 }

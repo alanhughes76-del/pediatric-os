@@ -1,24 +1,33 @@
 /**
- * Percentilos de crecimiento con el método LMS.
+ * Motor de percentilos de crecimiento (método LMS). Módulo puro, sin interfaz.
+ * Lo usan la consulta (antropometría en vivo) y la tarjeta Crecimiento de la ficha.
  *
  * Referencias:
- * - OMS 2006/2007 (oms_lms.json): peso/edad, talla/edad, PC/edad, IMC/edad y peso/talla.
- * - SAP/Lejarraga 2009 (argentina_lms.json): peso/edad y talla/edad.
- * En los dos archivos el sexo va como M o F y "t" es la edad en meses
- * (en peso/talla, "t" es la talla en cm).
+ * - OMS 2006/2007 (oms_lms.json): peso/edad (0–60 m), talla/edad (acostado 0–24 m, de pie 24–228 m),
+ *   PC/edad (0–60 m), IMC/edad (0–228 m) y peso/talla (acostado 45–110 cm, de pie 65–120 cm).
+ * - SAP/Lejarraga 2009 (argentina_lms.json): peso/edad y talla/edad (0–228 m).
+ * En los dos archivos el sexo va como M o F y "t" es la edad en meses (en peso/talla, la talla en cm).
  *
  * Reglas:
- * - OMS hasta los 60 meses. Peso y talla después de los 60 meses: referencia argentina.
- * - PC, IMC y peso/talla: siempre OMS.
- * - Prematuros: hasta los 24 meses se usa la edad corregida (ver `edadParaCalculo`).
+ * - Z = ((X/M)^L − 1) / (L·S); si L = 0, Z = ln(X/M) / S. Interpolación lineal de L, M y S.
+ * - Percentilo = Φ(Z) × 100. Curvas: X = M·(1 + L·S·Z)^(1/L), o M·e^(S·Z) si L = 0.
+ * - Fuera del rango de la tabla no se extrapola.
+ * - Referencia por defecto: OMS hasta los 60 meses; peso y talla después de los 60 meses, SAP.
+ *   PC, IMC y peso/talla siempre OMS. Se puede pedir la otra referencia cuando exista.
+ * - Talla: acostado antes de los 24 meses, de pie desde los 24. Si se midió en la otra posición,
+ *   se corrige 0,7 cm antes de calcular (de pie → acostado +0,7; acostado → de pie −0,7).
+ * - Prematuros: hasta los 24 meses se usa la edad corregida (ver `edadParaCalculo` en edad.ts).
+ * - Avisos (criterios OMS): |Z| > 3 → valor extremo; fuera de los límites de plausibilidad →
+ *   probable error de carga.
  */
 import oms from '@/data/referencias/oms_lms.json';
 import argentina from '@/data/referencias/argentina_lms.json';
 
 export interface FilaLMS { t: number; L: number; M: number; S: number }
-type SexoRef = 'M' | 'F';
-
+export type SexoRef = 'M' | 'F';
 export type Indicador = 'peso' | 'talla' | 'pc' | 'imc' | 'peso-talla';
+export type Referencia = 'OMS' | 'SAP';
+export type Posicion = 'acostado' | 'de_pie';
 
 export const INDICADORES: { clave: Indicador; nombre: string; corto: string; unidad: string }[] = [
   { clave: 'peso', nombre: 'Peso para la edad', corto: 'Peso', unidad: 'kg' },
@@ -28,8 +37,6 @@ export const INDICADORES: { clave: Indicador; nombre: string; corto: string; uni
   { clave: 'peso-talla', nombre: 'Peso para la talla', corto: 'Peso/talla', unidad: 'kg' },
 ];
 
-export type Referencia = 'OMS' | 'SAP';
-
 export interface TablaElegida {
   filas: FilaLMS[];
   referencia: Referencia;
@@ -37,33 +44,61 @@ export interface TablaElegida {
   etiqueta: string;
 }
 
+// ---------- Posición de la talla ----------
+
+/** Corrección entre talla acostado y de pie (cm). */
+export const CORRECCION_POSICION = 0.7;
+
+/** Posición que corresponde a la edad: acostado antes de los 24 meses, de pie desde los 24. */
+export const posicionPorEdad = (meses: number): Posicion => (meses < 24 ? 'acostado' : 'de_pie');
+
+/** Lleva una talla medida en `medida` a la posición que corresponde a la edad (±0,7 cm). */
+export function tallaParaReferencia(cm: number, medida: Posicion | undefined, meses: number): number {
+  const esperada = posicionPorEdad(meses);
+  if (!medida || medida === esperada) return cm;
+  return esperada === 'acostado' ? cm + CORRECCION_POSICION : cm - CORRECCION_POSICION;
+}
+
+// ---------- Referencias ----------
+
+/** Referencia por defecto: OMS hasta los 60 meses; peso y talla después de los 60, SAP. */
+export function referenciaPorDefecto(ind: Indicador, meses: number): Referencia {
+  return (ind === 'peso' || ind === 'talla') && meses > 60 ? 'SAP' : 'OMS';
+}
+
+/** Referencias que existen para ese indicador (peso y talla tienen OMS y SAP). */
+export function referenciasDelIndicador(ind: Indicador): Referencia[] {
+  return ind === 'peso' || ind === 'talla' ? ['OMS', 'SAP'] : ['OMS'];
+}
+
 /**
- * Elige la tabla según indicador, sexo y edad (meses).
- * Devuelve null si no hay referencia para esa edad (por ejemplo, PC después de los 5 años).
+ * Elige la tabla según indicador, sexo, edad (meses) y referencia.
+ * Devuelve null si esa referencia no existe para el indicador.
  */
-export function elegirTabla(ind: Indicador, sexo: SexoRef, meses: number): TablaElegida | null {
+export function elegirTabla(ind: Indicador, sexo: SexoRef, meses: number, referencia: Referencia = referenciaPorDefecto(ind, meses)): TablaElegida | null {
+  if (referencia === 'SAP') {
+    if (ind === 'peso') return { filas: argentina.peso_edad[sexo], referencia, etiqueta: 'SAP/Lejarraga' };
+    if (ind === 'talla') return { filas: argentina.talla_edad[sexo], referencia, etiqueta: 'SAP/Lejarraga' };
+    return null;
+  }
+  const pos = posicionPorEdad(meses);
   switch (ind) {
     case 'peso':
-      return meses <= 60
-        ? { filas: oms.peso_edad[sexo], referencia: 'OMS', etiqueta: 'OMS' }
-        : { filas: argentina.peso_edad[sexo], referencia: 'SAP', etiqueta: 'SAP/Lejarraga' };
+      return { filas: oms.peso_edad[sexo], referencia, etiqueta: 'OMS' };
     case 'talla':
-      if (meses > 60) return { filas: argentina.talla_edad[sexo], referencia: 'SAP', etiqueta: 'SAP/Lejarraga' };
-      return meses < 24
-        ? { filas: oms.talla_edad[sexo].acostado, referencia: 'OMS', etiqueta: 'OMS (acostado)' }
-        : { filas: oms.talla_edad[sexo].de_pie, referencia: 'OMS', etiqueta: 'OMS (de pie)' };
+      return { filas: oms.talla_edad[sexo][pos], referencia, etiqueta: pos === 'acostado' ? 'OMS (acostado)' : 'OMS (de pie)' };
     case 'pc':
-      return meses <= 60 ? { filas: oms.pc_edad[sexo], referencia: 'OMS', etiqueta: 'OMS' } : null;
+      return { filas: oms.pc_edad[sexo], referencia, etiqueta: 'OMS' };
     case 'imc':
-      return { filas: oms.imc_edad[sexo], referencia: 'OMS', etiqueta: 'OMS' };
+      return { filas: oms.imc_edad[sexo], referencia, etiqueta: 'OMS' };
     case 'peso-talla':
-      return meses < 24
-        ? { filas: oms.peso_talla[sexo].acostado, referencia: 'OMS', etiqueta: 'OMS (acostado)' }
-        : { filas: oms.peso_talla[sexo].de_pie, referencia: 'OMS', etiqueta: 'OMS (de pie)' };
+      return { filas: oms.peso_talla[sexo][pos], referencia, etiqueta: pos === 'acostado' ? 'OMS (acostado)' : 'OMS (de pie)' };
   }
 }
 
-/** L, M y S en `t`, interpolando linealmente entre las filas de la tabla. */
+// ---------- LMS ----------
+
+/** L, M y S en `t`, interpolando linealmente entre los dos puntos más cercanos. Null fuera de rango. */
 export function lmsEn(filas: FilaLMS[], t: number): FilaLMS | null {
   if (filas.length === 0 || t < filas[0].t || t > filas[filas.length - 1].t) return null;
   let i = 0;
@@ -75,73 +110,118 @@ export function lmsEn(filas: FilaLMS[], t: number): FilaLMS | null {
   return { t, L: a.L + (b.L - a.L) * f, M: a.M + (b.M - a.M) * f, S: a.S + (b.S - a.S) * f };
 }
 
-/** Z = ((X/M)^L − 1) / (L·S); si L = 0, Z = ln(X/M)/S. */
+/** Z = ((X/M)^L − 1) / (L·S); si L = 0, Z = ln(X/M) / S. */
 export function zScore(x: number, { L, M, S }: FilaLMS): number {
-  return Math.abs(L) < 1e-9 ? Math.log(x / M) / S : (Math.pow(x / M, L) - 1) / (L * S);
+  return L === 0 ? Math.log(x / M) / S : (Math.pow(x / M, L) - 1) / (L * S);
 }
 
-/** Valor de la medida para un Z dado (para dibujar las curvas). */
+/** X = M·(1 + L·S·Z)^(1/L), o M·e^(S·Z) si L = 0. */
 export function valorParaZ(z: number, { L, M, S }: FilaLMS): number {
-  return Math.abs(L) < 1e-9 ? M * Math.exp(S * z) : M * Math.pow(1 + L * S * z, 1 / L);
+  return L === 0 ? M * Math.exp(S * z) : M * Math.pow(1 + L * S * z, 1 / L);
 }
 
-/** Función de distribución normal estándar (Φ). */
+/** Función de distribución normal estándar Φ (Abramowitz y Stegun 7.1.26, error < 1,5·10⁻⁷). */
 export function normalCDF(z: number): number {
-  // Abramowitz y Stegun 7.1.26 (error < 1,5·10⁻⁷)
   const t = 1 / (1 + 0.3275911 * (Math.abs(z) / Math.SQRT2));
   const y = 1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-(z * z) / 2);
   return z >= 0 ? (1 + y) / 2 : (1 - y) / 2;
 }
 
-/** Z de los percentilos de las curvas. */
+/** Z de las curvas P3 a P97. */
 export const CURVAS: { p: number; z: number }[] = [
   { p: 3, z: -1.8808 }, { p: 10, z: -1.2816 }, { p: 25, z: -0.6745 }, { p: 50, z: 0 },
   { p: 75, z: 0.6745 }, { p: 90, z: 1.2816 }, { p: 97, z: 1.8808 },
 ];
 
-/** Límites físicos: fuera de esto, la medida es imposible (casi seguro un error de tipeo). */
-const LIMITES: Record<Indicador, [number, number]> = {
-  peso: [0.3, 200],
-  talla: [20, 230],
-  pc: [18, 70],
-  imc: [5, 80],
-  'peso-talla': [0.3, 200],
+// ---------- Avisos ----------
+
+/** |Z| por encima de esto: "valor extremo, revisá la medida". */
+export const Z_EXTREMO = 3;
+
+/** Límites de plausibilidad (criterios OMS): fuera de esto, probable error de carga. */
+export const LIMITES_PLAUSIBLES: Record<Indicador, [number, number]> = {
+  peso: [-6, 5],
+  talla: [-6, 6],
+  imc: [-5, 5],
+  'peso-talla': [-5, 5],
+  pc: [-5, 5], // la consigna no lo fija; se usa el criterio OMS para PC/edad
 };
 
-/** A partir de este |Z| se avisa un posible error de tipeo. */
-export const Z_EXTREMO = 4;
+export type Aviso = 'extremo' | 'error-carga';
 
-export type Aviso = 'imposible' | 'z-extremo';
+export const TEXTO_AVISO: Record<Aviso, string> = {
+  extremo: 'Valor extremo, revisá la medida.',
+  'error-carga': 'Probable error de carga.',
+};
 
-export type ResultadoPercentil =
-  | { ok: true; z: number; percentil: number; referencia: Referencia; etiqueta: string; aviso?: Aviso }
-  | { ok: false; motivo: 'sin-referencia' | 'fuera-de-rango' | 'imposible' };
-
-/**
- * Calcula Z y percentilo de una medida.
- * `t` es la edad en meses (o la talla en cm para peso/talla).
- * `mesesEdad` decide qué tabla usar (en peso/talla, acostado o de pie).
- */
-export function calcular(ind: Indicador, sexo: SexoRef, valor: number, mesesEdad: number, t = mesesEdad): ResultadoPercentil {
-  const [min, max] = LIMITES[ind];
-  if (!(valor >= min && valor <= max)) return { ok: false, motivo: 'imposible' };
-  const tabla = elegirTabla(ind, sexo, mesesEdad);
-  if (!tabla) return { ok: false, motivo: 'sin-referencia' };
-  const lms = lmsEn(tabla.filas, t);
-  if (!lms) return { ok: false, motivo: 'fuera-de-rango' };
-  const z = zScore(valor, lms);
-  return {
-    ok: true,
-    z,
-    percentil: normalCDF(z) * 100,
-    referencia: tabla.referencia,
-    etiqueta: tabla.etiqueta,
-    aviso: Math.abs(z) >= Z_EXTREMO ? 'z-extremo' : undefined,
-  };
+export function avisoPara(ind: Indicador, z: number): Aviso | undefined {
+  const [min, max] = LIMITES_PLAUSIBLES[ind];
+  if (z < min || z > max) return 'error-carga';
+  if (Math.abs(z) > Z_EXTREMO) return 'extremo';
+  return undefined;
 }
 
+// ---------- Cálculo ----------
+
+export type Motivo = 'fuera-de-rango' | 'invalido';
+
+export const TEXTO_MOTIVO: Record<Motivo, string> = {
+  'fuera-de-rango': 'Fuera del rango de la referencia',
+  invalido: 'Valor no válido',
+};
+
+export type ResultadoPercentil =
+  | { ok: true; z: number; percentil: number; referencia: Referencia; etiqueta: string; valorUsado: number; aviso?: Aviso }
+  | { ok: false; motivo: Motivo };
+
+export interface Pedido {
+  indicador: Indicador;
+  sexo: SexoRef;
+  /** Valor medido. Para talla, tal como se midió (la corrección por posición la hace el motor). */
+  valor: number;
+  /** Edad en meses (corregida si corresponde). */
+  meses: number;
+  /** Para peso/talla: la talla en cm (eje de la tabla). */
+  tallaCm?: number;
+  /** Posición en que se midió la talla (por defecto, la que corresponde a la edad). */
+  posicion?: Posicion;
+  /** Referencia elegida (por defecto, según la edad). */
+  referencia?: Referencia;
+}
+
+export function calcular(p: Pedido): ResultadoPercentil {
+  if (!(p.valor > 0) || (p.indicador === 'peso-talla' && !(p.tallaCm && p.tallaCm > 0))) return { ok: false, motivo: 'invalido' };
+  const tabla = elegirTabla(p.indicador, p.sexo, p.meses, p.referencia);
+  if (!tabla) return { ok: false, motivo: 'fuera-de-rango' };
+
+  const valor = p.indicador === 'talla' ? tallaParaReferencia(p.valor, p.posicion, p.meses) : p.valor;
+  const t = p.indicador === 'peso-talla' ? tallaParaReferencia(p.tallaCm!, p.posicion, p.meses) : p.meses;
+  const lms = lmsEn(tabla.filas, t);
+  if (!lms) return { ok: false, motivo: 'fuera-de-rango' };
+
+  const z = zScore(valor, lms);
+  return { ok: true, z, percentil: normalCDF(z) * 100, referencia: tabla.referencia, etiqueta: tabla.etiqueta, valorUsado: valor, aviso: avisoPara(p.indicador, z) };
+}
+
+/** IMC = peso / talla² (talla en metros). */
 export function imc(pesoKg: number, tallaCm: number): number {
   return pesoKg / Math.pow(tallaCm / 100, 2);
+}
+
+/**
+ * Puntos de una curva de percentilo para dibujar.
+ * `xs` son edades en meses (o tallas en cm para peso/talla, con `mesesParaTabla` para elegir acostado o de pie).
+ * Sin referencia fija, cada punto usa la referencia por defecto de su edad.
+ */
+export function curva(ind: Indicador, sexo: SexoRef, z: number, xs: number[], opciones: { referencia?: Referencia; mesesParaTabla?: number } = {}) {
+  const puntos: { x: number; y: number }[] = [];
+  for (const x of xs) {
+    const meses = ind === 'peso-talla' ? opciones.mesesParaTabla ?? 0 : x;
+    const tabla = elegirTabla(ind, sexo, meses, opciones.referencia ?? referenciaPorDefecto(ind, meses));
+    const lms = tabla ? lmsEn(tabla.filas, x) : null;
+    if (lms) puntos.push({ x, y: valorParaZ(z, lms) });
+  }
+  return puntos;
 }
 
 // ---------- Formato ----------
@@ -160,12 +240,6 @@ export function formatoPercentil(p: number): string {
 export function formatoZ(z: number): string {
   return `${z >= 0 ? '+' : '−'}${coma(Math.abs(z), 2)}`;
 }
-
-export const TEXTO_MOTIVO: Record<'sin-referencia' | 'fuera-de-rango' | 'imposible', string> = {
-  'sin-referencia': 'Sin referencia para esta edad',
-  'fuera-de-rango': 'Fuera del rango de la tabla',
-  imposible: 'Medida imposible: revisá si hay un error de tipeo',
-};
 
 /** Convierte lo que se escribe ("8,25") a número, o undefined si está vacío o no es válido. */
 export function leerNumero(texto: string): number | undefined {

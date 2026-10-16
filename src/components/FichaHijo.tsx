@@ -9,7 +9,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '@/data/store';
 import {
-  paciente, nombreCompleto, alergiasDe, problemasDe, medicionesDe, consultasDe, informesFamilia,
+  paciente, nombreCompleto, alergiasDe, problemasDe, consultasDe, informesFamilia,
   notaVigente, fiebreDe, sinRevisar, TEXTO_VISITA, type Vista,
 } from '@/data/selectores';
 import type { CarePlanCategory } from '@/data/types';
@@ -22,7 +22,7 @@ import { Seccion } from './Seccion';
 import { Etiqueta } from './Etiqueta';
 import { Boton } from './Boton';
 import { AlergiasDestacadas } from './Alergias';
-import { GraficoMediciones } from './GraficoMediciones';
+import { TarjetaCrecimiento } from './crecimiento/TarjetaCrecimiento';
 
 const CATEGORIA: Record<CarePlanCategory, string> = { control: 'Control', prevencion: 'Prevención', vacuna: 'Vacuna', otro: 'Otro' };
 const SEXO = { M: 'Masculino', F: 'Femenino', X: 'X' } as const;
@@ -91,9 +91,9 @@ export function FichaHijo({ hijoId, vista }: { hijoId: string; vista: Vista }) {
 
       <ProblemasYAlergias patientId={p.id} vista={vista} />
 
-      <Seccion titulo="Crecimiento" bajada="Las curvas con percentilos llegan en la próxima entrega">
+      <Seccion titulo="Crecimiento">
         <Tarjeta>
-          <GraficoMediciones mediciones={medicionesDe(db, p.id)} fechaNacimiento={p.birthDate} />
+          <TarjetaCrecimiento paciente={p} vista={vista} />
         </Tarjeta>
       </Seccion>
     </>

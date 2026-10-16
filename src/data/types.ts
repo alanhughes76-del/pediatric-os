@@ -163,6 +163,8 @@ export interface GrowthMeasurement extends Base {
   weightKg?: number;
   heightCm?: number;
   headCm?: number;
+  /** Posición en que se midió la talla. Por defecto: acostado antes de los 24 meses, de pie desde los 24. */
+  position?: 'acostado' | 'de_pie';
 }
 
 /** Un hito marcado (o desmarcado) en una consulta. */

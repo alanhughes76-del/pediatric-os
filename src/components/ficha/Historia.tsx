@@ -11,15 +11,15 @@ import { Tarjeta } from '../Tarjeta';
 import { Etiqueta } from '../Etiqueta';
 import { Boton } from '../Boton';
 import { Texto, TextoFuerte, TextoChico } from '../Texto';
-import { GraficoMediciones } from '../GraficoMediciones';
+import { TarjetaCrecimiento } from '../crecimiento/TarjetaCrecimiento';
 import { colors } from '@/theme';
 
 export function BloqueCrecimiento({ paciente }: { paciente: Patient }) {
   const { db } = useApp();
   return (
-    <Seccion titulo="Crecimiento" bajada="Las curvas con percentilos llegan en la etapa C">
+    <Seccion titulo="Crecimiento" bajada={`${medicionesDe(db, paciente.id).length} mediciones`}>
       <Tarjeta>
-        <GraficoMediciones mediciones={medicionesDe(db, paciente.id)} fechaNacimiento={paciente.birthDate} />
+        <TarjetaCrecimiento paciente={paciente} vista="medico" />
       </Tarjeta>
     </Seccion>
   );
