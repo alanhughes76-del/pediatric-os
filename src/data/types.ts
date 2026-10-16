@@ -83,6 +83,8 @@ export interface Patient extends Base {
   lastName: string;
   birthDate: ISODate; // obligatoria
   sex: Sex;
+  /** Opcional. Si está cargado, aparece en los certificados. */
+  dni?: string;
   /** 22 a 44 semanas. Vacío = de término. */
   gestationalWeeks?: number;
   gestationalDays?: number;
@@ -257,12 +259,28 @@ export interface FeverEntry extends Base {
 
 export type CertificateType = 'aptitud-fisica' | 'control-salud' | 'buena-salud' | 'libre';
 
+/**
+ * Certificado emitido. Es inmutable: si hay un error se anula (queda visible como
+ * "Anulado", con motivo) y se emite otro.
+ */
 export interface Certificate extends Base {
   patientId: ID;
   type: CertificateType;
-  body: string; // "Certifico que [nombre], de [edad], …"
+  /** Texto completo tal como se emitió: "Certifico que …". */
+  body: string;
+  /** Adulto a pedido de quien se extiende. */
+  requestedBy: string;
+  /** Ante quién se presenta ("el colegio", "la prepaga"…). */
+  destination: string;
   place: string;
   date: ISODate;
+  /** Firma tipográfica (la firma digital real llega en otra etapa). */
+  signature: string;
+  status: 'emitido' | 'anulado';
+  voidReason?: string;
+  voidedAt?: ISODateTime;
+  /** Documento del paciente donde queda guardado el PDF. */
+  documentId: ID;
 }
 
 export interface Document extends Base {
@@ -270,6 +288,8 @@ export interface Document extends Base {
   title: string;
   date: ISODate;
   file: string; // ruta en el almacenamiento de archivos
+  /** Si el documento es un certificado emitido desde la app. */
+  certificateId?: ID;
 }
 
 // ---------- Auditoría ----------

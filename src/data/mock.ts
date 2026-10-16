@@ -6,6 +6,7 @@
 import type { Database, Base } from './types';
 import { enDias, hoyISO, sumarDias, sumarHoras } from '@/lib/fechas';
 import { pacientesExtra } from './mockPacientes';
+import { FIRMA, textoCertificado, tipoCertificado } from '@/lib/certificados';
 
 export const DOCTOR_ID = 'dr';
 const hoy = hoyISO();
@@ -55,7 +56,7 @@ const base: Database = {
   ],
 
   patients: [
-    { ...b('p-tomas', '2026-02-20T10:00:00-03:00'), familyId: 'f-ferreyra', firstName: 'Tomás', lastName: 'Ruiz Ferreyra', birthDate: '2023-05-12', sex: 'M', scope: 'membresia', status: 'activo' },
+    { ...b('p-tomas', '2026-02-20T10:00:00-03:00'), familyId: 'f-ferreyra', firstName: 'Tomás', lastName: 'Ruiz Ferreyra', birthDate: '2023-05-12', sex: 'M', dni: '58.912.345', scope: 'membresia', status: 'activo' },
     { ...b('p-emma', '2026-02-20T10:00:00-03:00'), familyId: 'f-ferreyra', firstName: 'Emma', lastName: 'Ruiz Ferreyra', birthDate: '2026-01-20', sex: 'F', gestationalWeeks: 34, gestationalDays: 3, scope: 'membresia', status: 'activo' },
     { ...b('p-benjamin', '2026-09-12T10:00:00-03:00'), familyId: 'f-godoy', firstName: 'Benjamín', lastName: 'Godoy', birthDate: '2026-09-10', sex: 'M', gestationalWeeks: 38, scope: 'membresia', status: 'activo' },
     { ...b('p-olivia', '2025-10-28T10:00:00-03:00'), familyId: 'f-benitez', firstName: 'Olivia', lastName: 'Benítez', birthDate: '2021-07-03', sex: 'F', gestationalWeeks: 40, gestationalDays: 1, scope: 'cardales', status: 'activo' },
@@ -224,8 +225,15 @@ const base: Database = {
       reviewedAt: sumarHoras(consBenjaminAyer, 0.5), reviewedBy: DOCTOR_ID, consultationId: 'c-b2' },
   ],
 
-  certificates: [],
+  certificates: [
+    {
+      ...b('cert-o1', '2026-05-14T18:10:00-03:00'), patientId: 'p-olivia', type: 'control-salud', date: '2026-05-14', place: 'Buenos Aires',
+      body: textoCertificado({ nombre: 'Olivia Benítez', edad: '4 años y 10 meses', texto: tipoCertificado('control-salud').texto('F'), adulto: 'Paula Benítez', destino: 'la prepaga' }),
+      requestedBy: 'Paula Benítez', destination: 'la prepaga', signature: FIRMA, status: 'emitido', documentId: 'doc-cert-o1',
+    },
+  ],
   documents: [
+    { ...b('doc-cert-o1', '2026-05-14T18:10:00-03:00'), patientId: 'p-olivia', title: 'Constancia de control de salud', date: '2026-05-14', file: 'certificados/p-olivia/cert-o1.pdf', certificateId: 'cert-o1' },
     { ...b('doc-1', '2026-03-02T12:00:00-03:00'), patientId: 'p-tomas', title: 'Certificado de aptitud física (jardín)', date: '2026-03-02', file: 'documentos/p-tomas/apto-fisico-2026.pdf' },
   ],
 

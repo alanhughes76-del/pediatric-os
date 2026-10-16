@@ -55,7 +55,7 @@ export function vistaFamilia(db: Database, guardianId: ID): Database {
     followUps: [],
     carePlan: delPaciente(db.carePlan),
     fever: delPaciente(db.fever),
-    certificates: delPaciente(db.certificates),
+    certificates: delPaciente(db.certificates).map((c) => ({ ...c, voidReason: undefined })),
     documents: delPaciente(db.documents),
     auditLog: [],
   };

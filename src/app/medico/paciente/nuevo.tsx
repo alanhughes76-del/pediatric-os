@@ -31,6 +31,7 @@ export default function NuevoPaciente() {
   const [sexo, setSexo] = useState<Sex>();
   const [ambito, setAmbito] = useState<Scope>('sin-asignar');
   const [semanas, setSemanas] = useState('');
+  const [dni, setDni] = useState('');
   const [intento, setIntento] = useState(false);
   const [duplicadoVisto, setDuplicadoVisto] = useState(false);
 
@@ -53,7 +54,7 @@ export default function NuevoPaciente() {
     if (duplicados.length > 0 && !aunqueExista) return setDuplicadoVisto(true);
     const id = agregar('patients', {
       firstName: nombre.trim(), lastName: apellido.trim(), birthDate: nacimiento, sex: sexo,
-      gestationalWeeks: sem, scope: ambito, status: 'activo',
+      gestationalWeeks: sem, scope: ambito, status: 'activo', dni: dni.trim() || undefined,
     }, 'paciente.crear');
     router.replace(`/medico/hijo/${id}`);
   };
@@ -75,6 +76,7 @@ export default function NuevoPaciente() {
       <Opciones etiqueta="Sexo" opciones={SEXOS} valor={sexo} onCambio={setSexo} />
       {intento && errores.sexo ? <Aviso tono="alerta" texto={errores.sexo} /> : null}
 
+      <Campo etiqueta="DNI (opcional)" value={dni} onChangeText={setDni} keyboardType="number-pad" placeholder="Ej.: 55123456" ayuda="Si está cargado, aparece en los certificados." />
       <Opciones
         etiqueta="Ámbito (opcional)"
         opciones={(Object.keys(TEXTO_AMBITO) as Scope[]).map((v) => ({ valor: v, texto: TEXTO_AMBITO[v] }))}

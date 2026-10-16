@@ -23,8 +23,8 @@ src/
     index.tsx       Selector de rol (modo prueba)
     ingresar.tsx    Ingreso de familias con enlace mágico simulado (lib/enlaceMagico.ts: punto de integración)
     familia/        Portal de la familia: (tabs) Inicio, Pedir visita, Fiebre, Membresía; hijo/[id], fiebre/, urgencia
-    medico/         Médico: (tabs) Hoy, Pacientes, Fiebre, Membresías; hijo/[id] (ficha), paciente/nuevo, adulto/[id], adulto/vincular, accesos, consulta/[id], seguimiento/[id], fiebre/, familia/[id]
-  components/     Componentes de interfaz: ficha/ (ficha completa del médico), crecimiento/ (curvas P3–P97 y tabla), consulta/, fiebre/, formularios.
+    medico/         Médico: (tabs) Hoy, Pacientes, Fiebre, Membresías; hijo/[id] (ficha), paciente/nuevo, adulto/[id], adulto/vincular, accesos, certificado/nuevo, consulta/[id], seguimiento/[id], fiebre/, familia/[id]
+  components/     Componentes de interfaz: ficha/ (ficha completa del médico), crecimiento/ (curvas P3–P97 y tabla), certificados/, consulta/, fiebre/, formularios.
                   FichaHijo.tsx es la ficha del portal de la familia.
   data/
     types.ts        Modelo de datos (una interfaz = una tabla)
@@ -34,7 +34,7 @@ src/
     vistaFamilia.ts Lo que puede ver un adulto: el store la aplica antes de entregar datos al portal
     selectores.ts   Lecturas comunes
     referencias/    oms_lms.json, argentina_lms.json, hitos_desarrollo.json
-  lib/            Lógica pura: percentiles (motor LMS), crecimiento (percentilos por visita), busqueda, edad, fechas, hitos, fiebre, notaIA (borrador de ejemplo).
+  lib/            Lógica pura: percentiles (motor LMS), crecimiento (percentilos por visita), certificados (textos), certificadoPdf (PDF con expo-print), enlaceMagico, busqueda, edad, fechas, hitos, fiebre, notaIA (borrador de ejemplo).
                   Tests: *.test.ts (npm test)
   config.ts       Links de PacienteX y Cal.com
   theme.ts        Colores, tipografías, tamaños
@@ -76,4 +76,5 @@ Doctor, Family, Guardian (acceso habilitado sí/no), PatientRelationship (tipo, 
 - Etapa B (ficha completa) hecha: encabezado con ámbito y alergias, Contacto, Adultos responsables (pantalla de adulto con domicilios y hermanos; vincular existente o nuevo), Problemas ("Lo ve la familia", resolver y reabrir), Alergias, Plan (vencidos resaltados), Crecimiento, Consultas, Fiebre y Documentos. Domicilio de la visita elegible en la consulta. Edad abreviada ("2a 3m 5d") solo del lado del médico.
 - Etapa C (crecimiento) hecha: motor LMS con tests (6 casos de referencia + bordes), posición de la talla con corrección de 0,7 cm, avisos OMS (|Z| > 3 extremo; límites de plausibilidad → probable error de carga), selector de referencia OMS/SAP, sexo X, prematuros con edad corregida y puntos huecos; tarjeta con curvas P3–P97, toque en cada punto y tabla por visita (la familia ve solo peso, talla y PC, sin Z, avisos ni tabla). La consulta usa el mismo motor.
 - Etapa D (portal) hecha: vista de familia filtrada en la capa de datos (tests para cada adulto de ejemplo), enlace mágico simulado (15 min, un uso, solo adultos habilitados), interruptor "Puede entrar al portal" en la ficha del adulto, Registro de accesos, Inicio con selector de hijo y secciones por hijo, membresía vencida: lectura completa pero sin pedir visitas ("Tu membresía venció. Para pedir una visita, contactame por PacienteX.").
-- Pendiente: etapas E (certificados; DNI opcional en el paciente, confirmado por el Dr.) y F (verificación final).
+- Etapa E (certificados) hecha: 4 tipos con texto prearmado (género por sexo, neutro para X), DNI opcional del paciente, vista previa, emisión inmutable que queda en Documentos, anulación con motivo (la familia ve "Anulado" sin el motivo), PDF con encabezado de la marca, firma tipográfica y leyenda "Documento generado digitalmente"; la familia lo descarga o comparte. El PDF se genera a pedido desde el texto emitido (en el backend se sube al almacenamiento de archivos).
+- Pendiente: etapa F (verificación final).

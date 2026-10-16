@@ -10,6 +10,7 @@ import { TEXTO_AMBITO } from '@/lib/busqueda';
 import { Titulo, Texto, TextoFuerte, TextoChico } from '../Texto';
 import { Opciones } from '../Formulario';
 import { AlergiasDestacadas } from '../Alergias';
+import { CampoEditable } from './piezas';
 import { colors, fonts, size } from '@/theme';
 
 const SEXO = { M: 'Masculino', F: 'Femenino', X: 'X' } as const;
@@ -37,6 +38,14 @@ export function Encabezado({ paciente: p }: { paciente: Patient }) {
           Edad gestacional al nacer: {textoEG(p)} · Nació el {fechaCorta(p.birthDate)} · Sexo {SEXO[p.sex]}
         </TextoChico>
       </View>
+
+      <CampoEditable
+        etiqueta="DNI"
+        valor={p.dni}
+        keyboardType="number-pad"
+        placeholder="Ej.: 55123456"
+        onGuardar={(v) => actualizar('patients', p.id, { dni: v || undefined }, 'paciente.dni')}
+      />
 
       <Opciones<Scope>
         etiqueta="Ámbito"

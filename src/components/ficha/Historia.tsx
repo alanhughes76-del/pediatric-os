@@ -12,6 +12,7 @@ import { Etiqueta } from '../Etiqueta';
 import { Boton } from '../Boton';
 import { Texto, TextoFuerte, TextoChico } from '../Texto';
 import { TarjetaCrecimiento } from '../crecimiento/TarjetaCrecimiento';
+import { ListaCertificados } from '../certificados/ListaCertificados';
 import { colors } from '@/theme';
 
 export function BloqueCrecimiento({ paciente }: { paciente: Patient }) {
@@ -85,20 +86,10 @@ export function BloqueFiebre({ patientId }: { patientId: string }) {
 }
 
 export function BloqueDocumentos({ patientId }: { patientId: string }) {
-  const { db } = useApp();
-  const documentos = db.documents.filter((d) => d.patientId === patientId && !d.archivedAt).sort((a, b) => b.date.localeCompare(a.date));
   return (
-    <Seccion titulo="Certificados y documentos" bajada="La emisión de certificados llega en la etapa E">
-      {documentos.length === 0 ? <Texto color={colors.textMuted}>Sin documentos.</Texto> : null}
-      {documentos.map((d) => (
-        <Tarjeta key={d.id} style={s.fila}>
-          <Ionicons name="document-text-outline" size={24} color={colors.primary2} />
-          <View style={{ flex: 1 }}>
-            <TextoFuerte>{d.title}</TextoFuerte>
-            <TextoChico>{fechaCorta(d.date)}</TextoChico>
-          </View>
-        </Tarjeta>
-      ))}
+    <Seccion titulo="Certificados y documentos">
+      <Boton titulo="+ Emitir certificado" variante="secundario" onPress={() => router.push({ pathname: '/medico/certificado/nuevo', params: { paciente: patientId } })} />
+      <ListaCertificados patientId={patientId} vista="medico" />
     </Seccion>
   );
 }

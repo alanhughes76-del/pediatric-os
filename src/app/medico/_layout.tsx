@@ -16,6 +16,7 @@ export default function MedicoLayout() {
       <Stack.Screen name="adulto/[id]" options={{ title: 'Adulto' }} />
       <Stack.Screen name="adulto/vincular" options={{ title: 'Agregar adulto' }} />
       <Stack.Screen name="accesos" options={{ title: 'Registro de accesos' }} />
+      <Stack.Screen name="certificado/nuevo" options={{ title: 'Certificado' }} />
       <Stack.Screen name="consulta/[id]" options={{ title: 'Consulta' }} />
       <Stack.Screen name="seguimiento/[id]" options={{ title: 'Seguimiento' }} />
       <Stack.Screen name="fiebre/[id]" options={{ title: 'Fiebre' }} />

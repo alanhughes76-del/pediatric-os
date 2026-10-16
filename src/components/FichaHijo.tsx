@@ -22,6 +22,7 @@ import { Etiqueta } from './Etiqueta';
 import { Boton } from './Boton';
 import { AlergiasDestacadas } from './Alergias';
 import { TarjetaCrecimiento } from './crecimiento/TarjetaCrecimiento';
+import { ListaCertificados } from './certificados/ListaCertificados';
 
 const CATEGORIA: Record<CarePlanCategory, string> = { control: 'Control', prevencion: 'Prevención', vacuna: 'Vacuna', otro: 'Otro' };
 
@@ -150,20 +151,9 @@ function AlergiasYTemas({ patientId }: { patientId: string }) {
 }
 
 function Certificados({ patientId }: { patientId: string }) {
-  const { db } = useApp();
-  const documentos = db.documents.filter((d) => d.patientId === patientId).sort((a, b) => b.date.localeCompare(a.date));
   return (
     <Seccion titulo="Certificados">
-      {documentos.length === 0 ? <Texto color={colors.textMuted}>Todavía no hay certificados.</Texto> : null}
-      {documentos.map((d) => (
-        <Tarjeta key={d.id} style={s.fila}>
-          <Ionicons name="document-text-outline" size={24} color={colors.primary2} />
-          <View style={{ flex: 1 }}>
-            <TextoFuerte>{d.title}</TextoFuerte>
-            <TextoChico>{fechaCorta(d.date)}</TextoChico>
-          </View>
-        </Tarjeta>
-      ))}
+      <ListaCertificados patientId={patientId} vista="familia" />
     </Seccion>
   );
 }

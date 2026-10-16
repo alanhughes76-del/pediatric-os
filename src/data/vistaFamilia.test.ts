@@ -59,6 +59,7 @@ describe.each(db.guardians.map((g) => [`${g.firstName} ${g.lastName}`, g.id]))('
     expect(v.followUps).toEqual([]);
     expect(v.milestoneChecks).toEqual([]);
     expect(v.auditLog).toEqual([]);
+    expect(v.certificates.every((c) => c.voidReason === undefined)).toBe(true);
   });
 
   test('de los otros adultos solo ve el nombre', () => {
