@@ -69,12 +69,12 @@ Doctor, Family, Guardian (acceso habilitado sí/no), PatientRelationship (tipo, 
 - Contacto: **no hay WhatsApp en ningún lado**. Botón "Contactá al Dr. por PacienteX", que abre `CONFIG.pacienteXUrl` en el navegador del teléfono.
 - La app nunca sugiere dosis ni diagnósticos a las familias.
 
-## Estado
+## Estado (16/10/2026)
 
-- Hecho: dos roles con selector de prueba; Inicio de la familia; consulta (antropometría con percentilos LMS, hitos CDC/AAP + PRUNAPE, nota clínica versionada con borrador de ejemplo); seguimientos pendientes; registro de fiebre de los dos lados; plan de cuidado con tildado y "Vacunas aplicadas".
-- Etapa A (lista de pacientes) hecha: solapas por ámbito con conteo, orden por apellido, búsqueda sin tildes (nombre, iniciales, fecha) y alta con aviso de duplicado.
-- Etapa B (ficha completa) hecha: encabezado con ámbito y alergias, Contacto, Adultos responsables (pantalla de adulto con domicilios y hermanos; vincular existente o nuevo), Problemas ("Lo ve la familia", resolver y reabrir), Alergias, Plan (vencidos resaltados), Crecimiento, Consultas, Fiebre y Documentos. Domicilio de la visita elegible en la consulta. Edad abreviada ("2a 3m 5d") solo del lado del médico.
-- Etapa C (crecimiento) hecha: motor LMS con tests (6 casos de referencia + bordes), posición de la talla con corrección de 0,7 cm, avisos OMS (|Z| > 3 extremo; límites de plausibilidad → probable error de carga), selector de referencia OMS/SAP, sexo X, prematuros con edad corregida y puntos huecos; tarjeta con curvas P3–P97, toque en cada punto y tabla por visita (la familia ve solo peso, talla y PC, sin Z, avisos ni tabla). La consulta usa el mismo motor.
-- Etapa D (portal) hecha: vista de familia filtrada en la capa de datos (tests para cada adulto de ejemplo), enlace mágico simulado (15 min, un uso, solo adultos habilitados), interruptor "Puede entrar al portal" en la ficha del adulto, Registro de accesos, Inicio con selector de hijo y secciones por hijo, membresía vencida: lectura completa pero sin pedir visitas ("Tu membresía venció. Para pedir una visita, contactame por PacienteX.").
-- Etapa E (certificados) hecha: 4 tipos con texto prearmado (género por sexo, neutro para X), DNI opcional del paciente, vista previa, emisión inmutable que queda en Documentos, anulación con motivo (la familia ve "Anulado" sin el motivo), PDF con encabezado de la marca, firma tipográfica y leyenda "Documento generado digitalmente"; la familia lo descarga o comparte. El PDF se genera a pedido desde el texto emitido (en el backend se sube al almacenamiento de archivos).
-- Pendiente: etapa F (verificación final).
+Pedido de etapas A a F terminado. Detalle punto por punto en `VERIFICACION.md`.
+
+- **Médico:** Hoy (visitas, seguimientos pendientes, registro de accesos), Pacientes (solapas por ámbito, búsqueda, alta con aviso de duplicado), ficha completa (encabezado con ámbito y DNI, Contacto, Adultos responsables con domicilios, Problemas, Alergias, Plan de cuidado y vacunas aplicadas, Crecimiento con curvas P3–P97 y tabla, Consultas, Registro de fiebre, Certificados y documentos), consulta (antropometría con el motor de percentilos, hitos, nota clínica versionada), fiebre.
+- **Familia:** ingreso con enlace mágico simulado, Inicio con selector de hijo y secciones por hijo, Pedir visita (bloqueado con membresía vencida), registro de fiebre, certificados en PDF. Los datos llegan filtrados por `vistaFamilia`.
+- **Calidad:** 227 tests (percentilos, búsqueda, vista de familia para cada adulto, enlace mágico, certificados).
+- **Pendiente para la etapa del backend (Vibecode Cloud):** base de datos y archivos reales, envío real del enlace mágico, subir el PDF del certificado al almacenamiento, conexión real con IA. Siguen sin tocar: Plaud, mails, Notion y firma digital.
+- **Sin verificar por Claude:** la app en un iPhone real y el PDF generado en el teléfono.
