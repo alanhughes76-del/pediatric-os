@@ -4,7 +4,7 @@ App móvil (iOS y Android) de la práctica de pediatría a domicilio del Dr. Ala
 
 Dos roles: el médico (único usuario) y las familias, donde cada adulto responsable tiene su propio acceso.
 
-**Desde el 17/10/2026 manda `docs/PROMPT_MAESTRO.md`** (Pediatric OS, backend Firebase). Donde choque con lo de abajo, gana el prompt maestro. Etapa 0 (exploración y propuesta, sin código): `docs/ETAPA_0_PROPUESTA.md`; respuestas del Dr. en su sección 13 (botón "Escribime por PacienteX", email del enlace por SMTP, región southamerica-east1, Expo Go hasta necesitar un development build, proyecto Firebase nuevo "pediatric-os" más adelante). Etapas 1a (Firebase, ver abajo), 1b (diseño y navegación) y 2a (pacientes y familias sobre los datos de ejemplo) hechas. Etapa 2b hecha: la app se conecta a Firebase (ver "Datos de la app"). Próximo paso: Etapa 3 (agenda y turnos), con el OK del Dr.
+**Desde el 17/10/2026 manda `docs/PROMPT_MAESTRO.md`** (Pediatric OS, backend Firebase). Donde choque con lo de abajo, gana el prompt maestro. Etapa 0 (exploración y propuesta, sin código): `docs/ETAPA_0_PROPUESTA.md`; respuestas del Dr. en su sección 13 (botón "Escribime por PacienteX", email del enlace por SMTP, región southamerica-east1, Expo Go hasta necesitar un development build, proyecto Firebase nuevo "pediatric-os" más adelante). Etapas 1a (Firebase, ver abajo), 1b (diseño y navegación) y 2a (pacientes y familias sobre los datos de ejemplo) hechas. Etapa 2b hecha: la app se conecta a Firebase (ver "Datos de la app"). Etapa 3 hecha: agenda y turnos (ver "Agenda"). Próximo paso: Etapa 4 (clínica), con el OK del Dr.
 
 Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionadas, Expo Router).
 
@@ -12,7 +12,7 @@ Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionad
 
 - Expo SDK 57 + React Native 0.86 + TypeScript, Expo Router (rutas en `src/app/`).
 - **SDK 57 a propósito**: es la versión que corre el Expo Go del iPhone del Dr. No subir de SDK sin preguntarle.
-- La app todavía usa datos de ejemplo **ficticios** en memoria (`src/data/mock.ts`). El backend es **Firebase** (prompt maestro); desde la Etapa 1a existen reglas, Functions y datos de demostración en los emuladores, pero la app todavía no está conectada (llega en las Etapas 1b y 2).
+- Por defecto la app usa datos de ejemplo **ficticios** en memoria (`src/data/mock.ts`). El backend es **Firebase** (prompt maestro): reglas, Functions y datos de demostración en los emuladores; la app se conecta desde la Etapa 2b (ver "Datos de la app").
 - Gráficos con `react-native-svg`. Tipografía Inter (`@expo-google-fonts/inter`).
 - Probar en el teléfono: `npx expo start --tunnel --clear` y abrir en Expo Go. `@expo/ngrok` está instalado en el proyecto, porque la instalación global falla por permisos.
 - Tests con jest-expo. `expo-modules-core` está mapeado en la config de jest a la copia anidada en `node_modules/expo`, porque instalarlo en la raíz choca con una dependencia opcional.
@@ -22,10 +22,19 @@ Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionad
 - Dos fuentes con el mismo contrato (`src/data/contrato.ts`); las pantallas solo usan `useApp()`:
   - `demo` (por defecto): datos ficticios en memoria y selector de rol (`src/data/fuenteDemo.tsx`).
   - `firebase`: ingreso real del médico con email y contraseña, lecturas en vivo de Firestore y escrituras con la firma que piden las reglas (`src/data/firebase/`). Se elige con `EXPO_PUBLIC_DATOS=firebase` (`npm run web:firebase`, con `npm run emuladores` y `npm run sembrar`).
-- Lo crítico va por Functions (`operaciones` del contrato): `crearPaciente`, `aprobarNota`, `corregirNota`, `emitirCertificado` y `anularCertificado`. En demostración hacen lo mismo en memoria.
+- Lo crítico va por Functions (`operaciones` del contrato): `crearPaciente`, `aprobarNota`, `corregirNota`, `emitirCertificado`, `anularCertificado`, `crearTurno` y `accionTurno`. En demostración hacen lo mismo en memoria.
 - En `firebase`, el portal de las familias todavía no entra: las copias filtradas del portal llegan en la Etapa 6. El asistente tampoco tiene pantallas todavía.
 - El servidor escribe las fechas como la app (hora de Argentina con `-03:00`, `shared/fechaHora.ts`), porque la app compara fechas como texto.
 - En el celular la sesión de Firebase no queda guardada: se vuelve a ingresar al abrir la app. La sesión persistente llega con la versión propia de la app (EAS).
+
+## Agenda (desde la Etapa 3)
+
+- Los turnos (`Appointment`) están separados de las consultas: el turno organiza la visita; la consulta (`appointmentId` opcional) es lo clínico. Ya no existen consultas "programadas".
+- Reglas comunes en `shared/agenda.ts` (app y servidor): superposición con buffer, horario, bloqueos, zona, estados y acciones permitidas. Entre dos turnos confirmados queda siempre el buffer; un choque entre confirmados bloquea, lo demás es aviso ("Guardar igual").
+- En Firebase todo turno pasa por el servidor (`functions/src/turnos/`): `crearTurno`, `accionTurno` (transacción sobre `agendaDays`) y el endpoint `reservaCalcom` (firma `X-Cal-Signature-256` con `CALCOM_WEBHOOK_SECRET`; vínculo por DNI o "por identificar"; idempotente). En la demostración, `src/data/turnosDemo.ts` hace lo mismo en memoria.
+- Configuración en `settings/agenda` (horarios, duración por tipo, buffer, zonas). Los valores iniciales de `CONFIG_AGENDA_INICIAL` son provisorios: se editan en Configuración (Etapa 7).
+- Eventos para Make: `turno.solicitado`, `turno.confirmado`, `turno.reprogramado`, `turno.cancelado`, `turno.en_camino`, solo con ids, horario y modalidad. `turno.recordatorio_24h` llega en la Etapa 8.
+- Pantallas: Agenda (día, semana, mes), `medico/turno/nuevo`, `medico/turno/[id]` (acciones e historial). Inicio muestra los turnos de hoy, lo que falta confirmar y los próximos días.
 
 ## Firebase (desde la Etapa 1a)
 
@@ -39,7 +48,7 @@ Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionad
 - Comandos:
   - `npm run emuladores` levanta Auth, Firestore, Functions y Storage, con la interfaz en http://127.0.0.1:4000.
   - `npm run sembrar` carga los datos de demostración, con los emuladores corriendo.
-  - `npm run test:reglas` corre los 60 tests de reglas.
+  - `npm run test:reglas` corre los tests de reglas.
   - `npm run test:funciones` corre la lógica de las Functions.
   - `npm run test:integracion` prueba los triggers en el emulador.
   - `npm run typecheck` revisa la app, los tests, los scripts y las Functions.
