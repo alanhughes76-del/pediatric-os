@@ -15,9 +15,12 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
+import { getBytes, ref as refArchivo, uploadBytes } from 'firebase/storage';
+import * as WebBrowser from 'expo-web-browser';
+import { mostrarBytes, nombreSeguro, problemaDelArchivo, tipoPorNombre } from '@/lib/archivos';
 import { FirebaseError } from 'firebase/app';
 import type { AppState, ResultadoTurno, Sesion, Tabla } from '../contrato';
-import type { Appointment, AppointmentChange, Communication, Database } from '../types';
+import type { Appointment, AppointmentChange, Communication, Database, MaterialDelivery } from '../types';
 import { CONFIG_AGENDA_INICIAL } from '@shared/agenda';
 import { firebase } from './config';
 import { ADMINISTRATIVAS, CLINICAS, aFirestore, coleccion, desdeFirestore, diferencias, ruta } from './mapeo';
@@ -28,7 +31,7 @@ const VACIA: Database = {
   doctor: { id: '', name: 'Dr. Alan Hughes', email: '', signature: FIRMA },
   families: [], guardians: [], relationships: [], addresses: [], patients: [], memberships: [], payments: [],
   backgrounds: [], problems: [], allergies: [], consultations: [], measurements: [], milestoneChecks: [], notes: [], followUps: [],
-  carePlan: [], vaccineDoses: [], medications: [], prescriptions: [], studies: [], fever: [], certificates: [], documents: [], appointments: [], appointmentHistory: [], blocks: [], communications: [],
+  carePlan: [], vaccineDoses: [], medications: [], prescriptions: [], studies: [], fever: [], certificates: [], documents: [], appointments: [], appointmentHistory: [], blocks: [], communications: [], educationalMaterials: [], materialDeliveries: [],
   agenda: CONFIG_AGENDA_INICIAL, ia: { enabled: false }, vacunas: { calendarioVerificado: false }, auditLog: [],
 };
 
@@ -45,7 +48,7 @@ export function mensajeDeError(e: unknown): string {
 }
 
 export function useFuenteFirebase(): AppState {
-  const { auth, db: fs, functions } = firebase();
+  const { auth, db: fs, functions, storage } = firebase();
   const [listo, setListo] = useState(false);
   const [sesion, setSesion] = useState<Sesion | null>(null);
   const [org, setOrg] = useState<string | null>(null);
@@ -96,6 +99,9 @@ export function useFuenteFirebase(): AppState {
     subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/agenda`), (snap) => {
       const a = snap.data() ?? {};
       setDatos((d) => ({ ...d, agenda: { ...CONFIG_AGENDA_INICIAL, ...a, duracionMin: { ...CONFIG_AGENDA_INICIAL.duracionMin, ...(a.duracionMin ?? {}) } } }));
+    }, fallo));
+    subs.push(onSnapshot(collection(fs, `organizations/${org}/materialDeliveries`), (snap) => {
+      setDatos((d) => ({ ...d, materialDeliveries: snap.docs.map((x) => ({ id: x.id, ...x.data() }) as MaterialDelivery) }));
     }, fallo));
     subs.push(onSnapshot(collection(fs, `organizations/${org}/communications`), (snap) => {
       setDatos((d) => ({ ...d, communications: snap.docs.map((x) => ({ id: x.id, ...x.data() }) as Communication) }));
@@ -184,6 +190,7 @@ export function useFuenteFirebase(): AppState {
       anularCertificado: (c, motivo) => llamar('anularCertificado', { patientId: c.patientId, certificateId: c.id, reason: motivo }),
       crearTurno: (datos) => turno('crearTurno', datos),
       accionTurno: ({ turno: t, ...resto }) => turno('accionTurno', { id: t.id, ...resto }),
+      enviarMaterial: ({ material, patientId }) => llamar('enviarMaterial', { materialId: material.id, patientId }),
       verificarCalendario: async (verificado) => {
         // settings/vacunas lo puede escribir solo el médico, con su firma (reglas).
         const ref = doc(fs, `organizations/${org}/settings/vacunas`);
@@ -203,6 +210,58 @@ export function useFuenteFirebase(): AppState {
       enviarResumen: ({ nota, asunto, texto }) => llamar('enviarResumenFamilia', { patientId: nota.patientId, noteId: nota.id, asunto, texto }),
     };
   }, [functions, fs, org, uid]);
+
+  /** Archivos en Cloud Storage: se suben y se leen con la sesión del médico. Nunca hay enlaces públicos. */
+  const archivos = useMemo<AppState['archivos']>(() => {
+    const subir = async (ruta: string, archivo: { uri: string; mimeType: string }) => {
+      const blob = await (await fetch(archivo.uri)).blob();
+      await uploadBytes(refArchivo(storage, ruta), blob, { contentType: archivo.mimeType });
+    };
+    const abrir = async (ruta: string, nombre: string, mimeType?: string) => {
+      const bytes = await getBytes(refArchivo(storage, ruta));
+      await mostrarBytes(bytes, nombre, mimeType ?? tipoPorNombre(ruta));
+    };
+    return {
+      subirDocumento: async (datos, archivo) => {
+        if (!org) return 'No hay sesión.';
+        const problema = problemaDelArchivo(archivo);
+        if (problema) return problema;
+        try {
+          const ref = doc(collection(fs, `organizations/${org}/clinical/${datos.patientId}/documents`));
+          const file = `orgs/${org}/patients/${datos.patientId}/documentos/${ref.id}-${nombreSeguro(archivo.name)}`;
+          await subir(file, archivo);
+          await setDoc(ref, { ...aFirestore('documents', { ...datos, file, mimeType: archivo.mimeType, origin: 'medico' }), ...firmaNueva() });
+          return null;
+        } catch (e) { return mensajeDeError(e); }
+      },
+      abrirDocumento: async (d) => {
+        if (!d.file) return 'Es un documento sin archivo cargado.';
+        try { await abrir(d.file, `${nombreSeguro(d.title)}${d.file.match(/\.[a-z]+$/i)?.[0] ?? ''}`, d.mimeType); return null; } catch (e) { return mensajeDeError(e); }
+      },
+      guardarMaterial: async (datos, archivo) => {
+        if (!org) return 'No hay sesión.';
+        if (archivo) {
+          const problema = problemaDelArchivo(archivo);
+          if (problema) return problema;
+        }
+        try {
+          const ref = doc(collection(fs, `organizations/${org}/educationalMaterials`));
+          const file = archivo ? `orgs/${org}/materials/${ref.id}-${nombreSeguro(archivo.name)}` : undefined;
+          if (archivo && file) await subir(file, archivo);
+          await setDoc(ref, { ...aFirestore('educationalMaterials', { ...datos, file }), ...firmaNueva() });
+          return null;
+        } catch (e) { return mensajeDeError(e); }
+      },
+      abrirMaterial: async (m) => {
+        try {
+          if (m.kind === 'enlace' && m.url) { await WebBrowser.openBrowserAsync(m.url); return null; }
+          if (!m.file) return 'No encontramos el archivo de este material.';
+          await abrir(m.file, nombreSeguro(m.title) + '.pdf', 'application/pdf');
+          return null;
+        } catch (e) { return mensajeDeError(e); }
+      },
+    };
+  }, [fs, org, storage, firmaNueva]);
 
   return useMemo<AppState>(() => ({
     fuente: 'firebase',
@@ -224,5 +283,6 @@ export function useFuenteFirebase(): AppState {
     actualizar,
     enLote,
     operaciones,
-  }), [listo, datos, sesion, uid, error, auth, agregar, actualizar, enLote, operaciones, fallo]);
+    archivos,
+  }), [archivos, listo, datos, sesion, uid, error, auth, agregar, actualizar, enLote, operaciones, fallo]);
 }

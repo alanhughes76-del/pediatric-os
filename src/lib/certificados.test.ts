@@ -26,7 +26,7 @@ test('los textos prearmados de cada tipo', () => {
   expect(tipoCertificado('buena-salud').texto('M')).toBe('se encuentra en buen estado de salud y puede concurrir al jardín maternal');
   expect(tipoCertificado('control-salud').destino).toBe('la prepaga');
   expect(tipoCertificado('buena-salud').destino).toBe('el jardín maternal');
-  expect(TIPOS_CERTIFICADO.map((t) => t.tipo)).toEqual(['aptitud-fisica', 'control-salud', 'buena-salud', 'libre']);
+  expect(TIPOS_CERTIFICADO.map((t) => t.tipo)).toEqual(['aptitud-fisica', 'control-salud', 'buena-salud', 'constancia-atencion', 'libre']);
 });
 
 test('no duplica el punto final si el texto ya lo trae', () => {
@@ -36,4 +36,11 @@ test('no duplica el punto final si el texto ya lo trae', () => {
 test('lugar y fecha', () => {
   expect(lugarYFecha('Buenos Aires', '2026-10-16')).toBe('Buenos Aires, 16 de octubre de 2026');
   expect(lugarYFecha('', '2026-10-16')).toBe('Buenos Aires, 16 de octubre de 2026');
+});
+
+test('constancia de atención: redacción neutra, igual para cualquier sexo', () => {
+  const t = tipoCertificado('constancia-atencion');
+  expect(t.titulo).toBe('Constancia de atención');
+  expect(t.texto('M')).toBe(t.texto('F'));
+  expect(t.texto('X')).toBe('recibió atención pediátrica en el día de la fecha');
 });

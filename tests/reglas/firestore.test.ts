@@ -76,6 +76,18 @@ describe('vacunas, medicación y estudios: solo el médico', () => {
   });
 });
 
+describe('prevención', () => {
+  const material = { title: 'Sueño seguro', kind: 'enlace', url: 'https://ejemplo.com', topics: [] };
+  test('el médico carga materiales; el asistente los lee pero no los carga', async () => {
+    await assertSucceeds(setDoc(doc(db('medico'), r('educationalMaterials', 'm1')), firma(uid('medico'), material)));
+    await assertFails(setDoc(doc(db('asistente'), r('educationalMaterials', 'm2')), firma(uid('asistente'), material)));
+    await assertSucceeds(leer('asistente', r('educationalMaterials', 'm1')));
+  });
+  test('los envíos los registra solo el servidor (que emite el aviso)', async () => {
+    await assertFails(setDoc(doc(db('medico'), r('materialDeliveries', 'e1')), firma(uid('medico'), { patientId: 'p-tomas', materialId: 'm1' })));
+  });
+});
+
 describe('nota clínica: inmutable una vez aprobada', () => {
   const borrador = r('clinical', 'p-tomas', 'notes', 'n-borrador');
   const aprobada = r('clinical', 'p-tomas', 'notes', 'n-aprobada');

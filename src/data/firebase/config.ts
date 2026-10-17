@@ -10,12 +10,13 @@ import { getApp, getApps, initializeApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth, initializeAuth, inMemoryPersistence, type Auth } from 'firebase/auth';
 import { connectFirestoreEmulator, getFirestore, type Firestore } from 'firebase/firestore';
 import { connectFunctionsEmulator, getFunctions, type Functions } from 'firebase/functions';
+import { connectStorageEmulator, getStorage, type FirebaseStorage } from 'firebase/storage';
 
 export const REGION = 'southamerica-east1';
 const EMULADORES = process.env.EXPO_PUBLIC_USE_EMULATORS !== 'false';
 const HOST = process.env.EXPO_PUBLIC_EMULADOR_HOST || '127.0.0.1';
 
-let conectado: { auth: Auth; db: Firestore; functions: Functions } | null = null;
+let conectado: { auth: Auth; db: Firestore; functions: Functions; storage: FirebaseStorage } | null = null;
 
 export function firebase() {
   if (conectado) return conectado;
@@ -24,7 +25,7 @@ export function firebase() {
     apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || 'demo-api-key',
     authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
     projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || 'demo-pediatric-os',
-    storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || 'demo-pediatric-os.appspot.com',
     appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
   });
   // Web: la sesión queda guardada en el navegador. Celular: por ahora en memoria (se vuelve a
@@ -32,11 +33,13 @@ export function firebase() {
   const auth = Platform.OS === 'web' || yaEstaba ? getAuth(app) : initializeAuth(app, { persistence: inMemoryPersistence });
   const db = getFirestore(app);
   const functions = getFunctions(app, REGION);
+  const storage = getStorage(app);
   if (EMULADORES && !yaEstaba) {
+    connectStorageEmulator(storage, HOST, 9199);
     connectAuthEmulator(auth, `http://${HOST}:9099`, { disableWarnings: true });
     connectFirestoreEmulator(db, HOST, 8080);
     connectFunctionsEmulator(functions, HOST, 5001);
   }
-  conectado = { auth, db, functions };
+  conectado = { auth, db, functions, storage };
   return conectado;
 }

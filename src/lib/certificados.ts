@@ -48,6 +48,14 @@ export const TIPOS_CERTIFICADO: TipoCertificado[] = [
     texto: () => 'se encuentra en buen estado de salud y puede concurrir al jardín maternal',
   },
   {
+    tipo: 'constancia-atencion',
+    titulo: 'Constancia de atención',
+    paraQue: 'Para justificar una ausencia o presentar donde la pidan',
+    destino: '',
+    // Redacción que no depende del sexo.
+    texto: () => 'recibió atención pediátrica en el día de la fecha',
+  },
+  {
     tipo: 'libre',
     titulo: 'Certificado',
     paraQue: 'Texto libre',

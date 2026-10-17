@@ -317,7 +317,7 @@ export interface StudyOrder extends Base {
   /** "Revisar resultado el": fecha que estima el médico. */
   reviewDate?: ISODate;
   status: StudyStatus;
-  /** Lo que dice el resultado, en palabras del médico (el archivo se adjunta en la Etapa 5b). */
+  /** Lo que dice el resultado, en palabras del médico (el archivo va como documento con studyId). */
   resultNote?: string;
   resultAt?: ISODateTime;
   reviewedAt?: ISODateTime;
@@ -362,7 +362,7 @@ export interface FeverEntry extends Base {
 
 // ---------- Certificados y documentos ----------
 
-export type CertificateType = 'aptitud-fisica' | 'control-salud' | 'buena-salud' | 'libre';
+export type CertificateType = 'aptitud-fisica' | 'control-salud' | 'buena-salud' | 'constancia-atencion' | 'libre';
 
 /**
  * Certificado emitido. Es inmutable: si hay un error se anula (queda visible como
@@ -388,13 +388,48 @@ export interface Certificate extends Base {
   documentId: ID;
 }
 
+export type DocumentKind = 'certificado' | 'receta' | 'estudio' | 'otro';
+
 export interface Document extends Base {
   patientId: ID;
   title: string;
   date: ISODate;
-  file: string; // ruta en el almacenamiento de archivos
+  /** Ruta en Cloud Storage (nunca un enlace público). Vacía en los ejemplos sin archivo. */
+  file: string;
   /** Si el documento es un certificado emitido desde la app. */
   certificateId?: ID;
+  /** Tipo de documento (los certificados viejos no lo tienen: se deduce de certificateId). */
+  kind?: DocumentKind;
+  /** Quién lo cargó: el médico, la familia (Etapa 6) o el sistema (el PDF del certificado). */
+  origin?: 'medico' | 'familia' | 'sistema';
+  /** La familia lo ve en el portal. */
+  visibleToFamily?: boolean;
+  mimeType?: string;
+  studyId?: ID;
+  prescriptionId?: ID;
+}
+
+// ---------- Prevención y educación (Etapa 5b) ----------
+
+/** Material que carga el Dr. (PDF o enlace), etiquetado por edad y tema. */
+export interface EducationalMaterial extends Base {
+  title: string;
+  kind: 'pdf' | 'enlace';
+  /** Enlace (si es enlace) o ruta en Storage (si es PDF). */
+  url?: string;
+  file?: string;
+  /** Edad para la que sirve, en meses (vacío = cualquier edad). */
+  ageFromMonths?: number;
+  ageToMonths?: number;
+  topics: string[];
+  updatedAt?: ISODateTime;
+}
+
+/** Material enviado a una familia (lo registra el servidor y emite el aviso para Make). */
+export interface MaterialDelivery extends Base {
+  patientId: ID;
+  materialId: ID;
+  sentAt: ISODateTime;
 }
 
 // ---------- Agenda (Etapa 3) ----------
@@ -506,6 +541,8 @@ export interface Database {
   appointmentHistory: AppointmentChange[];
   blocks: AgendaBlock[];
   communications: Communication[];
+  educationalMaterials: EducationalMaterial[];
+  materialDeliveries: MaterialDelivery[];
   /** Horarios, duraciones, buffer y zonas (en Firebase: settings/agenda). */
   agenda: ConfigAgenda;
   /** IA encendida o apagada (settings/ia). Arranca apagada; se enciende en la Etapa 9. */

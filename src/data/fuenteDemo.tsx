@@ -5,16 +5,22 @@
  */
 import { useCallback, useMemo, useState } from 'react';
 import { datosDeEjemplo, DOCTOR_ID } from './mock';
-import type { AuditLog, Certificate, ClinicalNote, Communication, Database, Document, FollowUp } from './types';
+import type { AuditLog, Certificate, ClinicalNote, Communication, Database, Document, FollowUp, MaterialDelivery } from './types';
 import type { AppState, Sesion } from './contrato';
 import { vistaFamilia } from './vistaFamilia';
 import { buscarDuplicados } from '@shared/duplicados';
-import { horasDeSeguimiento, mensajeDeSeguimiento } from './selectores';
+import { horasDeSeguimiento, mensajeDeSeguimiento, nombreCompleto } from './selectores';
 import { pedirEnlace, usarEnlace, type Enlace } from '@/lib/enlaceMagico';
 import { FIRMA } from '@/lib/certificados';
 import { ahoraISO, sumarHoras } from '@/lib/fechas';
 import { accionTurnoDemo, crearTurnoDemo, type Contexto } from './turnosDemo';
 import { dosisDelEsquema } from './vacunasApp';
+import { Linking } from 'react-native';
+import { mostrarUri, nombreSeguro, problemaDelArchivo } from '@/lib/archivos';
+import { compartirCertificado } from '@/lib/certificadoPdf';
+
+/** Demostración: los archivos quedan en la memoria del dispositivo (ruta → archivo local). */
+const archivosDemo = new Map<string, { uri: string; mimeType: string }>();
 
 let contador = 0;
 export const nuevoId = (prefijo: string) => `${prefijo}-${Date.now().toString(36)}-${(contador++).toString(36)}`;
@@ -145,6 +151,15 @@ export function useFuenteDemo(): AppState {
       return salida.resultado;
     },
 
+    enviarMaterial: async ({ material, patientId }) => {
+      enLote((d, { ahora, usuarioId: uid, log }) => {
+        const e: MaterialDelivery = { id: nuevoId('env'), createdAt: ahora, createdBy: uid, patientId, materialId: material.id, sentAt: ahora };
+        log({ action: 'material.enviar', entity: 'materialDeliveries', entityId: e.id });
+        return { ...d, materialDeliveries: [...d.materialDeliveries, e] };
+      });
+      return null;
+    },
+
     verificarCalendario: async (verificado) => {
       enLote((d, { log }) => {
         log({ action: verificado ? 'vacunas.calendario-verificado' : 'vacunas.calendario-borrador', entity: 'settings', entityId: 'vacunas' });
@@ -180,6 +195,43 @@ export function useFuenteDemo(): AppState {
     },
   };
   }, [db, actualizar, enLote, usuarioId]);
+
+  const archivos = useMemo<AppState['archivos']>(() => ({
+    subirDocumento: async (datos, archivo) => {
+      const problema = problemaDelArchivo(archivo);
+      if (problema) return problema;
+      const id = nuevoId('doc');
+      const file = `demo/${datos.patientId}/${id}-${nombreSeguro(archivo.name)}`;
+      archivosDemo.set(file, { uri: archivo.uri, mimeType: archivo.mimeType });
+      agregar('documents', { ...datos, id, file, mimeType: archivo.mimeType, origin: 'medico' }, `documento.subir.${datos.kind}`);
+      return null;
+    },
+    abrirDocumento: async (doc) => {
+      const local = archivosDemo.get(doc.file);
+      if (local) { await mostrarUri(local.uri, local.mimeType); return null; }
+      const cert = doc.certificateId ? db.certificates.find((c) => c.id === doc.certificateId) : undefined;
+      const p = db.patients.find((x) => x.id === doc.patientId);
+      if (cert && p) { await compartirCertificado(cert, nombreCompleto(p)); return null; }
+      return 'Es un documento de ejemplo: no tiene archivo cargado.';
+    },
+    guardarMaterial: async (datos, archivo) => {
+      if (archivo) {
+        const problema = problemaDelArchivo(archivo);
+        if (problema) return problema;
+      }
+      const id = nuevoId('mat');
+      const file = archivo ? `demo/materiales/${id}-${nombreSeguro(archivo.name)}` : undefined;
+      if (archivo && file) archivosDemo.set(file, { uri: archivo.uri, mimeType: archivo.mimeType });
+      agregar('educationalMaterials', { ...datos, id, file }, 'material.crear');
+      return null;
+    },
+    abrirMaterial: async (m) => {
+      if (m.kind === 'enlace' && m.url) { await Linking.openURL(m.url); return null; }
+      const local = m.file ? archivosDemo.get(m.file) : undefined;
+      if (local) { await mostrarUri(local.uri, local.mimeType); return null; }
+      return 'No encontramos el archivo de este material.';
+    },
+  }), [db, agregar]);
 
   // Con sesión de familia, las pantallas solo reciben la vista filtrada.
   const guardianId = sesion?.rol === 'familia' ? sesion.guardian.id : null;
@@ -222,5 +274,6 @@ export function useFuenteDemo(): AppState {
     actualizar,
     enLote,
     operaciones,
-  }), [db, dbVisible, sesion, enlaces, usuarioId, agregar, actualizar, enLote, filaLog, operaciones]);
+    archivos,
+  }), [archivos, db, dbVisible, sesion, enlaces, usuarioId, agregar, actualizar, enLote, filaLog, operaciones]);
 }

@@ -2,7 +2,8 @@
  * Lo que la app pide a la capa de datos, sea la demostración en memoria o Firebase.
  * Las pantallas solo usan `useApp()` (store.tsx): no saben de dónde vienen los datos.
  */
-import type { Appointment, AuditLog, Certificate, ClinicalNote, Consultation, Database, Guardian, Patient } from './types';
+import type { Appointment, AuditLog, Certificate, ClinicalNote, Consultation, Database, Document, DocumentKind, EducationalMaterial, Guardian, Patient } from './types';
+import type { ArchivoElegido } from '@/lib/archivos';
 import type { AccionTurno, Aviso } from '@shared/agenda';
 import type { ResultadoEnlace } from '@/lib/enlaceMagico';
 import type { Fuente } from './fuente';
@@ -15,7 +16,7 @@ export type Sesion =
  * Tablas que la app escribe fila por fila (todas menos `doctor`, la configuración de la agenda,
  * la auditoría y los turnos con su historial, que pasan por `operaciones`).
  */
-export type Tabla = Exclude<keyof Database, 'doctor' | 'agenda' | 'ia' | 'vacunas' | 'auditLog' | 'communications' | 'appointments' | 'appointmentHistory'>;
+export type Tabla = Exclude<keyof Database, 'doctor' | 'agenda' | 'ia' | 'vacunas' | 'auditLog' | 'communications' | 'materialDeliveries' | 'appointments' | 'appointmentHistory'>;
 export type Fila<T extends Tabla> = Database[T][number];
 
 export interface CamposNota {
@@ -72,8 +73,34 @@ export interface Operaciones {
   accionTurno: (pedido: PedidoAccionTurno) => Promise<ResultadoTurno>;
   /** "Revisé y lo mando": el resumen de una nota aprobada sale hacia Make. */
   enviarResumen: (p: { nota: ClinicalNote; asunto: string; texto: string }) => Promise<string | null>;
+  /** "Enviar material": queda disponible en el portal y sale el aviso para Make. */
+  enviarMaterial: (p: { material: EducationalMaterial; patientId: string }) => Promise<string | null>;
   /** El Dr. marca el calendario de vacunas como verificado (o lo vuelve a borrador). */
   verificarCalendario: (verificado: boolean) => Promise<string | null>;
+}
+
+export interface DatosDocumento {
+  patientId: string;
+  title: string;
+  date: string;
+  kind: DocumentKind;
+  visibleToFamily: boolean;
+  studyId?: string;
+  prescriptionId?: string;
+}
+
+export type DatosMaterial = Pick<EducationalMaterial, 'title' | 'kind' | 'url' | 'ageFromMonths' | 'ageToMonths' | 'topics'>;
+
+/**
+ * Archivos: se suben a Cloud Storage con la sesión del médico y se leen con ella.
+ * Nunca hay enlaces públicos. Devuelven un mensaje de error comprensible, o null si salió bien.
+ */
+export interface Archivos {
+  subirDocumento: (datos: DatosDocumento, archivo: ArchivoElegido) => Promise<string | null>;
+  abrirDocumento: (d: Document) => Promise<string | null>;
+  /** PDF (con archivo) o enlace (sin archivo). */
+  guardarMaterial: (datos: DatosMaterial, archivo?: ArchivoElegido) => Promise<string | null>;
+  abrirMaterial: (m: EducationalMaterial) => Promise<string | null>;
 }
 
 export interface AppState {
@@ -111,4 +138,5 @@ export interface AppState {
   /** Varias escrituras juntas (por ejemplo, un adulto con su domicilio y su vínculo). */
   enLote: (fn: (db: Database, ctx: { ahora: string; usuarioId: string; log: (a: Omit<AuditLog, 'id' | 'at' | 'actorId'>) => void }) => Database) => void;
   operaciones: Operaciones;
+  archivos: Archivos;
 }

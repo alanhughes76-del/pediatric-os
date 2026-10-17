@@ -171,10 +171,10 @@ service cloud.firestore {
         allow delete: if false;
       }
 
+      // Envíos de material a una familia: los registra el servidor (enviarMaterial), que emite el aviso.
       match /materialDeliveries/{id} {
         allow read: if esMedico(orgId);
-        allow create, update: if esMedico(orgId) && firmaOk(orgId);
-        allow delete: if false;
+        allow write: if false;
       }
 
       match /consents/{id} {

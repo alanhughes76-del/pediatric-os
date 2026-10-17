@@ -304,8 +304,8 @@ const base: Database = {
     },
   ],
   documents: [
-    { ...b('doc-cert-o1', '2026-05-14T18:10:00-03:00'), patientId: 'p-olivia', title: 'Constancia de control de salud', date: '2026-05-14', file: 'certificados/p-olivia/cert-o1.pdf', certificateId: 'cert-o1' },
-    { ...b('doc-1', '2026-03-02T12:00:00-03:00'), patientId: 'p-tomas', title: 'Certificado de aptitud física (jardín)', date: '2026-03-02', file: 'documentos/p-tomas/apto-fisico-2026.pdf' },
+    { ...b('doc-cert-o1', '2026-05-14T18:10:00-03:00'), patientId: 'p-olivia', title: 'Constancia de control de salud', date: '2026-05-14', file: '', certificateId: 'cert-o1', kind: 'certificado', origin: 'sistema', visibleToFamily: true },
+    { ...b('doc-1', '2026-03-02T12:00:00-03:00'), patientId: 'p-tomas', title: 'Certificado de aptitud física (jardín)', date: '2026-03-02', file: '', kind: 'otro', origin: 'medico', visibleToFamily: true },
   ],
 
   vaccineDoses: vacunasDeEjemplo,
@@ -321,6 +321,9 @@ const base: Database = {
     { ...b('bl-1', enDias(-5, '10:00')), desde: enDias(3, '13:00'), hasta: enDias(3, '20:00'), motivo: 'Curso de actualización' },
   ],
   communications: [],
+  // La biblioteca de prevención arranca vacía: los materiales los carga el Dr.
+  educationalMaterials: [],
+  materialDeliveries: [],
   agenda: CONFIG_AGENDA_INICIAL,
   ia: { enabled: false },
   vacunas: { calendarioVerificado: false },

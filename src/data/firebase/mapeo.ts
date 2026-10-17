@@ -29,7 +29,7 @@ export const CLINICAS: Partial<Record<Tabla, string>> = {
 };
 
 /** Tablas administrativas: colección directa de la organización. */
-export const ADMINISTRATIVAS: Tabla[] = ['families', 'guardians', 'relationships', 'patients', 'memberships', 'payments', 'blocks'];
+export const ADMINISTRATIVAS: Tabla[] = ['families', 'guardians', 'relationships', 'patients', 'memberships', 'payments', 'blocks', 'educationalMaterials'];
 
 export const TABLAS: Tabla[] = [...ADMINISTRATIVAS, 'addresses', ...(Object.keys(CLINICAS) as Tabla[])];
 
