@@ -47,8 +47,10 @@ export function ListaCertificados({ patientId, vista }: { patientId: string; vis
 }
 
 function ItemCertificado({ c, vista }: { c: Certificate; vista: 'medico' | 'familia' }) {
-  const { db, operaciones } = useApp();
+  const { db, operaciones, archivos } = useApp();
   const p = buscarPaciente(db, c.patientId);
+  // El PDF que se guardó al emitir (Firebase). Si no hay, se arma en el momento con el mismo texto.
+  const guardado = db.documents.find((d) => d.id === c.documentId && d.file);
   const [ver, setVer] = useState(false);
   const [anulando, setAnulando] = useState(false);
   const [motivo, setMotivo] = useState('');
@@ -78,9 +80,13 @@ function ItemCertificado({ c, vista }: { c: Certificate; vista: 'medico' | 'fami
           compacto
           titulo={vista === 'familia' ? 'Descargar o compartir PDF' : 'Ver o compartir PDF'}
           variante="secundario"
-          onPress={() => p && compartirCertificado(c, nombreCompleto(p))}
+          onPress={() => {
+            if (vista === 'medico' && guardado) void archivos.abrirDocumento(guardado).then((e) => { if (e) setError(e); });
+            else if (p) void compartirCertificado(c, nombreCompleto(p));
+          }}
         />
       ) : null}
+      {error && !anulando ? <TextoChico color={colors.alert}>{error}</TextoChico> : null}
 
       {vista === 'medico' ? (
         <View style={s.acciones}>

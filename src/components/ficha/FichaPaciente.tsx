@@ -21,7 +21,9 @@ import { BloqueVacunas } from './Vacunas';
 import { BloqueMedicacion, BloquePrescripciones } from './Medicacion';
 import { BloqueEstudios } from './Estudios';
 import { EstadoVacio } from '../Estados';
-import { BloqueConsultas, BloqueCrecimiento, BloqueDocumentos, BloqueFiebre, useNuevaConsulta } from './Historia';
+import { BloqueConsultas, BloqueCrecimiento, BloqueFiebre, useNuevaConsulta } from './Historia';
+import { BloqueDocumentos } from './Documentos';
+import { BloqueMaterial } from './MaterialFamilia';
 import { Resumen } from './Resumen';
 import { BloqueAntecedentes } from './Antecedentes';
 import { colors, fonts } from '@/theme';
@@ -109,7 +111,12 @@ export function FichaPaciente({ patientId, solapaInicial }: { patientId: string;
       ) : null}
       {solapa === 'consultas' ? <BloqueConsultas patientId={p.id} /> : null}
       {solapa === 'crecimiento' ? <BloqueCrecimiento paciente={p} /> : null}
-      {solapa === 'plan' ? <BloquePlan patientId={p.id} /> : null}
+      {solapa === 'plan' ? (
+        <>
+          <BloquePlan patientId={p.id} />
+          <BloqueMaterial paciente={p} />
+        </>
+      ) : null}
       {solapa === 'vacunas' ? <BloqueVacunas paciente={p} /> : null}
       {solapa === 'medicaciones' ? (
         <>

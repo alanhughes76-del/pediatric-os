@@ -1,7 +1,7 @@
 /**
  * Estudios (prompt maestro 7.10): pedido con "Revisar resultado el", y el recorrido
  * solicitado → realizado → resultado recibido → revisado. La orden legal se emite en la plataforma
- * registrada, igual que las recetas. Adjuntar el resultado (PDF o imagen) llega en la Etapa 5b.
+ * registrada, igual que las recetas. El resultado (PDF o imagen) se adjunta al estudio.
  */
 import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
@@ -16,6 +16,7 @@ import { Boton } from '../Boton';
 import { Campo } from '../Formulario';
 import { Texto, TextoFuerte, TextoChico } from '../Texto';
 import { Agregar } from './piezas';
+import { BotonAdjuntar, ListaAdjuntos } from '../documentos/Adjuntos';
 import { colors } from '@/theme';
 
 const TONO: Record<StudyOrder['status'], 'neutro' | 'celeste' | 'naranja' | 'verde'> = { solicitado: 'neutro', realizado: 'celeste', resultado: 'naranja', revisado: 'verde' };
@@ -60,7 +61,7 @@ export function BloqueEstudios({ paciente: p }: { paciente: Patient }) {
 }
 
 function TarjetaEstudio({ estudio: x }: { estudio: StudyOrder }) {
-  const { actualizar } = useApp();
+  const { db, actualizar } = useApp();
   const hoy = hoyISO();
   const siguiente = SIGUIENTE_ESTUDIO[x.status];
   const vencido = x.status !== 'revisado' && !!x.reviewDate && x.reviewDate < hoy;
@@ -90,8 +91,15 @@ function TarjetaEstudio({ estudio: x }: { estudio: StudyOrder }) {
         {x.reviewedAt ? ` · Revisado el ${fechaCorta(x.reviewedAt)}` : ''}
       </TextoChico>
       {x.resultNote ? <Texto>Resultado: {x.resultNote}</Texto> : null}
+      <ListaAdjuntos documentos={db.documents.filter((d) => d.studyId === x.id && !d.archivedAt)} />
+      {x.status !== 'solicitado' ? (
+        <BotonAdjuntar
+          titulo="Adjuntar el resultado (PDF o imagen)"
+          datos={{ patientId: x.patientId, title: `Resultado: ${x.study}`, date: hoy, kind: 'estudio', visibleToFamily: false, studyId: x.id }}
+        />
+      ) : null}
       {cargando ? (
-        <Campo etiqueta="Qué dice el resultado (opcional)" value={nota} onChangeText={setNota} multiline ayuda="Solo lo ves vos. El archivo se adjunta en la Etapa 5b." />
+        <Campo etiqueta="Qué dice el resultado (opcional)" value={nota} onChangeText={setNota} multiline ayuda="Solo lo ves vos. El archivo se adjunta con el botón de abajo." />
       ) : null}
       {siguiente ? (
         <View style={s.fila}>

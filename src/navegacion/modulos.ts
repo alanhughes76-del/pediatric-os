@@ -32,7 +32,6 @@ const mod = (clave: string, titulo: string, icono: NombreIcono, etapa: string, t
   atajos,
 });
 
-const aPacientes = { titulo: 'Ir a Pacientes', href: '/medico/pacientes' as Href, icono: 'people-outline' as NombreIcono };
 
 export const MODULOS: Modulo[] = [
   { clave: 'inicio', titulo: 'Inicio', icono: 'home-outline', href: '/medico', rutas: ['/medico', '/medico/seguimiento', '/medico/fiebre', '/medico/accesos'] },
@@ -51,10 +50,10 @@ export const MODULOS: Modulo[] = [
   { clave: 'estudios', titulo: 'Estudios', icono: 'flask-outline', href: '/medico/estudios', rutas: ['/medico/estudios'] },
   { clave: 'vacunas', titulo: 'Vacunas', icono: 'shield-checkmark-outline', href: '/medico/vacunas', rutas: ['/medico/vacunas'] },
   { clave: 'crecimiento', titulo: 'Crecimiento', icono: 'trending-up-outline', href: '/medico/crecimiento', rutas: ['/medico/crecimiento'] },
-  mod('certificados', 'Certificados', 'ribbon-outline', 'Etapa 5', 'Listado de certificados emitidos y anulados. Hoy se emiten desde la ficha de cada paciente.', [aPacientes]),
-  mod('prevencion', 'Prevención', 'leaf-outline', 'Etapa 5', 'Biblioteca de materiales que cargás vos, sugeridos según la edad del paciente.'),
+  { clave: 'certificados', titulo: 'Certificados', icono: 'ribbon-outline', href: '/medico/certificados', rutas: ['/medico/certificados'] },
+  { clave: 'prevencion', titulo: 'Prevención', icono: 'leaf-outline', href: '/medico/prevencion', rutas: ['/medico/prevencion'] },
   mod('comunicaciones', 'Comunicaciones', 'chatbubbles-outline', 'Etapa 7', 'Registro de lo que sale por las automatizaciones y lo que registres a mano. No es un chat: las conversaciones siguen por PacienteX.'),
-  mod('documentos', 'Documentos', 'folder-open-outline', 'Etapa 5', 'Archivos de cada paciente, con enlaces de descarga temporales.'),
+  { clave: 'documentos', titulo: 'Documentos', icono: 'folder-open-outline', href: '/medico/documentos', rutas: ['/medico/documentos'] },
   mod('reportes', 'Reportes', 'bar-chart-outline', 'Etapa 7', 'Reporte mensual con datos reales del sistema, exportable a CSV y PDF.'),
   mod('ia', 'IA Asistente', 'sparkles-outline', 'Etapa 9', 'Propuestas que revisás vos. Arranca apagada hasta que revises el consentimiento para usar IA con datos de salud.'),
 ];

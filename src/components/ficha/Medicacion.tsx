@@ -2,7 +2,7 @@
  * Medicaciones y prescripciones (prompt maestro 7.9 y regla 11).
  * - Medicación actual: la dosis la escribe el médico. La plataforma nunca sugiere ni calcula dosis.
  * - Prescripciones: registro de lo indicado. La receta con validez legal se emite en la plataforma
- *   registrada (ReNaPDiS): el botón la abre. Adjuntar el PDF de la receta llega en la Etapa 5b.
+ *   registrada (ReNaPDiS): el botón la abre. Se puede adjuntar el PDF de la receta emitida.
  */
 import { useState } from 'react';
 import { View, Linking, StyleSheet } from 'react-native';
@@ -20,6 +20,7 @@ import { Boton } from '../Boton';
 import { Campo, Opciones } from '../Formulario';
 import { Texto, TextoFuerte, TextoChico } from '../Texto';
 import { Agregar, BotonTexto } from './piezas';
+import { BotonAdjuntar, ListaAdjuntos } from '../documentos/Adjuntos';
 import { colors } from '@/theme';
 
 const fechaOpcional = (t: string) => (t.trim() ? deFecha(t) : undefined);
@@ -122,6 +123,11 @@ export function BloquePrescripciones({ paciente: p }: { paciente: Patient }) {
               <Etiqueta texto={x.issuedAt ? 'Receta emitida' : 'Sin emitir'} tono={x.issuedAt ? 'verde' : 'neutro'} />
             </View>
             <Texto>{x.detail}</Texto>
+            <ListaAdjuntos documentos={db.documents.filter((d) => d.prescriptionId === x.id && !d.archivedAt)} />
+            <BotonAdjuntar
+              titulo="Adjuntar el PDF de la receta"
+              datos={{ patientId: p.id, title: `Receta del ${fechaCorta(x.date)}`, date: x.date, kind: 'receta', visibleToFamily: false, prescriptionId: x.id }}
+            />
             <View style={s.acciones}>
               {c ? <BotonTexto texto={`Consulta del ${fechaCorta(c.occurredAt)}`} onPress={() => router.push(`/medico/consulta/${c.id}`)} /> : null}
               {x.issuedAt
@@ -131,7 +137,6 @@ export function BloquePrescripciones({ paciente: p }: { paciente: Patient }) {
           </Tarjeta>
         );
       })}
-      <TextoChico>Adjuntar el PDF de la receta emitida llega con los archivos (Etapa 5b).</TextoChico>
       <Agregar
         titulo="Registrar lo indicado"
         alCancelar={() => { setDetalle(''); setConsulta('ninguna'); setError(undefined); }}

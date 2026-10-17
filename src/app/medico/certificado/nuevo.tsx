@@ -62,7 +62,12 @@ export default function NuevoCertificado() {
     operaciones.emitirCertificado({
       patientId: p.id, type: tipo, body: cuerpo, requestedBy: adulto.trim(), destination: destino.trim(),
       place: lugar.trim() || LUGAR_POR_DEFECTO, date: fechaISO, titulo: tipoCertificado(tipo).titulo,
-    }).then((e) => (e ? setError(e) : router.back()));
+    }).then((e) => {
+      if (e) return setError(e);
+      // Si se abrió directo (sin pantalla anterior), vuelve a los documentos de la ficha.
+      if (router.canGoBack()) router.back();
+      else router.replace({ pathname: '/medico/hijo/[id]', params: { id: p.id, solapa: 'documentos' } });
+    });
   };
 
   return (

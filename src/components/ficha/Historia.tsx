@@ -12,7 +12,6 @@ import { Etiqueta } from '../Etiqueta';
 import { Boton } from '../Boton';
 import { Texto, TextoFuerte, TextoChico } from '../Texto';
 import { TarjetaCrecimiento } from '../crecimiento/TarjetaCrecimiento';
-import { ListaCertificados } from '../certificados/ListaCertificados';
 import { colors } from '@/theme';
 
 export function BloqueCrecimiento({ paciente }: { paciente: Patient }) {
@@ -86,15 +85,6 @@ export function BloqueFiebre({ patientId }: { patientId: string }) {
           <Ionicons name="chevron-forward" size={24} color={colors.primary3} />
         </View>
       </Tarjeta>
-    </Seccion>
-  );
-}
-
-export function BloqueDocumentos({ patientId }: { patientId: string }) {
-  return (
-    <Seccion titulo="Certificados y documentos">
-      <Boton titulo="+ Emitir certificado" variante="secundario" onPress={() => router.push({ pathname: '/medico/certificado/nuevo', params: { paciente: patientId } })} />
-      <ListaCertificados patientId={patientId} vista="medico" />
     </Seccion>
   );
 }
