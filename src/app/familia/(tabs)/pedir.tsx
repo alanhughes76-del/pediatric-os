@@ -45,7 +45,7 @@ export default function PedirVisita() {
       />
 
       {sinLink ? (
-        <TextoChico color={colors.alert}>Todavía no está configurado el link de turnos. Contactá al Dr. por PacienteX.</TextoChico>
+        <TextoChico color={colors.alert}>Todavía no está configurado el link de turnos. Escribime por PacienteX.</TextoChico>
       ) : null}
     </Pantalla>
   );

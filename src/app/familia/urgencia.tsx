@@ -26,7 +26,7 @@ export default function AntesDeLaUrgencia() {
         onPress={async () => setSinLink(!(await abrirAgenda(CONFIG.calUrgenciaUrl)))}
       /> : null}
       {sinLink ? (
-        <TextoChico color={colors.alert}>Todavía no está configurado el link de turnos. Contactá al Dr. por PacienteX.</TextoChico>
+        <TextoChico color={colors.alert}>Todavía no está configurado el link de turnos. Escribime por PacienteX.</TextoChico>
       ) : null}
     </Pantalla>
   );
