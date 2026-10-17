@@ -19,7 +19,7 @@ test.each([
   ['/medico/prevencion', 'prevencion'],
   ['/medico/modulo/reportes', 'reportes'],
   ['/medico/turno/t1', 'agenda'],
-  ['/medico/modulo/configuracion', 'configuracion'],
+  ['/medico/configuracion', 'configuracion'],
   ['/medico/agenda', 'agenda'],
 ])('%s marca %s', (ruta, clave) => {
   expect(moduloActivo(ruta)).toBe(clave);
