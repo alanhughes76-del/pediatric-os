@@ -4,7 +4,7 @@ App móvil (iOS y Android) de la práctica de pediatría a domicilio del Dr. Ala
 
 Dos roles: el médico (único usuario) y las familias, donde cada adulto responsable tiene su propio acceso.
 
-**Desde el 17/10/2026 manda `docs/PROMPT_MAESTRO.md`** (Pediatric OS, backend Firebase). Donde choque con lo de abajo, gana el prompt maestro. Etapa 0 (exploración y propuesta, sin código): `docs/ETAPA_0_PROPUESTA.md`; respuestas del Dr. en su sección 13 (botón "Escribime por PacienteX", email del enlace por SMTP, región southamerica-east1, Expo Go hasta necesitar un development build, proyecto Firebase nuevo "pediatric-os" más adelante). Etapas 1a (Firebase, ver abajo), 1b (diseño y navegación) y 2a (pacientes y familias sobre los datos de ejemplo) hechas. Etapa 2b hecha: la app se conecta a Firebase (ver "Datos de la app"). Etapa 3 hecha: agenda y turnos (ver "Agenda"). Etapa 4 hecha: clínica (ver "Clínica"). Próximo paso: Etapa 5 (seguimiento: vacunas, medicación, estudios, certificados, documentos y prevención), con el OK del Dr.
+**Desde el 17/10/2026 manda `docs/PROMPT_MAESTRO.md`** (Pediatric OS, backend Firebase). Donde choque con lo de abajo, gana el prompt maestro. Etapa 0 (exploración y propuesta, sin código): `docs/ETAPA_0_PROPUESTA.md`; respuestas del Dr. en su sección 13 (botón "Escribime por PacienteX", email del enlace por SMTP, región southamerica-east1, Expo Go hasta necesitar un development build, proyecto Firebase nuevo "pediatric-os" más adelante). Etapas 1a (Firebase, ver abajo), 1b (diseño y navegación) y 2a (pacientes y familias sobre los datos de ejemplo) hechas. Etapa 2b hecha: la app se conecta a Firebase (ver "Datos de la app"). Etapa 3 hecha: agenda y turnos (ver "Agenda"). Etapa 4 hecha: clínica (ver "Clínica"). Etapa 5 partida en dos: 5a hecha (vacunas, medicación y prescripciones, estudios, plan de cuidado; ver "Seguimiento"). Próximo paso: Etapa 5b (archivos en Storage: documentos con enlaces temporales, adjuntos de recetas y estudios, PDF del certificado guardado; certificados y prevención), con el OK del Dr.
 
 Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionadas, Expo Router).
 
@@ -43,6 +43,14 @@ Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionad
 - IA apagada (`db.ia`, en Firebase `settings/ia`): "Generar borrador con IA" queda deshabilitado con la explicación y no aparece "Volver a generar". `lib/notaIA.ts` (borrador de ejemplo) queda para cuando se conecte la IA (Etapa 9).
 - Resumen para la familia: en la nota aprobada, "Preparar el mail" (`shared/resumen.ts`, solo el resumen) → el Dr. lo edita → "Revisé y lo mando". El servidor emite `resumen.envio_aprobado` (el único evento con texto clínico) y registra una comunicación sin el texto.
 - Módulos de la barra lateral: Historia clínica (`medico/historia`: notas sin aprobar, problemas activos, alergias), Consultas (`medico/consultas`) y Crecimiento (`medico/crecimiento`: última medición con percentilos; primero los avisos). Lecturas en `src/data/clinica.ts`. La ficha abre en una pestaña con `?solapa=`.
+
+## Seguimiento (desde la Etapa 5a)
+
+- Vacunas (`shared/vacunas.ts`, `components/ficha/Vacunas.tsx`, módulo `medico/vacunas`): el esquema sale tal cual de `assets/data/calendario_vacunas.json` (BORRADOR). Se genera al dar de alta un paciente (servidor y demostración) o con "Generar esquema" para los que ya existían. "Atrasada" se calcula. Mientras `settings/vacunas.calendarioVerificado` sea false se ve "Calendario sin verificar", la familia no ve fechas estimadas y no salen recordatorios (`puedeRecordarVacunas`). El Dr. lo marca en el módulo Vacunas (se mudará a Configuración en la Etapa 7).
+- Medicación y prescripciones (`components/ficha/Medicacion.tsx`, módulo `medico/prescripciones`): la dosis la escribe el médico; nunca se sugiere ni se calcula. "Emitir receta en…" abre `CONFIG.recetasUrl` (vacío hasta Configuración: el botón lo explica).
+- Estudios (`components/ficha/Estudios.tsx`, módulo `medico/estudios`): solicitado → realizado → resultado → revisado, con "Revisar resultado el". Los resultados sin revisar y las vacunas atrasadas están en Avisos.
+- Plan de cuidado: categoría "estudio" y estado cancelado (`cancelledAt`); las vacunas ya no son ítems del plan.
+- Lecturas en `src/data/seguimientoClinico.ts`. La familia ve las vacunas aplicadas; medicación, prescripciones y estudios no.
 
 ## Firebase (desde la Etapa 1a)
 

@@ -60,6 +60,8 @@ Subcolecciones de `…/clinical/{patientId}/`:
 
 `background` · `problems` · `allergies` · `consultations` · `growth` · `milestones` · `vaccineDoses` · `medications` · `prescriptions` · `studyOrders` (y `studyOrders/{id}/results`) · `carePlan` · `notes` · `followUps` · `fever` · `certificates` · `documents`
 
+Etapa 5a: `vaccineDoses` (una por dosis del calendario, id `vd-{paciente}-{clave}`, con `dueDate`, `status` pendiente o aplicada, `appliedDate`, `place`, `lot`, `source` calendario o manual; "atrasada" no se guarda, se calcula), `medications` (la dosis la escribe el médico), `prescriptions` (lo indicado y si ya se emitió en la plataforma de recetas) y `studyOrders` (solicitado → realizado → resultado → revisado, con `reviewDate`). La familia ve solo las vacunas. El calendario es `assets/data/calendario_vacunas.json` y `settings/vacunas.calendarioVerificado` dice si el Dr. lo verificó.
+
 `background` es un documento por paciente (`ant-{patientId}`): peso al nacer, tipo de parto, complicaciones perinatales, patológicos e internaciones, familiares, hábitos y medicación actual. La edad gestacional queda en el paciente. `consultations` guarda `problemIds` (problemas que se abordaron) y `appointmentId` (turno de origen).
 
 | Subcolección | Escribe | Regla especial |
