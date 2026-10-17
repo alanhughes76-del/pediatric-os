@@ -17,7 +17,8 @@ import { Tarjeta } from '../Tarjeta';
 import { Etiqueta } from '../Etiqueta';
 import { Seccion } from '../Seccion';
 import { CampoEditable } from './piezas';
-import { categorias, colors, fonts, size } from '@/theme';
+import { Avatar, TONO_AMBITO } from '../Avatar';
+import { colors, fonts, size } from '@/theme';
 
 const SEXO = { M: 'Masculino', F: 'Femenino', X: 'X' } as const;
 
@@ -32,14 +33,11 @@ export function Encabezado({ paciente: p, acciones }: { paciente: Patient; accio
   const mediciones = medicionesDe(db, p.id);
   const peso = [...mediciones].reverse().find((m) => m.weightKg != null);
   const talla = [...mediciones].reverse().find((m) => m.heightCm != null);
-  const iniciales = `${p.firstName[0] ?? ''}${p.lastName[0] ?? ''}`.toUpperCase();
 
   return (
     <Tarjeta style={s.tarjeta}>
       <View style={s.arriba}>
-        <View style={s.avatar} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <Text style={s.avatarTexto}>{iniciales}</Text>
-        </View>
+        <Avatar paciente={p} tamano={72} />
         <View style={s.datos}>
           <Titulo>{nombreCompleto(p)}</Titulo>
           <View style={s.cifras}>
@@ -67,7 +65,7 @@ export function Encabezado({ paciente: p, acciones }: { paciente: Patient; accio
       ) : null}
 
       <View style={s.etiquetas}>
-        <Etiqueta texto={TEXTO_AMBITO[p.scope]} tono="celeste" />
+        <Etiqueta texto={TEXTO_AMBITO[p.scope]} tono={TONO_AMBITO[p.scope]} />
         {confirmadas.map((a) => <Etiqueta key={a.id} texto={`Alergia: ${a.allergen}`} tono="alerta" />)}
         {referidas.map((a) => <Etiqueta key={a.id} texto={`Alergia referida: ${a.allergen}`} tono="arena" />)}
         {alergias.length === 0 ? <Etiqueta texto="Sin alergias cargadas" tono="verdeAgua" /> : null}
@@ -106,8 +104,6 @@ export function BloqueDatos({ paciente: p }: { paciente: Patient }) {
 const s = StyleSheet.create({
   tarjeta: { gap: 14, padding: 22 },
   arriba: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 18 },
-  avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: categorias.celeste.fondo, alignItems: 'center', justifyContent: 'center' },
-  avatarTexto: { fontFamily: fonts.title, fontSize: 28, color: categorias.celeste.texto },
   datos: { flex: 1, minWidth: 220, gap: 6 },
   cifras: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 18, rowGap: 4 },
   cifra: { fontFamily: fonts.bodySemi, fontSize: size.large, color: colors.text },

@@ -16,11 +16,14 @@ import { Campo } from '@/components/Formulario';
 import { Boton } from '@/components/Boton';
 import { Tarjeta } from '@/components/Tarjeta';
 import { Etiqueta } from '@/components/Etiqueta';
+import { Avatar, TONO_AMBITO } from '@/components/Avatar';
+import { useEscritorio } from '@/components/escritorio/Marco';
 import { Texto, TextoFuerte, TextoChico } from '@/components/Texto';
 import { colors, fonts } from '@/theme';
 
 export default function Pacientes() {
   const { db } = useApp();
+  const escritorio = useEscritorio();
   // `q` llega desde el buscador de la barra superior (pantallas anchas).
   const { q } = useLocalSearchParams<{ q?: string }>();
   const [solapa, setSolapa] = useState<Solapa>('todos');
@@ -36,18 +39,23 @@ export default function Pacientes() {
   const lista = useMemo(() => filtrarPacientes(db.patients, solapa, busqueda), [db.patients, solapa, busqueda]);
 
   return (
-    <Pantalla>
-      <Boton titulo="+ Nuevo paciente" onPress={() => router.push('/medico/paciente/nuevo')} />
-
-      <Campo
-        value={busqueda}
-        onChangeText={setBusqueda}
-        placeholder="Nombre, iniciales o dd/mm/aaaa"
-        autoCorrect={false}
-        autoCapitalize="none"
-        clearButtonMode="while-editing"
-        accessibilityLabel="Buscar paciente"
-      />
+    <Pantalla ancho>
+      <View style={s.arriba}>
+        <View style={s.buscador}>
+          <Campo
+            value={busqueda}
+            onChangeText={setBusqueda}
+            placeholder="Nombre, iniciales o dd/mm/aaaa"
+            autoCorrect={false}
+            autoCapitalize="none"
+            clearButtonMode="while-editing"
+            accessibilityLabel="Buscar paciente"
+          />
+        </View>
+        <View style={s.nuevo}>
+          <Boton titulo="+ Nuevo paciente" onPress={() => router.push('/medico/paciente/nuevo')} />
+        </View>
+      </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.solapas} accessibilityRole="tablist">
         {SOLAPAS.map((x) => {
@@ -75,24 +83,27 @@ export default function Pacientes() {
         <Texto color={colors.textMuted}>No encontramos pacientes{busqueda.trim() ? ` con «${busqueda.trim()}»` : ''} en esta solapa.</Texto>
       ) : null}
 
-      {lista.map((p) => {
-        const fiebre = fiebreDe(db, p.id).filter(sinRevisar).length;
-        return (
-          <Tarjeta key={p.id} onPress={() => router.push(`/medico/hijo/${p.id}`)} accessibilityLabel={`Abrir la ficha de ${p.firstName} ${p.lastName}`} style={s.fila}>
-            <View style={{ flex: 1, gap: 2 }}>
-              <TextoFuerte style={{ fontSize: 19 }}>{p.lastName}, {p.firstName}</TextoFuerte>
-              <TextoChico>{edades(p, undefined, 'abreviado').cronologica} · {fechaCorta(p.birthDate)}</TextoChico>
-              {solapa === 'todos' || fiebre > 0 ? (
-                <View style={s.etiquetas}>
-                  {solapa === 'todos' ? <Etiqueta texto={TEXTO_AMBITO[p.scope]} tono={p.scope === 'sin-asignar' ? 'neutro' : 'celeste'} /> : null}
-                  {fiebre > 0 ? <Etiqueta texto={`${fiebre} de fiebre sin revisar`} tono="azul" /> : null}
-                </View>
-              ) : null}
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={colors.primary3} />
-          </Tarjeta>
-        );
-      })}
+      <View style={s.grilla}>
+        {lista.map((p) => {
+          const fiebre = fiebreDe(db, p.id).filter(sinRevisar).length;
+          return (
+            <Tarjeta key={p.id} onPress={() => router.push(`/medico/hijo/${p.id}`)} accessibilityLabel={`Abrir la ficha de ${p.firstName} ${p.lastName}`} style={[s.fila, escritorio && s.media]}>
+              <Avatar paciente={p} />
+              <View style={{ flex: 1, gap: 2 }}>
+                <TextoFuerte style={{ fontSize: 19 }}>{p.lastName}, {p.firstName}</TextoFuerte>
+                <TextoChico>{edades(p, undefined, 'abreviado').cronologica} · {fechaCorta(p.birthDate)}</TextoChico>
+                {solapa === 'todos' || fiebre > 0 ? (
+                  <View style={s.etiquetas}>
+                    {solapa === 'todos' ? <Etiqueta texto={TEXTO_AMBITO[p.scope]} tono={TONO_AMBITO[p.scope]} /> : null}
+                    {fiebre > 0 ? <Etiqueta texto={`${fiebre} de fiebre sin revisar`} tono="azul" /> : null}
+                  </View>
+                ) : null}
+              </View>
+              <Ionicons name="chevron-forward" size={24} color={colors.primary3} />
+            </Tarjeta>
+          );
+        })}
+      </View>
     </Pantalla>
   );
 }
@@ -106,6 +117,12 @@ const s = StyleSheet.create({
   solapaActiva: { backgroundColor: colors.primary, borderColor: colors.primary },
   solapaTexto: { fontFamily: fonts.bodySemi, fontSize: 16, color: colors.primary },
   solapaNumero: { fontFamily: fonts.body, fontSize: 15, color: colors.textMuted },
-  fila: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 },
+  arriba: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 12 },
+  buscador: { flexGrow: 1, flexBasis: 280 },
+  nuevo: { flexGrow: 1, flexBasis: 220, maxWidth: 360 },
+  // En pantalla ancha, dos columnas fijas (la última tarjeta no se estira); en el teléfono, una.
+  grilla: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12 },
+  fila: { width: '100%', flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14 },
+  media: { width: '49.2%' },
   etiquetas: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
 });
