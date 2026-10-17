@@ -5,6 +5,7 @@
  */
 import type { ReactNode } from 'react';
 import { View, StyleSheet } from 'react-native';
+import Svg, { Circle, Polyline } from 'react-native-svg';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '@/data/store';
@@ -38,14 +39,30 @@ export function Resumen({ paciente: p, irA }: { paciente: Patient; irA: (s: Sola
         <ProximasAcciones paciente={p} irA={irA} />
         <Crecimiento paciente={p} irA={irA} />
         <Vacunas paciente={p} irA={irA} />
+        <Pendiente titulo="Estudios" icono="flask-outline" etapa="Etapa 5" texto="Pedidos y resultados para revisar." onPress={() => irA('estudios')} />
+        <Pendiente titulo="Prescripciones activas" icono="reader-outline" etapa="Etapa 5" texto="Lo indicado en cada consulta." onPress={() => irA('medicaciones')} />
         <Documentos paciente={p} irA={irA} />
+        <Pendiente titulo="Comunicaciones recientes" icono="chatbubbles-outline" etapa="Etapa 7" texto="Recordatorios, resúmenes y avisos enviados." onPress={() => irA('comunicaciones')} />
         <PlanPorPlazo paciente={p} irA={irA} />
+        <Pendiente titulo="IA Asistente" icono="sparkles-outline" color="violeta" etapa="Etapa 9" texto="Resumir la historia, preparar la evolución, sugerir material. Arranca apagada hasta que revises el consentimiento." />
       </Grilla>
     </>
   );
 }
 
 type PropsTarjeta = { paciente: Patient; irA: (s: SolapaFicha) => void };
+
+/** Tarjeta de un módulo que todavía no existe: dice en qué etapa llega. */
+function Pendiente({ titulo, icono, etapa, texto, color = 'celeste', onPress }: {
+  titulo: string; icono: NombreIcono; etapa: string; texto: string; color?: Categoria; onPress?: () => void;
+}) {
+  return (
+    <Caja titulo={titulo} icono={icono} color={color} ver={onPress ? { texto: `Ver ${titulo.toLowerCase()}`, onPress } : undefined}>
+      <Texto color={colors.textMuted}>{texto}</Texto>
+      <Etiqueta texto={`Llega en la ${etapa}`} tono="neutro" />
+    </Caja>
+  );
+}
 
 const Rotulo = ({ children }: { children: ReactNode }) => <TextoChico style={s.rotulo}>{children}</TextoChico>;
 const Vacio = ({ children }: { children: ReactNode }) => <Texto color={colors.textMuted}>{children}</Texto>;
@@ -71,6 +88,10 @@ function ResumenClinico({ paciente: p, irA }: PropsTarjeta) {
             </Texto>
           </View>
         ))}
+      </View>
+      <View>
+        <Rotulo>Medicación actual</Rotulo>
+        <Texto color={colors.textMuted}>Se carga desde la Etapa 5.</Texto>
       </View>
       <View style={{ gap: 2 }}>
         <Rotulo>Problemas activos</Rotulo>
@@ -193,7 +214,8 @@ function Crecimiento({ paciente: p, irA }: PropsTarjeta) {
     <Caja titulo="Crecimiento" icono="trending-up-outline" color="celeste" ver={{ texto: 'Ver curvas y tabla', onPress: () => irA('crecimiento') }}>
       {!ultima ? <Vacio>Todavía no hay mediciones.</Vacio> : (
         <>
-          <TextoChico>Última medición: {fechaCorta(ultima.fecha)} · {filas.length} en total</TextoChico>
+          <MiniCurva valores={filas.map((f) => f.peso?.valor ?? null)} />
+          <TextoChico>Peso en cada control · última medición {fechaCorta(ultima.fecha)} · {filas.length} en total</TextoChico>
           <View style={s.datos}>
             {dato('Peso', ultima.peso, 'kg')}
             {dato('Talla', ultima.talla, 'cm')}
@@ -205,13 +227,30 @@ function Crecimiento({ paciente: p, irA }: PropsTarjeta) {
   );
 }
 
+/** Mini gráfico del peso en cada control (sin ejes: el detalle está en la pestaña Crecimiento). */
+function MiniCurva({ valores }: { valores: (number | null)[] }) {
+  const puntos = valores.map((v, i) => ({ i, v })).filter((x): x is { i: number; v: number } => x.v != null);
+  if (puntos.length < 2) return null;
+  const W = 300, H = 64, m = 6;
+  const min = Math.min(...puntos.map((p) => p.v)), max = Math.max(...puntos.map((p) => p.v));
+  const x = (i: number) => m + (i / Math.max(1, valores.length - 1)) * (W - 2 * m);
+  const y = (v: number) => H - m - ((v - min) / Math.max(0.001, max - min)) * (H - 2 * m);
+  const ultimo = puntos[puntos.length - 1];
+  return (
+    <Svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" accessibilityLabel="Mini gráfico del peso">
+      <Polyline points={puntos.map((p) => `${x(p.i)},${y(p.v)}`).join(' ')} fill="none" stroke={categorias.celeste.acento} strokeWidth={2.5} />
+      {puntos.map((p) => <Circle key={p.i} cx={x(p.i)} cy={y(p.v)} r={p === ultimo ? 4.5 : 3} fill={p === ultimo ? colors.accion : categorias.celeste.acento} />)}
+    </Svg>
+  );
+}
+
 function Vacunas({ paciente: p, irA }: PropsTarjeta) {
   const { db } = useApp();
   const vacunas = db.carePlan.filter((i) => i.patientId === p.id && i.category === 'vacuna' && !i.archivedAt);
   const aplicadas = vacunas.filter((v) => v.done).sort((a, b) => (b.doneAt ?? '').localeCompare(a.doneAt ?? ''));
   const pendientes = vacunas.filter((v) => !v.done).sort((a, b) => (a.targetDate ?? '9').localeCompare(b.targetDate ?? '9'));
   return (
-    <Caja titulo="Vacunas" icono="shield-checkmark-outline" color="rosado" ver={{ texto: 'Ver plan y vacunas', onPress: () => irA('plan') }}>
+    <Caja titulo="Vacunas" icono="shield-checkmark-outline" color="rosado" ver={{ texto: 'Ver vacunas', onPress: () => irA('vacunas') }}>
       {vacunas.length === 0 ? <Vacio>Sin vacunas cargadas.</Vacio> : null}
       {aplicadas[0] ? (
         <View><Rotulo>Última aplicada</Rotulo><Texto>{aplicadas[0].description}{aplicadas[0].doneAt ? ` · ${fechaCorta(aplicadas[0].doneAt)}` : ''}</Texto></View>

@@ -14,7 +14,7 @@ import { Etiqueta } from '../Etiqueta';
 import { Campo, Opciones, Interruptor } from '../Formulario';
 import { Texto, TextoFuerte, TextoChico } from '../Texto';
 import { Agregar, BotonTexto } from './piezas';
-import { colors, fonts } from '@/theme';
+import { categorias, colors, fonts } from '@/theme';
 
 const fechaOpcional = (t: string) => (t.trim() ? deFecha(t) : undefined);
 
@@ -159,7 +159,6 @@ export function BloquePlan({ patientId }: { patientId: string }) {
   const plan = db.carePlan
     .filter((i) => i.patientId === patientId && !i.archivedAt)
     .sort((a, b) => Number(a.done) - Number(b.done) || (a.targetDate ?? '9').localeCompare(b.targetDate ?? '9'));
-  const vacunas = plan.filter((i) => i.category === 'vacuna' && i.done).sort((a, b) => (b.doneAt ?? '').localeCompare(a.doneAt ?? ''));
   const [categoria, setCategoria] = useState<CarePlanCategory>();
   const [descripcion, setDescripcion] = useState('');
   const [fecha, setFecha] = useState('');
@@ -211,21 +210,30 @@ export function BloquePlan({ patientId }: { patientId: string }) {
           {error ? <TextoChico color={colors.alert}>{error}</TextoChico> : null}
         </Agregar>
       </Seccion>
-
-      {vacunas.length > 0 ? (
-        <Seccion titulo="Vacunas aplicadas">
-          <Tarjeta style={{ gap: 12 }}>
-            {vacunas.map((v, n) => (
-              <View key={v.id} style={[s.fila, n > 0 && s.separador]}>
-                <Ionicons name="shield-checkmark" size={22} color={colors.primary3} />
-                <TextoFuerte style={{ flex: 1 }}>{v.description}</TextoFuerte>
-                {v.doneAt ? <TextoChico>{fechaCorta(v.doneAt)}</TextoChico> : null}
-              </View>
-            ))}
-          </Tarjeta>
-        </Seccion>
-      ) : null}
     </>
+  );
+}
+
+/** Vacunas aplicadas (ítems "vacuna" hechos del plan). El esquema según el calendario llega en la Etapa 5. */
+export function BloqueVacunas({ patientId }: { patientId: string }) {
+  const { db } = useApp();
+  const vacunas = db.carePlan
+    .filter((i) => i.patientId === patientId && !i.archivedAt && i.category === 'vacuna' && i.done)
+    .sort((a, b) => (b.doneAt ?? '').localeCompare(a.doneAt ?? ''));
+  return (
+    <Seccion titulo="Vacunas aplicadas" bajada="Se cargan como ítems «Vacuna» del plan de cuidado. El esquema según el calendario llega en la Etapa 5.">
+      {vacunas.length === 0 ? <Texto color={colors.textMuted}>Todavía no hay vacunas registradas.</Texto> : (
+        <Tarjeta style={{ gap: 12 }}>
+          {vacunas.map((v, n) => (
+            <View key={v.id} style={[s.fila, n > 0 && s.separador]}>
+              <Ionicons name="shield-checkmark" size={22} color={categorias.rosado.acento} />
+              <TextoFuerte style={{ flex: 1 }}>{v.description}</TextoFuerte>
+              {v.doneAt ? <TextoChico>{fechaCorta(v.doneAt)}</TextoChico> : null}
+            </View>
+          ))}
+        </Tarjeta>
+      )}
+    </Seccion>
   );
 }
 
