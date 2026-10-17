@@ -35,8 +35,8 @@ Estado al 17/10/2026, Etapa 1a. Las reglas están en `firestore.rules` y `storag
 | `…/patients/{id}` | M, A | Alta: S (control de duplicados, Etapa 2). Cambios: M, A | Firma |
 | `…/memberships/{id}`, `…/payments/{id}` | M, A | M, A (y S para los pagos de Telegram, Etapa 8) | Firma |
 | `…/communications/{id}` | M, A | M, A, S | Firma. No guarda textos clínicos (la lee el asistente). Hoy la escribe `enviarResumenFamilia` al mandar un resumen |
-| `…/educationalMaterials/{id}` | M, A | M | Firma |
-| `…/materialDeliveries/{id}` | M | M | Firma |
+| `…/educationalMaterials/{id}` (título, PDF o enlace, edades en meses, temas) | M, A | M | Firma |
+| `…/materialDeliveries/{id}` | M | **Solo S** (`enviarMaterial`, que emite `material.enviado`) | — |
 
 ## Agenda (Etapa 3)
 
@@ -59,6 +59,8 @@ Horarios, duraciones, buffer y zonas viven en `settings/agenda` (en lugar de las
 Subcolecciones de `…/clinical/{patientId}/`:
 
 `background` · `problems` · `allergies` · `consultations` · `growth` · `milestones` · `vaccineDoses` · `medications` · `prescriptions` · `studyOrders` (y `studyOrders/{id}/results`) · `carePlan` · `notes` · `followUps` · `fever` · `certificates` · `documents`
+
+Etapa 5b: `documents` suma `kind` (certificado, receta, estudio, otro), `origin` (medico, familia, sistema), `visibleToFamily`, `mimeType`, `studyId` y `prescriptionId`; `file` es la ruta en Storage (`orgs/{org}/patients/{paciente}/documentos/…` o `/certificados/{id}.pdf`, que arma el servidor al emitir). Los archivos se leen con la sesión del médico: nunca hay enlaces públicos.
 
 Etapa 5a: `vaccineDoses` (una por dosis del calendario, id `vd-{paciente}-{clave}`, con `dueDate`, `status` pendiente o aplicada, `appliedDate`, `place`, `lot`, `source` calendario o manual; "atrasada" no se guarda, se calcula), `medications` (la dosis la escribe el médico), `prescriptions` (lo indicado y si ya se emitió en la plataforma de recetas) y `studyOrders` (solicitado → realizado → resultado → revisado, con `reviewDate`). La familia ve solo las vacunas. El calendario es `assets/data/calendario_vacunas.json` y `settings/vacunas.calendarioVerificado` dice si el Dr. lo verificó.
 
