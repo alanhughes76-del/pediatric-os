@@ -4,6 +4,8 @@
  */
 export { asignarRol } from './roles';
 export { crearPaciente } from './pacientes';
+export { aprobarNota, corregirNota } from './notas';
+export { emitirCertificado, anularCertificado } from './certificados';
 export { auditarAdministrativo, auditarClinico, auditarDomicilios } from './auditoria/triggers';
 export { accesoPorAdulto, accesoPorVinculo } from './acceso/triggers';
 export { despacharEvento, reintentarEventos } from './outbox/triggers';

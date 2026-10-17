@@ -10,6 +10,7 @@
  */
 import type { Database, Patient, Consultation, ClinicalNote, FeverEntry, VisitType, Modality, ID, Address, PatientRelationship, CoverageKind } from './types';
 import { hoyISO, diasEntre, horasEntre } from '@/lib/fechas';
+import { horasDeSeguimiento as horasDeSeguimientoComun, mensajeSeguimiento } from '@shared/seguimiento';
 
 export type Vista = 'medico' | 'familia';
 
@@ -194,7 +195,7 @@ export function visitasDelDia(db: Database, fecha = hoyISO()) {
 // ---------- Seguimientos ----------
 
 /** Horas para el vencimiento: 24 h si fue urgencia, 48 h en el resto (desde la consulta). */
-export const horasDeSeguimiento = (t: VisitType) => (esUrgencia(t) ? 24 : 48);
+export const horasDeSeguimiento = (t: VisitType) => horasDeSeguimientoComun(t);
 
 export function seguimientosPendientes(db: Database) {
   return db.followUps
@@ -205,10 +206,7 @@ export function seguimientosPendientes(db: Database) {
 /** Borrador de mensaje para la familia, armado con el resumen y la conducta. */
 export function mensajeDeSeguimiento(db: Database, nota: ClinicalNote): string {
   const adulto = adultosDe(db, nota.patientId)[0]?.guardian;
-  const saludo = adulto ? `Hola, ${adulto.firstName}.` : 'Hola.';
-  const partes = [saludo, nota.familySummary.trim()];
-  if (nota.plan.trim()) partes.push(`Indicaciones: ${nota.plan.trim()}`);
-  return partes.filter(Boolean).join('\n\n');
+  return mensajeSeguimiento({ nombreAdulto: adulto?.firstName, resumenFamilia: nota.familySummary, conducta: nota.plan });
 }
 
 // ---------- Fiebre ----------
