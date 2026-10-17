@@ -271,6 +271,10 @@ service cloud.firestore {
         allow read: if esMedico(orgId) || accedeA(orgId, patientId);
         allow write: if false;
       }
+      // Enlaces mágicos: solo el servidor (guarda la huella del código, nunca el código).
+      match /magicLinks/{id} {
+        allow read, write: if false;
+      }
       match /portalAccess/{uid} {
         allow read: if esMedico(orgId) || (conSesion() && request.auth.uid == uid);
         allow write: if false;
