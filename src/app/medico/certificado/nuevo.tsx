@@ -5,9 +5,9 @@
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
-import { useApp, nuevoId } from '@/data/store';
+import { useApp } from '@/data/store';
 import { adultosDe, adultoPrincipal, nombreCompleto, paciente as buscarPaciente } from '@/data/selectores';
-import type { Certificate, CertificateType, Document } from '@/data/types';
+import type { CertificateType } from '@/data/types';
 import { FIRMA, LUGAR_POR_DEFECTO, TIPOS_CERTIFICADO, lugarYFecha, textoCertificado, tipoCertificado } from '@/lib/certificados';
 import { edades } from '@/lib/edad';
 import { aCampos, ahoraISO, deFecha, hoyISO } from '@/lib/fechas';
@@ -20,7 +20,7 @@ import { VistaCertificado } from '@/components/certificados/VistaCertificado';
 
 export default function NuevoCertificado() {
   const { paciente: pid } = useLocalSearchParams<{ paciente: string }>();
-  const { db, enLote } = useApp();
+  const { db, operaciones } = useApp();
   const p = buscarPaciente(db, pid);
   const adultos = p ? adultosDe(db, p.id) : [];
   const principal = p ? adultoPrincipal(db, p.id) : undefined;
@@ -58,22 +58,11 @@ export default function NuevoCertificado() {
     if (!fechaISO) return setError('Revisá la fecha (dd/mm/aaaa).');
     setError(null);
     if (!confirmar) return setConfirmar(true);
-    enLote((d, { ahora, usuarioId, log }) => {
-      const base = { createdAt: ahora, createdBy: usuarioId };
-      const certId = nuevoId('cert');
-      const docId = nuevoId('doc');
-      const certificado: Certificate = {
-        ...base, id: certId, patientId: p.id, type: tipo, body: cuerpo, requestedBy: adulto.trim(), destination: destino.trim(),
-        place: lugar.trim() || LUGAR_POR_DEFECTO, date: fechaISO, signature: FIRMA, status: 'emitido', documentId: docId,
-      };
-      const documento: Document = {
-        ...base, id: docId, patientId: p.id, title: tipoCertificado(tipo).titulo, date: fechaISO,
-        file: `certificados/${p.id}/${certId}.pdf`, certificateId: certId,
-      };
-      log({ action: 'certificado.emitir', entity: 'certificates', entityId: certId, detail: tipo });
-      return { ...d, certificates: [...d.certificates, certificado], documents: [...d.documents, documento] };
-    });
-    router.back();
+    // Emitir lo hace el servidor: un certificado emitido no se edita, se anula y se emite otro.
+    operaciones.emitirCertificado({
+      patientId: p.id, type: tipo, body: cuerpo, requestedBy: adulto.trim(), destination: destino.trim(),
+      place: lugar.trim() || LUGAR_POR_DEFECTO, date: fechaISO, titulo: tipoCertificado(tipo).titulo,
+    }).then((e) => (e ? setError(e) : router.back()));
   };
 
   return (

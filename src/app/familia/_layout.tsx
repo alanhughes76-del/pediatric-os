@@ -2,10 +2,13 @@ import { Redirect, Stack } from 'expo-router';
 import { useApp } from '@/data/store';
 import { encabezado } from '@/components/navegacion';
 import { Marco } from '@/components/escritorio/Marco';
+import { Cargando } from '@/components/Estados';
 import { colors } from '@/theme';
 
 export default function FamiliaLayout() {
-  const { sesion } = useApp();
+  const { sesion, listo } = useApp();
+  // En Firebase la sesión se resuelve al arrancar: mientras tanto no se redirige.
+  if (!listo) return <Cargando texto="Abriendo…" />;
   if (sesion?.rol !== 'familia') return <Redirect href="/" />;
 
   return (

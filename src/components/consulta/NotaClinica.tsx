@@ -9,11 +9,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useApp, nuevoId } from '@/data/store';
-import { versionesDeNota, notaVigente, mensajeDeSeguimiento, horasDeSeguimiento } from '@/data/selectores';
-import type { ClinicalNote, Consultation, Patient, FollowUp } from '@/data/types';
+import { useApp } from '@/data/store';
+import { versionesDeNota, notaVigente } from '@/data/selectores';
+import type { ClinicalNote, Consultation, Patient } from '@/data/types';
 import { borradorDeEjemplo, type CamposNota } from '@/lib/notaIA';
-import { ahoraISO, fechaCorta, hora, sumarHoras } from '@/lib/fechas';
+import { ahoraISO, fechaCorta, hora } from '@/lib/fechas';
 import { useAutoguardado } from '@/lib/useAutoguardado';
 import { Campo, Casilla, Aviso, EstadoGuardado } from '../Formulario';
 import { Boton } from '../Boton';
@@ -101,7 +101,7 @@ function SinNota({ consulta, paciente, texto }: { consulta: Consultation; pacien
 // ---------- Borrador (editable) ----------
 
 function Borrador({ nota, consulta, paciente, texto }: { nota: ClinicalNote; consulta: Consultation; paciente: Patient; texto: string }) {
-  const { actualizar, enLote } = useApp();
+  const { actualizar, operaciones } = useApp();
   const inicial: CamposNota = { findings: nota.findings, plan: nota.plan, familySummary: nota.familySummary, allergiesMedication: nota.allergiesMedication, clinicalFlag: nota.clinicalFlag };
   const [campos, setCampos] = useState<CamposNota>(inicial);
   const [origen, setOrigen] = useState(nota.origin);
@@ -136,32 +136,8 @@ function Borrador({ nota, consulta, paciente, texto }: { nota: ClinicalNote; con
     if (!campos.familySummary.trim() && !campos.findings.trim() && !campos.plan.trim()) {
       return setAviso('La nota está vacía. Completá al menos un campo antes de aprobar.');
     }
-    enLote((d, { ahora, usuarioId, log }) => {
-      const aprobada: ClinicalNote = { ...nota, ...campos, origin: origen, status: 'aprobada', updatedAt: ahora, approvedAt: ahora, approvedBy: usuarioId };
-      let followUps = d.followUps;
-      if (aprobada.clinicalFlag) {
-        const existente = d.followUps.find((f) => f.consultationId === consulta.id && f.status === 'pendiente');
-        const datos = {
-          noteId: aprobada.id,
-          dueAt: sumarHoras(consulta.occurredAt, horasDeSeguimiento(consulta.visitType)),
-          message: mensajeDeSeguimiento(d, aprobada),
-        };
-        if (existente) {
-          followUps = d.followUps.map((f) => (f.id === existente.id ? { ...f, ...datos } : f));
-        } else {
-          const nuevo: FollowUp = { id: nuevoId('fu'), createdAt: ahora, createdBy: usuarioId, consultationId: consulta.id, patientId: paciente.id, status: 'pendiente', ...datos };
-          followUps = [...d.followUps, nuevo];
-          log({ action: 'seguimiento.crear', entity: 'followUps', entityId: nuevo.id });
-        }
-      }
-      log({ action: 'nota.aprobar', entity: 'notes', entityId: nota.id, detail: `v${nota.version}` });
-      return {
-        ...d,
-        notes: d.notes.map((n) => (n.id === nota.id ? aprobada : n)),
-        consultations: d.consultations.map((c) => (c.id === consulta.id ? { ...c, status: 'realizada' } : c)),
-        followUps,
-      };
-    });
+    // Aprobar lo hace el servidor: fija la versión y, si tiene bandera, crea el seguimiento.
+    operaciones.aprobarNota({ nota, consulta, campos, origen }).then((error) => { if (error) setAviso(error); });
   };
 
   return (
@@ -204,25 +180,10 @@ function Borrador({ nota, consulta, paciente, texto }: { nota: ClinicalNote; con
 // ---------- Aprobada (solo lectura) ----------
 
 function Aprobada({ nota }: { nota: ClinicalNote }) {
-  const { enLote } = useApp();
-  const corregir = () =>
-    enLote((d, { ahora, usuarioId, log }) => {
-      const nueva: ClinicalNote = {
-        ...nota,
-        id: nuevoId('n'),
-        version: nota.version + 1,
-        previousVersionId: nota.id,
-        status: 'borrador',
-        origin: 'humano',
-        createdAt: ahora,
-        createdBy: usuarioId,
-        updatedAt: ahora,
-        approvedAt: undefined,
-        approvedBy: undefined,
-      };
-      log({ action: 'nota.corregir', entity: 'notes', entityId: nota.id, detail: `v${nota.version} → v${nueva.version}` });
-      return { ...d, notes: [...d.notes.map((n) => (n.id === nota.id ? { ...n, status: 'reemplazada' as const } : n)), nueva] };
-    });
+  const { operaciones } = useApp();
+  const [error, setError] = useState<string | null>(null);
+  // Corregir lo hace el servidor: la aprobada queda "reemplazada" y nace la versión siguiente.
+  const corregir = () => { operaciones.corregirNota(nota).then(setError); };
 
   return (
     <View style={s.tarjeta}>
@@ -231,6 +192,7 @@ function Aprobada({ nota }: { nota: ClinicalNote }) {
         {nota.clinicalFlag ? <Etiqueta texto="Bandera clínica" tono="alerta" /> : null}
       </View>
       <VistaCampos nota={nota} />
+      {error ? <Aviso tono="alerta" texto={error} /> : null}
       <Boton titulo="Corregir esta nota" icono="create-outline" variante="contorno" onPress={corregir} />
     </View>
   );

@@ -4,7 +4,7 @@ App móvil (iOS y Android) de la práctica de pediatría a domicilio del Dr. Ala
 
 Dos roles: el médico (único usuario) y las familias, donde cada adulto responsable tiene su propio acceso.
 
-**Desde el 17/10/2026 manda `docs/PROMPT_MAESTRO.md`** (Pediatric OS, backend Firebase). Donde choque con lo de abajo, gana el prompt maestro. Etapa 0 (exploración y propuesta, sin código): `docs/ETAPA_0_PROPUESTA.md`; respuestas del Dr. en su sección 13 (botón "Escribime por PacienteX", email del enlace por SMTP, región southamerica-east1, Expo Go hasta necesitar un development build, proyecto Firebase nuevo "pediatric-os" más adelante). Etapas 1a (Firebase, ver abajo), 1b (diseño y navegación) y 2a (pacientes y familias sobre los datos de ejemplo) hechas. La Etapa 2 se partió: **2b = conectar la app a Firebase** (ingreso real, capa de datos en Firestore, copias del portal), antes de la Agenda. Próximo paso: 2b, con el OK del Dr.
+**Desde el 17/10/2026 manda `docs/PROMPT_MAESTRO.md`** (Pediatric OS, backend Firebase). Donde choque con lo de abajo, gana el prompt maestro. Etapa 0 (exploración y propuesta, sin código): `docs/ETAPA_0_PROPUESTA.md`; respuestas del Dr. en su sección 13 (botón "Escribime por PacienteX", email del enlace por SMTP, región southamerica-east1, Expo Go hasta necesitar un development build, proyecto Firebase nuevo "pediatric-os" más adelante). Etapas 1a (Firebase, ver abajo), 1b (diseño y navegación) y 2a (pacientes y familias sobre los datos de ejemplo) hechas. Etapa 2b hecha: la app se conecta a Firebase (ver "Datos de la app"). Próximo paso: Etapa 3 (agenda y turnos), con el OK del Dr.
 
 Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionadas, Expo Router).
 
@@ -16,6 +16,16 @@ Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionad
 - Gráficos con `react-native-svg`. Tipografía Inter (`@expo-google-fonts/inter`).
 - Probar en el teléfono: `npx expo start --tunnel --clear` y abrir en Expo Go. `@expo/ngrok` está instalado en el proyecto, porque la instalación global falla por permisos.
 - Tests con jest-expo. `expo-modules-core` está mapeado en la config de jest a la copia anidada en `node_modules/expo`, porque instalarlo en la raíz choca con una dependencia opcional.
+
+## Datos de la app (desde la Etapa 2b)
+
+- Dos fuentes con el mismo contrato (`src/data/contrato.ts`); las pantallas solo usan `useApp()`:
+  - `demo` (por defecto): datos ficticios en memoria y selector de rol (`src/data/fuenteDemo.tsx`).
+  - `firebase`: ingreso real del médico con email y contraseña, lecturas en vivo de Firestore y escrituras con la firma que piden las reglas (`src/data/firebase/`). Se elige con `EXPO_PUBLIC_DATOS=firebase` (`npm run web:firebase`, con `npm run emuladores` y `npm run sembrar`).
+- Lo crítico va por Functions (`operaciones` del contrato): `crearPaciente`, `aprobarNota`, `corregirNota`, `emitirCertificado` y `anularCertificado`. En demostración hacen lo mismo en memoria.
+- En `firebase`, el portal de las familias todavía no entra: las copias filtradas del portal llegan en la Etapa 6. El asistente tampoco tiene pantallas todavía.
+- El servidor escribe las fechas como la app (hora de Argentina con `-03:00`, `shared/fechaHora.ts`), porque la app compara fechas como texto.
+- En el celular la sesión de Firebase no queda guardada: se vuelve a ingresar al abrir la app. La sesión persistente llega con la versión propia de la app (EAS).
 
 ## Firebase (desde la Etapa 1a)
 

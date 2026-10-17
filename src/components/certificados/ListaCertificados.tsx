@@ -12,7 +12,7 @@ import { nombreCompleto, paciente as buscarPaciente } from '@/data/selectores';
 import type { Certificate } from '@/data/types';
 import { lugarYFecha, tipoCertificado } from '@/lib/certificados';
 import { compartirCertificado } from '@/lib/certificadoPdf';
-import { ahoraISO, fechaCorta } from '@/lib/fechas';
+import { fechaCorta } from '@/lib/fechas';
 import { Tarjeta } from '../Tarjeta';
 import { Etiqueta } from '../Etiqueta';
 import { Boton } from '../Boton';
@@ -47,7 +47,7 @@ export function ListaCertificados({ patientId, vista }: { patientId: string; vis
 }
 
 function ItemCertificado({ c, vista }: { c: Certificate; vista: 'medico' | 'familia' }) {
-  const { db, actualizar } = useApp();
+  const { db, operaciones } = useApp();
   const p = buscarPaciente(db, c.patientId);
   const [ver, setVer] = useState(false);
   const [anulando, setAnulando] = useState(false);
@@ -58,8 +58,7 @@ function ItemCertificado({ c, vista }: { c: Certificate; vista: 'medico' | 'fami
 
   const anular = () => {
     if (!motivo.trim()) return setError('Escribí el motivo de la anulación.');
-    actualizar('certificates', c.id, { status: 'anulado', voidReason: motivo.trim(), voidedAt: ahoraISO() }, 'certificado.anular');
-    setAnulando(false);
+    operaciones.anularCertificado(c, motivo.trim()).then((e) => (e ? setError(e) : setAnulando(false)));
   };
 
   return (

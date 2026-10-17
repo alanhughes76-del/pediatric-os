@@ -17,6 +17,7 @@ import { deFecha, diasEntre, hoyISO, fechaCorta } from '@/lib/fechas';
 import { Pantalla } from '@/components/Pantalla';
 import { Campo, Opciones, Aviso } from '@/components/Formulario';
 import { Boton } from '@/components/Boton';
+import { ErrorComprensible } from '@/components/Estados';
 import { Tarjeta } from '@/components/Tarjeta';
 import { TextoFuerte } from '@/components/Texto';
 
@@ -30,7 +31,9 @@ const COBERTURAS = (Object.keys(TEXTO_COBERTURA) as CoverageKind[]).map((v) => (
 
 export default function NuevoPaciente() {
   const { familia: familiaId } = useLocalSearchParams<{ familia?: string }>();
-  const { db, agregar } = useApp();
+  const { db, operaciones } = useApp();
+  const [guardando, setGuardando] = useState(false);
+  const [errorServidor, setErrorServidor] = useState<string | null>(null);
   const familia = db.families.find((f) => f.id === familiaId);
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
@@ -61,18 +64,23 @@ export default function NuevoPaciente() {
     ? buscarDuplicados(db.patients, { lastName: apellido, birthDate: nacimiento, dni })
     : { mismoDni: [], posibles: [] };
 
-  const guardar = (aunqueExista = false) => {
+  const guardar = async (aunqueExista = false) => {
     setIntento(true);
-    if (!valido || !nacimiento || !sexo || mismoDni.length > 0) return;
+    if (!valido || !nacimiento || !sexo || mismoDni.length > 0 || guardando) return;
     if (duplicados.length > 0 && !aunqueExista) return setDuplicadoVisto(true);
-    const id = agregar('patients', {
+    // El alta pasa por el servidor (control de duplicados también allá).
+    setGuardando(true);
+    const r = await operaciones.crearPaciente({
       firstName: nombre.trim(), lastName: apellido.trim(), birthDate: nacimiento, sex: sexo,
       gestationalWeeks: sem, scope: ambito, status: 'activo', dni: dni.trim() || undefined,
       familyId: familia?.id,
       coverage: cobertura ? { kind: cobertura, name: nombreCobertura.trim() || undefined, memberNumber: numeroAfiliado.trim() || undefined } : undefined,
       bloodType: grupo,
-    }, 'paciente.crear');
-    router.replace(`/medico/hijo/${id}`);
+    }, aunqueExista);
+    setGuardando(false);
+    if (r.estado === 'creado') return router.replace(`/medico/hijo/${r.id}`);
+    if (r.estado === 'posible-duplicado') return setDuplicadoVisto(true);
+    setErrorServidor(r.mensaje);
   };
 
   return (
@@ -125,6 +133,7 @@ export default function NuevoPaciente() {
       ) : null}
       <Opciones etiqueta="Grupo sanguíneo (opcional)" opciones={GRUPOS_SANGUINEOS.map((g) => ({ valor: g, texto: g }))} valor={grupo} onCambio={setGrupo} />
 
+      {errorServidor ? <ErrorComprensible texto={errorServidor} /> : null}
       {duplicadoVisto && duplicados.length > 0 ? (
         <Tarjeta style={{ gap: 10 }}>
           <Aviso tono="alerta" texto={`Ya ${duplicados.length === 1 ? 'hay un paciente' : `hay ${duplicados.length} pacientes`} con apellido ${duplicados[0].lastName} y fecha de nacimiento ${fechaCorta(nacimiento!)}.`} />
@@ -137,7 +146,7 @@ export default function NuevoPaciente() {
           <Boton titulo="Es otro paciente: guardar igual" variante="contorno" onPress={() => guardar(true)} />
         </Tarjeta>
       ) : (
-        <Boton titulo="Guardar paciente" icono="checkmark" onPress={() => guardar()} />
+        <Boton titulo={guardando ? 'Guardando…' : 'Guardar paciente'} icono="checkmark" deshabilitado={guardando} onPress={() => guardar()} />
       )}
     </Pantalla>
   );

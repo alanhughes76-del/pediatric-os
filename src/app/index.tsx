@@ -1,6 +1,6 @@
 /**
- * Selector de rol (modo prueba) e ingreso de familias con enlace mágico simulado (/ingresar).
- * En la etapa del backend queda solo el ingreso por email (vale 15 minutos y se usa una sola vez).
+ * Primera pantalla. Modo demostración: selector de rol e ingreso de familias con enlace mágico
+ * simulado (/ingresar). Modo Firebase: ingreso real del equipo (components/IngresoEquipo.tsx).
  * Nadie se registra solo: el médico habilita a cada adulto.
  */
 import { View, StyleSheet } from 'react-native';
@@ -13,10 +13,18 @@ import { Subtitulo, Texto, TextoChico } from '@/components/Texto';
 import { Boton } from '@/components/Boton';
 import { Etiqueta } from '@/components/Etiqueta';
 import { colors } from '@/theme';
+import { IngresoEquipo } from '@/components/IngresoEquipo';
+import { Cargando } from '@/components/Estados';
 
-export default function SelectorDeRol() {
-  const { db, sesion, entrarComoMedico, entrarComoAdulto } = useApp();
+export default function Inicio() {
+  const { sesion, listo, fuente } = useApp();
+  if (!listo) return <Cargando texto="Abriendo…" />;
   if (sesion) return <Redirect href={sesion.rol === 'medico' ? '/medico' : '/familia'} />;
+  return fuente === 'firebase' ? <IngresoEquipo /> : <SelectorDeRol />;
+}
+
+function SelectorDeRol() {
+  const { db, entrarComoMedico, entrarComoAdulto } = useApp();
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
