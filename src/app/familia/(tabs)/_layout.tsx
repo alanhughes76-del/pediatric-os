@@ -18,7 +18,7 @@ export default function FamiliaTabs() {
       <Tabs.Screen name="index" options={{ title: 'Inicio', headerTitle: escritorio ? undefined : () => <Marca />, tabBarIcon: icono('home-outline') }} />
       <Tabs.Screen name="pedir" options={{ title: 'Pedir visita', tabBarIcon: icono('calendar-outline') }} />
       <Tabs.Screen name="fiebre" options={{ title: 'Fiebre', tabBarIcon: icono('thermometer-outline') }} />
-      <Tabs.Screen name="membresia" options={{ title: 'Membresía', tabBarIcon: icono('document-text-outline') }} />
+      <Tabs.Screen name="membresia" options={{ title: 'Mis datos', tabBarIcon: icono('person-outline') }} />
     </Tabs>
   );
 }

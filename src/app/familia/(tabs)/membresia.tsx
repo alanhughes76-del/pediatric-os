@@ -1,17 +1,15 @@
+/** "Mis datos" del portal (llega en la Etapa 6): teléfono, email, direcciones, membresía y pagos. */
 import { Pantalla } from '@/components/Pantalla';
 import { BarraPacienteX } from '@/components/BotonPacienteX';
-import { Proximamente } from '@/components/Proximamente';
+import { EstadoVacio } from '@/components/Estados';
 
-export default function MembresiaFamilia() {
+export default function MisDatos() {
   return (
     <Pantalla pie={<BarraPacienteX />}>
-      <Proximamente
-        titulo="Membresía y documentos"
-        incluye={[
-          'Plan, vigencia e hijos incluidos',
-          'Pagos registrados',
-          'Certificados para descargar en PDF',
-        ]}
+      <EstadoVacio
+        icono="person-outline"
+        titulo="Mis datos llega pronto"
+        texto="Vas a poder actualizar tu teléfono, tu email y tus direcciones, y ver tu membresía y tus pagos. Mientras tanto, si algo cambió, escribime por PacienteX."
       />
     </Pantalla>
   );

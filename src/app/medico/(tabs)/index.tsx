@@ -65,15 +65,15 @@ export default function Hoy() {
       <View style={s.cifras}>
         <Cifra color="celeste" icono="calendar-outline" numero={visitas.length} texto="Visitas hoy" detalle={`${atendidas} ${atendidas === 1 ? 'atendida' : 'atendidas'}`} />
         <Cifra
-          color="arena"
+          color="rosado"
           icono="flag-outline"
           numero={seguimientos.length}
           texto="Seguimientos"
           detalle={vencidos > 0 ? `${vencidos} ${vencidos === 1 ? 'vencido' : 'vencidos'}` : 'Ninguno vencido'}
           alerta={vencidos > 0}
         />
-        <Cifra color="lavanda" icono="thermometer-outline" numero={fiebre} texto="Fiebre sin revisar" detalle="Ver registros" onPress={() => router.navigate('/medico/fiebre')} />
-        <Cifra color="verdeAgua" icono="people-outline" numero={pacientes} texto="Pacientes" detalle="Ver la lista" onPress={() => router.navigate('/medico/pacientes')} />
+        <Cifra color="naranja" icono="thermometer-outline" numero={fiebre} texto="Fiebre sin revisar" detalle="Ver registros" onPress={() => router.navigate('/medico/fiebre')} />
+        <Cifra color="verde" icono="people-outline" numero={pacientes} texto="Pacientes" detalle="Ver la lista" onPress={() => router.navigate('/medico/pacientes')} />
       </View>
 
       {escritorio ? (
@@ -156,7 +156,7 @@ function Visita({ visita: v }: { visita: Consultation }) {
       )}
 
       <View style={s.botones}>
-        <Ancho completo={!escritorio}>
+        <Ancho completo>
           <Boton
             compacto
             titulo="Abrir consulta"
@@ -180,7 +180,7 @@ function Visita({ visita: v }: { visita: Consultation }) {
   );
 }
 
-/** Botón que comparte la fila; `completo` ocupa la fila entera (en el teléfono, para "Abrir consulta"). */
+/** Botón que comparte la fila; `completo` ocupa la fila entera ("Abrir consulta", la acción principal). */
 const Ancho = ({ children, completo }: { children: ReactNode; completo?: boolean }) => <View style={[s.boton, completo && { flexBasis: '100%' }]}>{children}</View>;
 
 const s = StyleSheet.create({

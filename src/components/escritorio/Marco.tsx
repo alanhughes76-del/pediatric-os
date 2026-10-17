@@ -1,61 +1,22 @@
 /**
- * Armado para pantallas anchas (web en computadora, tablet apaisada):
- * barra lateral a la izquierda y barra superior arriba. En el teléfono no cambia
- * nada: se ve la pantalla con sus pestañas de abajo.
- *
- * Los módulos "Próximamente" se muestran en gris y no se pueden abrir
- * (decisión del Dr., 17/10/2026).
+ * Armado para pantallas anchas (web en computadora, tablet apaisada), prompt maestro 5.2:
+ * - Médico: barra lateral con los 16 módulos (src/navegacion/modulos.ts) y, abajo, perfil,
+ *   Configuración y Cerrar sesión. Encabezado con buscador, frase de marca, campana y nombre.
+ * - Familia: marca "Dr. Alan Hughes · Pediatría a domicilio" y sus cuatro secciones.
+ * En el celular no se muestra nada de esto: se usan las pestañas de abajo.
  */
 import { useState, type ReactNode } from 'react';
-import { View, Text, Pressable, TextInput, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, StyleSheet, useWindowDimensions } from 'react-native';
 import { router, usePathname, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '@/data/store';
+import { avisosDelMedico } from '@/data/avisos';
+import { CONFIGURACION, MODULOS, moduloActivo } from '@/navegacion/modulos';
 import { Marca } from '@/components/Marca';
-import { colors, fonts, size, ANCHO_ESCRITORIO } from '@/theme';
+import { anilloFoco, colors, fonts, size, ANCHO_ESCRITORIO } from '@/theme';
 
 type NombreIcono = keyof typeof Ionicons.glyphMap;
 type Rol = 'medico' | 'familia';
-
-interface Item {
-  texto: string;
-  icono: NombreIcono;
-  href: Href;
-  /** El ítem queda marcado si la ruta actual empieza con alguno de estos prefijos. */
-  activoEn: (ruta: string) => boolean;
-}
-
-const empieza = (...prefijos: string[]) => (ruta: string) => prefijos.some((p) => ruta === p || ruta.startsWith(`${p}/`));
-
-const MENU: Record<Rol, Item[]> = {
-  medico: [
-    { texto: 'Hoy', icono: 'today-outline', href: '/medico', activoEn: (r) => r === '/medico' || empieza('/medico/seguimiento', '/medico/consulta')(r) },
-    {
-      texto: 'Pacientes',
-      icono: 'people-outline',
-      href: '/medico/pacientes',
-      activoEn: empieza('/medico/pacientes', '/medico/hijo', '/medico/paciente', '/medico/adulto', '/medico/familia', '/medico/certificado'),
-    },
-    { texto: 'Fiebre', icono: 'thermometer-outline', href: '/medico/fiebre', activoEn: empieza('/medico/fiebre') },
-    { texto: 'Membresías', icono: 'wallet-outline', href: '/medico/membresias', activoEn: empieza('/medico/membresias') },
-    { texto: 'Registro de accesos', icono: 'list-outline', href: '/medico/accesos', activoEn: empieza('/medico/accesos') },
-  ],
-  familia: [
-    { texto: 'Inicio', icono: 'home-outline', href: '/familia', activoEn: (r) => r === '/familia' || empieza('/familia/hijo')(r) },
-    { texto: 'Pedir visita', icono: 'calendar-outline', href: '/familia/pedir', activoEn: empieza('/familia/pedir', '/familia/urgencia') },
-    { texto: 'Fiebre', icono: 'thermometer-outline', href: '/familia/fiebre', activoEn: empieza('/familia/fiebre') },
-    { texto: 'Membresía', icono: 'document-text-outline', href: '/familia/membresia', activoEn: empieza('/familia/membresia') },
-  ],
-};
-
-const PROXIMAMENTE: { texto: string; icono: NombreIcono }[] = [
-  { texto: 'Agenda', icono: 'calendar-outline' },
-  { texto: 'Prescripciones', icono: 'medkit-outline' },
-  { texto: 'Estudios', icono: 'flask-outline' },
-  { texto: 'Comunicaciones', icono: 'chatbubbles-outline' },
-  { texto: 'Reportes', icono: 'bar-chart-outline' },
-  { texto: 'IA Asistente', icono: 'sparkles-outline' },
-];
 
 /** true en pantallas anchas (barra lateral); false en el teléfono (pestañas). */
 export function useEscritorio() {
@@ -68,7 +29,7 @@ export function Marco({ rol, children }: { rol: Rol; children: ReactNode }) {
   // una tablet o achicar la ventana, la navegación no vuelve al inicio.
   return (
     <View style={s.raiz}>
-      {escritorio ? <BarraLateral rol={rol} /> : null}
+      {escritorio ? (rol === 'medico' ? <LateralMedico /> : <LateralFamilia />) : null}
       <View style={s.principal}>
         {escritorio ? <BarraSuperior rol={rol} /> : null}
         <View style={{ flex: 1 }}>{children}</View>
@@ -77,53 +38,73 @@ export function Marco({ rol, children }: { rol: Rol; children: ReactNode }) {
   );
 }
 
-function BarraLateral({ rol }: { rol: Rol }) {
-  const ruta = usePathname();
-  const { salir } = useApp();
+function Item({ texto, icono, activo, onPress, detalle }: { texto: string; icono: NombreIcono; activo?: boolean; onPress: () => void; detalle?: string }) {
   return (
-    <View style={s.lateral} accessibilityRole="menu">
-      <View style={s.marca}><Marca claro /></View>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="link"
+      accessibilityState={{ selected: !!activo }}
+      accessibilityLabel={detalle ? `${texto}, ${detalle}` : texto}
+      style={(e) => [s.item, activo && s.itemActivo, e.pressed && !activo && s.itemApretado, (e as { focused?: boolean }).focused && anilloFoco]}
+    >
+      <Ionicons name={icono} size={20} color={activo ? colors.white : colors.sidebarTexto} />
+      <Text style={[s.itemTexto, activo && { color: colors.white }]} numberOfLines={1}>{texto}</Text>
+    </Pressable>
+  );
+}
 
-      <View style={{ gap: 2 }}>
-        {MENU[rol].map((it) => {
-          const activo = it.activoEn(ruta);
-          return (
-            <Pressable
-              key={it.texto}
-              onPress={() => router.navigate(it.href)}
-              accessibilityRole="menuitem"
-              accessibilityState={{ selected: activo }}
-              style={({ pressed }) => [s.item, activo && s.itemActivo, pressed && !activo && s.itemApretado]}
-            >
-              <Ionicons name={it.icono} size={21} color={activo ? colors.white : colors.sidebarTexto} />
-              <Text style={[s.itemTexto, activo && { color: colors.white }]}>{it.texto}</Text>
-            </Pressable>
-          );
-        })}
+function LateralMedico() {
+  const ruta = usePathname();
+  const { salir, db } = useApp();
+  const activo = moduloActivo(ruta);
+  return (
+    <View style={s.lateral}>
+      <View style={s.marca} accessible accessibilityLabel="Pediatric OS, Cuidando hoy su mañana">
+        <Text style={s.marcaNombre}>Pediatric OS</Text>
+        <Text style={s.marcaBajada}>Cuidando hoy su mañana</Text>
       </View>
 
-      {rol === 'medico' ? (
-        <View style={{ gap: 2 }}>
-          <Text style={s.grupo}>Próximamente</Text>
-          {PROXIMAMENTE.map((it) => (
-            <View key={it.texto} style={s.item} accessibilityState={{ disabled: true }} accessibilityLabel={`${it.texto}, próximamente`}>
-              <Ionicons name={it.icono} size={21} color={colors.sidebarApagado} />
-              <Text style={[s.itemTexto, { color: colors.sidebarApagado }]}>{it.texto}</Text>
-            </View>
-          ))}
-        </View>
-      ) : null}
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: 2 }} accessibilityRole="menu">
+        {MODULOS.map((m) => (
+          <Item key={m.clave} texto={m.titulo} icono={m.icono} activo={activo === m.clave} detalle={m.pendiente ? `llega en la ${m.pendiente.etapa}` : undefined} onPress={() => router.navigate(m.href)} />
+        ))}
+      </ScrollView>
 
-      <View style={{ flex: 1 }} />
-      <Pressable
-        onPress={() => { salir(); router.replace('/'); }}
-        accessibilityRole="button"
-        accessibilityLabel="Cambiar de rol (modo prueba)"
-        style={({ pressed }) => [s.item, pressed && s.itemApretado]}
-      >
-        <Ionicons name="swap-horizontal-outline" size={21} color={colors.sidebarTexto} />
-        <Text style={s.itemTexto}>Cambiar rol</Text>
-      </Pressable>
+      <View style={s.pie}>
+        <View style={s.perfil}>
+          <View style={s.avatar}><Text style={s.avatarTexto}>AH</Text></View>
+          <View style={{ flex: 1 }}>
+            <Text style={s.perfilNombre} numberOfLines={1}>{db.doctor.name}</Text>
+            <Text style={s.perfilDetalle}>Pediatra</Text>
+          </View>
+        </View>
+        <Item texto={CONFIGURACION.titulo} icono={CONFIGURACION.icono} activo={activo === 'configuracion'} onPress={() => router.navigate(CONFIGURACION.href)} />
+        <Item texto="Cerrar sesión" icono="log-out-outline" onPress={() => { salir(); router.replace('/'); }} />
+      </View>
+    </View>
+  );
+}
+
+const MENU_FAMILIA: { texto: string; icono: NombreIcono; href: Href; rutas: string[] }[] = [
+  { texto: 'Inicio', icono: 'home-outline', href: '/familia', rutas: ['/familia', '/familia/hijo'] },
+  { texto: 'Pedir visita', icono: 'calendar-outline', href: '/familia/pedir', rutas: ['/familia/pedir', '/familia/urgencia'] },
+  { texto: 'Fiebre', icono: 'thermometer-outline', href: '/familia/fiebre', rutas: ['/familia/fiebre'] },
+  { texto: 'Mis datos', icono: 'person-outline', href: '/familia/membresia', rutas: ['/familia/membresia'] },
+];
+
+function LateralFamilia() {
+  const ruta = usePathname();
+  const { salir } = useApp();
+  const activo = (rutas: string[]) => rutas.some((r) => (r === '/familia' ? ruta === r : ruta === r || ruta.startsWith(`${r}/`)));
+  return (
+    <View style={s.lateral}>
+      <View style={s.marca}><Marca claro /></View>
+      <View style={{ flex: 1, gap: 2 }} accessibilityRole="menu">
+        {MENU_FAMILIA.map((it) => <Item key={it.texto} texto={it.texto} icono={it.icono} activo={activo(it.rutas)} onPress={() => router.navigate(it.href)} />)}
+      </View>
+      <View style={s.pie}>
+        <Item texto="Cerrar sesión" icono="log-out-outline" onPress={() => { salir(); router.replace('/'); }} />
+      </View>
     </View>
   );
 }
@@ -132,7 +113,6 @@ function BarraSuperior({ rol }: { rol: Rol }) {
   const { db, sesion } = useApp();
   const [busqueda, setBusqueda] = useState('');
   const nombre = sesion?.rol === 'familia' ? `${sesion.guardian.firstName} ${sesion.guardian.lastName}` : db.doctor.name;
-  const detalle = rol === 'medico' ? 'Pediatra' : 'Adulto responsable';
   const iniciales = nombre.replace(/^Dr\.\s*/, '').split(/\s+/).map((x) => x[0]).slice(0, 2).join('').toUpperCase();
 
   const buscar = () => {
@@ -156,58 +136,71 @@ function BarraSuperior({ rol }: { rol: Rol }) {
           />
         </View>
       ) : (
-        <Text style={s.saludo}>Portal de la familia</Text>
+        <Text style={s.titulo}>Portal de la familia</Text>
       )}
       <View style={{ flex: 1 }} />
+      {rol === 'medico' ? <Text style={s.frase}>Pequeños pacientes, grandes historias</Text> : null}
+      {rol === 'medico' ? <Campana cantidad={avisosDelMedico(db).length} /> : null}
       <View style={s.usuario}>
-        <View style={s.avatar}><Text style={s.avatarTexto}>{iniciales}</Text></View>
+        <View style={s.avatarClaro}><Text style={s.avatarClaroTexto}>{iniciales}</Text></View>
         <View>
           <Text style={s.usuarioNombre}>{nombre}</Text>
-          <Text style={s.usuarioDetalle}>{detalle}</Text>
+          <Text style={s.usuarioDetalle}>{rol === 'medico' ? 'Pediatra' : 'Adulto responsable'}</Text>
         </View>
       </View>
     </View>
   );
 }
 
+function Campana({ cantidad }: { cantidad: number }) {
+  return (
+    <Pressable
+      onPress={() => router.navigate('/medico/avisos')}
+      accessibilityRole="button"
+      accessibilityLabel={cantidad > 0 ? `Avisos: ${cantidad} pendientes` : 'Avisos: no hay pendientes'}
+      style={(e) => [s.campana, (e as { focused?: boolean }).focused && anilloFoco]}
+      hitSlop={6}
+    >
+      <Ionicons name="notifications-outline" size={24} color={colors.primary} />
+      {cantidad > 0 ? <View style={s.contador}><Text style={s.contadorTexto}>{cantidad > 99 ? '99+' : cantidad}</Text></View> : null}
+    </Pressable>
+  );
+}
+
 const s = StyleSheet.create({
   raiz: { flex: 1, flexDirection: 'row', backgroundColor: colors.bg },
   principal: { flex: 1 },
-  lateral: { width: 260, backgroundColor: colors.sidebar, paddingHorizontal: 14, paddingVertical: 22, gap: 22 },
-  marca: { paddingHorizontal: 10, paddingBottom: 6 },
-  grupo: { fontFamily: fonts.bodySemi, fontSize: 13, color: colors.sidebarApagado, letterSpacing: 1, textTransform: 'uppercase', paddingHorizontal: 12, paddingBottom: 4 },
-  item: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12 },
+  lateral: { width: 256, backgroundColor: colors.sidebar, paddingHorizontal: 12, paddingTop: 22, paddingBottom: 14, gap: 18 },
+  marca: { paddingHorizontal: 10 },
+  marcaNombre: { fontFamily: fonts.title, fontSize: 24, color: colors.white, letterSpacing: -0.3 },
+  marcaBajada: { fontFamily: fonts.body, fontSize: 13, color: colors.sidebarTexto, marginTop: 2 },
+  item: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, minHeight: 44, borderRadius: 10 },
   itemActivo: { backgroundColor: colors.sidebarActivo },
   itemApretado: { backgroundColor: 'rgba(255,255,255,0.06)' },
-  itemTexto: { fontFamily: fonts.bodySemi, fontSize: 16, color: colors.sidebarTexto },
+  itemTexto: { fontFamily: fonts.bodySemi, fontSize: 15, color: colors.sidebarTexto, flex: 1 },
+  pie: { gap: 2, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)', paddingTop: 12 },
+  perfil: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 10, paddingBottom: 8 },
+  avatar: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.sidebarActivo, alignItems: 'center', justifyContent: 'center' },
+  avatarTexto: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.white },
+  perfilNombre: { fontFamily: fonts.bodySemi, fontSize: 15, color: colors.white },
+  perfilDetalle: { fontFamily: fonts.body, fontSize: 13, color: colors.sidebarTexto },
   superior: {
-    height: 72,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    paddingHorizontal: 28,
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    height: 72, flexDirection: 'row', alignItems: 'center', gap: 18, paddingHorizontal: 28,
+    backgroundColor: colors.white, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   buscador: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    width: '100%',
-    maxWidth: 520,
-    height: 44,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    backgroundColor: colors.bg,
-    borderWidth: 1,
-    borderColor: colors.border,
+    flexDirection: 'row', alignItems: 'center', gap: 10, width: '100%', maxWidth: 480, height: 44,
+    paddingHorizontal: 14, borderRadius: 12, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border,
   },
-  buscadorTexto: { flex: 1, fontFamily: fonts.body, fontSize: size.small + 1, color: colors.text, outlineStyle: 'none' } as object,
-  saludo: { fontFamily: fonts.titleSemi, fontSize: 22, color: colors.primary },
-  usuario: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  avatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSoft, alignItems: 'center', justifyContent: 'center' },
-  avatarTexto: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.primary },
-  usuarioNombre: { fontFamily: fonts.bodySemi, fontSize: 16, color: colors.text },
-  usuarioDetalle: { fontFamily: fonts.body, fontSize: 14, color: colors.textMuted },
+  buscadorTexto: { flex: 1, fontFamily: fonts.body, fontSize: size.base, color: colors.text, outlineStyle: 'none' } as object,
+  titulo: { fontFamily: fonts.title, fontSize: 20, color: colors.primary },
+  frase: { fontFamily: fonts.body, fontStyle: 'italic', fontSize: 14, color: colors.textMuted },
+  campana: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  contador: { position: 'absolute', top: 4, right: 2, minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 5, backgroundColor: colors.alert, alignItems: 'center', justifyContent: 'center' },
+  contadorTexto: { fontFamily: fonts.bodyBold, fontSize: 11, color: colors.white },
+  usuario: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  avatarClaro: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.accionSuave, alignItems: 'center', justifyContent: 'center' },
+  avatarClaroTexto: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.accionTexto },
+  usuarioNombre: { fontFamily: fonts.bodySemi, fontSize: 15, color: colors.text },
+  usuarioDetalle: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
 });

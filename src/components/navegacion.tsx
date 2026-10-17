@@ -13,7 +13,7 @@ export const encabezado = {
 
 export const pestanas = {
   ...encabezado,
-  tabBarActiveTintColor: colors.primary,
+  tabBarActiveTintColor: colors.accion,
   tabBarInactiveTintColor: colors.textMuted,
   tabBarStyle: { backgroundColor: colors.white, borderTopColor: colors.border, height: 68, paddingTop: 6 },
   tabBarLabelStyle: { fontFamily: fonts.bodySemi, fontSize: 13 },
