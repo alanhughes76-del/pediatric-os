@@ -1,0 +1,195 @@
+{
+ "estado": "BORRADOR — el Dr. Hughes debe verificarlo contra el Calendario Nacional de Vacunación 2026 antes de usarlo con pacientes reales",
+ "fuente": "Escenario de Make 'Vacunas — Alta automática de esquema' (ID 5836968), exportado el 17/10/2026",
+ "campos": {
+  "vacuna": "nombre",
+  "dosis": "número o tipo de dosis",
+  "edad_texto": "edad tal como se muestra",
+  "edad_meses": "edad en meses para calcular la fecha estimada desde la fecha de nacimiento",
+  "tipo": "obligatoria"
+ },
+ "dosis": [
+  {
+   "vacuna": "Hepatitis B",
+   "dosis": "Única",
+   "edad_texto": "Recién nacido",
+   "edad_meses": 0,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "BCG",
+   "dosis": "Única",
+   "edad_texto": "Recién nacido",
+   "edad_meses": 0,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "Quíntuple (Pentavalente)",
+   "dosis": "1ª",
+   "edad_texto": "2 meses",
+   "edad_meses": 2,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "IPV (Polio)",
+   "dosis": "1ª",
+   "edad_texto": "2 meses",
+   "edad_meses": 2,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "Neumococo conjugada",
+   "dosis": "1ª",
+   "edad_texto": "2 meses",
+   "edad_meses": 2,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "Rotavirus",
+   "dosis": "1ª",
+   "edad_texto": "2 meses",
+   "edad_meses": 2,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "Meningococo ACWY",
+   "dosis": "1ª",
+   "edad_texto": "3 meses",
+   "edad_meses": 3,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "Quíntuple (Pentavalente)",
+   "dosis": "2ª",
+   "edad_texto": "4 meses",
+   "edad_meses": 4,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "IPV (Polio)",
+   "dosis": "2ª",
+   "edad_texto": "4 meses",
+   "edad_meses": 4,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "Neumococo conjugada",
+   "dosis": "2ª",
+   "edad_texto": "4 meses",
+   "edad_meses": 4,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "Rotavirus",
+   "dosis": "2ª",
+   "edad_texto": "4 meses",
+   "edad_meses": 4,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "Meningococo ACWY",
+   "dosis": "2ª",
+   "edad_texto": "5 meses",
+   "edad_meses": 5,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "Quíntuple (Pentavalente)",
+   "dosis": "3ª",
+   "edad_texto": "6 meses",
+   "edad_meses": 6,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "IPV (Polio)",
+   "dosis": "3ª",
+   "edad_texto": "6 meses",
+   "edad_meses": 6,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "Triple Viral (SRP)",
+   "dosis": "1ª",
+   "edad_texto": "12 meses",
+   "edad_meses": 12,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "Hepatitis A",
+   "dosis": "Única",
+   "edad_texto": "12 meses",
+   "edad_meses": 12,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "Neumococo conjugada",
+   "dosis": "Refuerzo",
+   "edad_texto": "12 meses",
+   "edad_meses": 12,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "Meningococo ACWY",
+   "dosis": "Refuerzo",
+   "edad_texto": "15 meses",
+   "edad_meses": 15,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "Varicela",
+   "dosis": "Única",
+   "edad_texto": "15 meses",
+   "edad_meses": 15,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "Triple Viral (SRP)",
+   "dosis": "2ª",
+   "edad_texto": "15-18 meses",
+   "edad_meses": 16,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "Quíntuple (Pentavalente)",
+   "dosis": "Refuerzo",
+   "edad_texto": "15-18 meses",
+   "edad_meses": 16,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "Triple bacteriana celular (DPT)",
+   "dosis": "Refuerzo",
+   "edad_texto": "15-18 meses",
+   "edad_meses": 16,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "Varicela",
+   "dosis": "2ª",
+   "edad_texto": "5 años",
+   "edad_meses": 60,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "Meningococo ACWY",
+   "dosis": "Refuerzo",
+   "edad_texto": "11 años",
+   "edad_meses": 132,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "Triple bacteriana acelular (dTpa)",
+   "dosis": "Refuerzo",
+   "edad_texto": "11 años",
+   "edad_meses": 132,
+   "tipo": "obligatoria"
+  },
+  {
+   "vacuna": "VPH",
+   "dosis": "Única",
+   "edad_texto": "11 años",
+   "edad_meses": 132,
+   "tipo": "obligatoria"
+  }
+ ]
+}

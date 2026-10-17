@@ -1,0 +1,429 @@
+{
+ "areas": [
+  [
+   "SE",
+   "Socioemocional"
+  ],
+  [
+   "L",
+   "Lenguaje y comunicación"
+  ],
+  [
+   "C",
+   "Cognitivo"
+  ],
+  [
+   "M",
+   "Motor"
+  ]
+ ],
+ "etiquetas": {
+  "2": "2 meses",
+  "4": "4 meses",
+  "6": "6 meses",
+  "9": "9 meses",
+  "12": "12 meses",
+  "15": "15 meses",
+  "18": "18 meses",
+  "24": "24 meses",
+  "30": "30 meses",
+  "36": "3 años",
+  "48": "4 años",
+  "60": "5 años"
+ },
+ "tamizaje_en": {
+  "9": [
+   "AAP"
+  ],
+  "18": [
+   "AAP",
+   "SAP"
+  ],
+  "30": [
+   "AAP"
+  ],
+  "36": [
+   "SAP"
+  ]
+ },
+ "tamizaje_texto": {
+  "AAP": "la AAP recomienda un tamizaje estandarizado a los 9, 18 y 30 meses",
+  "SAP": "la Sociedad Argentina de Pediatría recomienda la PRUNAPE al menos dos veces antes del ingreso escolar, a los 18 meses y a los 3 años"
+ },
+ "prunape_5_anios": [
+  [
+   "Personal-social",
+   [
+    [
+     "Se pone ropa o zapatos",
+     "A"
+    ],
+    [
+     "Arma rompecabezas",
+     "A"
+    ],
+    [
+     "Aparea colores",
+     "A"
+    ],
+    [
+     "Junta dibujos semejantes",
+     "B"
+    ]
+   ]
+  ],
+  [
+   "Motriz fina",
+   [
+    [
+     "Dibuja una persona de tres partes (se deja de evaluar después de 5 años 9 meses)",
+     "A"
+    ],
+    [
+     "Dobla un papel en diagonal",
+     "A"
+    ],
+    [
+     "Copia una cruz",
+     "A"
+    ],
+    [
+     "Dibuja una persona de seis partes",
+     "B"
+    ],
+    [
+     "Copia un triángulo (se agrega después de 5 años 6 meses)",
+     "B"
+    ]
+   ]
+  ],
+  [
+   "Lenguaje",
+   [
+    [
+     "Cumple dos indicaciones consecutivas (no se toma después de 5 años 6 meses)",
+     "B"
+    ],
+    [
+     "Reconoce tres colores",
+     "B"
+    ],
+    [
+     "Uso de dos objetos",
+     "B"
+    ],
+    [
+     "Sabe por qué es de día o de noche",
+     "B"
+    ]
+   ]
+  ],
+  [
+   "Motricidad gruesa",
+   [
+    [
+     "Se para en un pie 5 segundos (no hace falta a los 5 años 11 meses)",
+     "A"
+    ],
+    [
+     "Salto amplio",
+     "A"
+    ],
+    [
+     "Salta en un pie",
+     "A"
+    ],
+    [
+     "Camina talón-punta",
+     "B"
+    ],
+    [
+     "Retrocede talón-punta (se agrega después de 5 años 3 meses)",
+     "B"
+    ]
+   ]
+  ]
+ ],
+ "hitos": {
+  "2": {
+   "SE": [
+    "Se calma cuando le hablás o lo/la alzás",
+    "Te mira a la cara",
+    "Parece contento/a de verte cuando te acercás",
+    "Sonríe cuando le hablás o le sonreís"
+   ],
+   "L": [
+    "Hace sonidos además de llorar",
+    "Reacciona a los ruidos fuertes"
+   ],
+   "C": [
+    "Te sigue con la mirada cuando te movés",
+    "Mira un juguete durante varios segundos"
+   ],
+   "M": [
+    "Levanta la cabeza cuando está boca abajo",
+    "Mueve ambos brazos y ambas piernas",
+    "Abre las manos brevemente"
+   ]
+  },
+  "4": {
+   "SE": [
+    "Sonríe por su cuenta para llamar tu atención",
+    "Se ríe suavemente (todavía no es una carcajada) cuando intentás hacerlo reír",
+    "Te mira, se mueve o hace sonidos para obtener o mantener tu atención"
+   ],
+   "L": [
+    "Hace sonidos como \"oooo\", \"aahh\" (arrullos)",
+    "Te responde con sonidos cuando le hablás",
+    "Gira la cabeza hacia el sonido de tu voz"
+   ],
+   "C": [
+    "Si tiene hambre, abre la boca al ver el pecho o la mamadera",
+    "Mira sus manos con interés"
+   ],
+   "M": [
+    "Sostiene la cabeza firme, sin apoyo, cuando lo/la alzás",
+    "Sostiene un juguete cuando se lo ponés en la mano",
+    "Usa el brazo para golpear juguetes",
+    "Se lleva las manos a la boca",
+    "Se apoya en los codos o antebrazos cuando está boca abajo"
+   ]
+  },
+  "6": {
+   "SE": [
+    "Reconoce a las personas conocidas",
+    "Le gusta mirarse en el espejo",
+    "Se ríe"
+   ],
+   "L": [
+    "Se turna con vos para hacer sonidos",
+    "Hace \"trompetillas\" (saca la lengua y sopla)",
+    "Hace chillidos"
+   ],
+   "C": [
+    "Se lleva las cosas a la boca para explorarlas",
+    "Estira la mano para agarrar un juguete que quiere",
+    "Cierra los labios para mostrar que no quiere más comida"
+   ],
+   "M": [
+    "Se da vuelta de boca abajo a boca arriba",
+    "Se empuja con los brazos extendidos cuando está boca abajo",
+    "Se apoya en las manos para sostenerse sentado/a"
+   ]
+  },
+  "9": {
+   "SE": [
+    "Es tímido/a, se aferra o se asusta con los extraños",
+    "Muestra varias expresiones faciales (contento, triste, enojado, sorprendido)",
+    "Mira cuando lo/la llamás por su nombre",
+    "Reacciona cuando te vas (mira, estira los brazos hacia vos o llora)",
+    "Sonríe o se ríe cuando jugás a \"¿dónde está?\" / cucú"
+   ],
+   "L": [
+    "Emite muchos sonidos distintos, como \"mamamama\" y \"bababababa\"",
+    "Levanta los brazos para que lo/la alcen"
+   ],
+   "C": [
+    "Busca objetos que se le cayeron fuera de su vista (la cuchara, un juguete)",
+    "Golpea dos objetos entre sí"
+   ],
+   "M": [
+    "Pasa a sentarse por sí mismo/a",
+    "Pasa objetos de una mano a la otra",
+    "Usa los dedos para \"rastrillar\" la comida hacia sí",
+    "Se sienta sin apoyo"
+   ]
+  },
+  "12": {
+   "SE": [
+    "Juega con vos a juegos como las palmitas"
+   ],
+   "L": [
+    "Saluda con la mano (\"chau\")",
+    "Llama a un padre \"mamá\" o \"papá\" o con otro nombre especial",
+    "Entiende \"no\" (se detiene o hace una pausa cuando se lo decís)"
+   ],
+   "C": [
+    "Pone algo dentro de un recipiente, como un cubo en una taza",
+    "Busca cosas que te ve esconder, como un juguete debajo de una manta"
+   ],
+   "M": [
+    "Se agarra para ponerse de pie",
+    "Camina agarrándose de los muebles",
+    "Toma de una taza sin tapa mientras se la sostenés",
+    "Levanta cosas pequeñas entre el pulgar y el índice, como trocitos de comida"
+   ]
+  },
+  "15": {
+   "SE": [
+    "Copia a otros chicos mientras juega (por ej., saca juguetes de un recipiente cuando otro lo hace)",
+    "Te muestra un objeto que le gusta",
+    "Aplaude cuando está entusiasmado/a",
+    "Abraza un muñeco u otro juguete",
+    "Te demuestra afecto (abrazos, mimos o besos)"
+   ],
+   "L": [
+    "Intenta decir una o dos palabras además de \"mamá\" o \"papá\", como \"ba\" por pelota o \"da\" por perro",
+    "Mira un objeto conocido cuando lo nombrás",
+    "Sigue indicaciones dadas con gesto y palabras (por ej., te da el juguete cuando extendés la mano y decís \"dame el juguete\")",
+    "Señala para pedir algo o pedir ayuda"
+   ],
+   "C": [
+    "Intenta usar las cosas de la forma correcta, como un teléfono, una taza o un libro",
+    "Apila al menos dos objetos pequeños, como bloques"
+   ],
+   "M": [
+    "Da algunos pasos solo/a",
+    "Usa los dedos para alimentarse con algo de comida"
+   ]
+  },
+  "18": {
+   "SE": [
+    "Se aleja de vos pero mira para asegurarse de que estés cerca",
+    "Señala para mostrarte algo interesante",
+    "Estira las manos para que se las laves",
+    "Mira algunas páginas de un libro con vos",
+    "Te ayuda a vestirlo/a (pasa el brazo por la manga o levanta el pie)"
+   ],
+   "L": [
+    "Intenta decir tres o más palabras además de \"mamá\" o \"papá\"",
+    "Sigue indicaciones de un paso sin gestos (por ej., te da el juguete cuando le decís \"dámelo\")"
+   ],
+   "C": [
+    "Te copia en tareas domésticas, como barrer con una escoba",
+    "Juega con los juguetes de forma simple, como empujar un autito"
+   ],
+   "M": [
+    "Camina sin agarrarse de nadie ni de nada",
+    "Garabatea",
+    "Toma de una taza sin tapa y a veces derrama",
+    "Come solo/a con los dedos",
+    "Intenta usar una cuchara",
+    "Se sube y se baja de un sillón o una silla sin ayuda"
+   ]
+  },
+  "24": {
+   "SE": [
+    "Nota cuando otros están lastimados o molestos (se detiene o se pone triste si alguien llora)",
+    "Te mira a la cara para saber cómo reaccionar ante una situación nueva"
+   ],
+   "L": [
+    "Señala cosas en un libro cuando se lo pedís (por ej., \"¿dónde está el oso?\")",
+    "Dice al menos dos palabras juntas, como \"más leche\"",
+    "Señala al menos dos partes del cuerpo cuando se lo pedís",
+    "Usa más gestos que solo saludar y señalar, como tirar un beso o asentir con la cabeza"
+   ],
+   "C": [
+    "Sostiene algo con una mano mientras usa la otra (por ej., sostiene un recipiente y le saca la tapa)",
+    "Intenta usar interruptores, perillas o botones de un juguete",
+    "Juega con más de un juguete a la vez (por ej., pone comida de juguete en un plato de juguete)"
+   ],
+   "M": [
+    "Patea una pelota",
+    "Corre",
+    "Sube algunos escalones caminando (no gateando), con o sin ayuda",
+    "Come con cuchara"
+   ]
+  },
+  "30": {
+   "SE": [
+    "Juega al lado de otros chicos y a veces con ellos",
+    "Te muestra lo que sabe hacer diciendo \"¡Mirame!\"",
+    "Sigue rutinas simples cuando se le piden (por ej., ayuda a juntar los juguetes cuando decís \"a ordenar\")"
+   ],
+   "L": [
+    "Dice unas 50 palabras",
+    "Dice dos o más palabras juntas, con un verbo de acción (por ej., \"perro corre\")",
+    "Nombra cosas de un libro cuando le señalás y le preguntás \"¿qué es esto?\"",
+    "Dice palabras como \"yo\", \"mí\" o \"nosotros\""
+   ],
+   "C": [
+    "Usa objetos para jugar a hacer de cuenta (por ej., le da de comer un bloque a una muñeca como si fuera comida)",
+    "Resuelve problemas simples (por ej., se sube a un banquito para alcanzar algo)",
+    "Sigue instrucciones de dos pasos, como \"dejá el juguete y cerrá la puerta\"",
+    "Muestra que conoce al menos un color (por ej., señala el crayón rojo cuando le preguntás cuál es el rojo)"
+   ],
+   "M": [
+    "Usa las manos para girar cosas, como picaportes o tapas a rosca",
+    "Se saca solo/a algo de ropa, como un pantalón suelto o una campera abierta",
+    "Salta con los dos pies despegando del suelo",
+    "Pasa las hojas de un libro de a una cuando le leés"
+   ]
+  },
+  "36": {
+   "SE": [
+    "Se calma dentro de los 10 minutos después de que te vas (por ej., al dejarlo/a en el jardín)",
+    "Nota a otros chicos y se une a jugar"
+   ],
+   "L": [
+    "Conversa con vos con al menos dos intercambios de ida y vuelta",
+    "Hace preguntas con \"quién\", \"qué\", \"dónde\" o \"por qué\" (por ej., \"¿dónde está mamá?\")",
+    "Dice qué acción ocurre en una imagen o libro cuando se lo pedís (corriendo, comiendo, jugando)",
+    "Dice su nombre de pila cuando se lo preguntan",
+    "Habla lo bastante claro como para que otros lo entiendan la mayor parte del tiempo"
+   ],
+   "C": [
+    "Dibuja un círculo cuando le mostrás cómo",
+    "Evita tocar objetos calientes, como la cocina, cuando se lo advertís"
+   ],
+   "M": [
+    "Enhebra objetos, como cuentas grandes o fideos",
+    "Se pone solo/a algo de ropa, como un pantalón suelto o una campera",
+    "Usa tenedor"
+   ]
+  },
+  "48": {
+   "SE": [
+    "Juega a ser otra cosa (maestra, superhéroe, perro)",
+    "Pide ir a jugar con otros chicos si no hay ninguno cerca (por ej., \"¿puedo jugar con Alex?\")",
+    "Consuela a otros que están lastimados o tristes (por ej., abraza a un amigo que llora)",
+    "Evita los peligros (por ej., no salta desde alturas en la plaza)",
+    "Le gusta ser \"ayudante\"",
+    "Cambia su conducta según el lugar donde está (templo, biblioteca, plaza)"
+   ],
+   "L": [
+    "Dice oraciones de cuatro o más palabras",
+    "Dice algunas palabras de una canción, un cuento o una rima",
+    "Cuenta al menos una cosa que le pasó en el día (por ej., \"jugué al fútbol\")",
+    "Responde preguntas simples como \"¿para qué sirve un abrigo?\" o \"¿para qué sirve un crayón?\""
+   ],
+   "C": [
+    "Nombra algunos colores de objetos",
+    "Dice qué viene después en un cuento muy conocido",
+    "Dibuja una persona con tres o más partes del cuerpo"
+   ],
+   "M": [
+    "Atrapa una pelota grande la mayoría de las veces",
+    "Se sirve comida o echa agua, con supervisión de un adulto",
+    "Desabrocha algunos botones",
+    "Sostiene el crayón o el lápiz entre los dedos y el pulgar (no con el puño)"
+   ]
+  },
+  "60": {
+   "SE": [
+    "Respeta las reglas o espera su turno en juegos con otros chicos",
+    "Canta, baila o actúa para vos",
+    "Hace tareas simples en casa, como emparejar medias o levantar la mesa después de comer"
+   ],
+   "L": [
+    "Cuenta un cuento que escuchó o inventó con al menos dos hechos",
+    "Responde preguntas simples sobre un libro o cuento después de que se lo leés o contás",
+    "Mantiene una conversación con más de tres intercambios de ida y vuelta",
+    "Usa o reconoce rimas simples (por ej., gato-pato)"
+   ],
+   "C": [
+    "Cuenta hasta 10",
+    "Nombra algunos números entre 1 y 5 cuando se los señalás",
+    "Usa palabras sobre el tiempo, como \"ayer\", \"mañana\", \"a la mañana\" o \"a la noche\"",
+    "Presta atención de 5 a 10 minutos durante una actividad",
+    "Escribe algunas letras de su nombre",
+    "Nombra algunas letras cuando se las señalás"
+   ],
+   "M": [
+    "Se abrocha algunos botones",
+    "Salta en un pie"
+   ]
+  }
+ },
+ "fuente": "Hitos: CDC/AAP 2022 (los que cumple al menos el 75 % de los niños), traducidos al español. Pautas PRUNAPE 5 años: Parisi et al., UNNE 2019. Extraído de Pediatric OS — Prototipo, 16/10/2026."
+}
