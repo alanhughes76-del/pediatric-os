@@ -190,6 +190,25 @@ describe('administrativo y agenda', () => {
     await assertFails(setDoc(doc(db('medico'), r('appointments', 't2')), firma(uid('medico'), { status: 'confirmado', date: '2026-10-17' })));
     await assertFails(updateDoc(doc(db('medico'), r('appointments', 't1')), { status: 'cancelado', updatedBy: uid('medico'), updatedAt: AHORA }));
   });
+  test('el historial de los turnos: lo leen el médico y el asistente, no la familia; nadie lo escribe', async () => {
+    const historial = (quien: Quien) => getDocs(query(collectionGroup(db(quien), 'history'), where('organizationId', '==', ORG)));
+    await assertSucceeds(historial('medico'));
+    await assertSucceeds(historial('asistente'));
+    await assertFails(historial('lucia'));
+    await assertFails(setDoc(doc(db('medico'), r('appointments', 't1', 'history', 'h2')), { organizationId: ORG, action: 'confirmar' }));
+  });
+  test('la familia no lee la agenda; nadie escribe los días ocupados', async () => {
+    await assertFails(leer('lucia', r('appointments', 't1')));
+    await assertFails(leer('lucia', r('agendaDays', '2026-10-17')));
+    await assertSucceeds(leer('asistente', r('agendaDays', '2026-10-17')));
+    await assertFails(setDoc(doc(db('medico'), r('agendaDays', '2026-10-17')), { organizationId: ORG, bloques: {} }));
+  });
+  test('bloqueos de agenda: los cargan el médico y el asistente con su firma; no se borran', async () => {
+    const bloqueo = { desde: '2026-10-20T00:00:00-03:00', hasta: '2026-10-21T00:00:00-03:00', motivo: 'Congreso' };
+    await assertSucceeds(setDoc(doc(db('asistente'), r('blocks', 'b1')), firma(uid('asistente'), bloqueo)));
+    await assertFails(setDoc(doc(db('lucia'), r('blocks', 'b2')), firma(uid('lucia'), bloqueo)));
+    await assertFails(deleteDoc(doc(db('medico'), r('blocks', 'b1'))));
+  });
   test('el asistente no lee la configuración de la IA', async () => {
     await assertFails(leer('asistente', r('settings', 'ia')));
     await assertSucceeds(leer('asistente', r('settings', 'agenda')));

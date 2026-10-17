@@ -76,6 +76,8 @@ export async function sembrar(env: RulesTestEnvironment) {
     await set(r('portal', 'p-tomas', 'summaries', 's1'), { text: 'Resumen aprobado para la familia' });
     await set(r('portal', 'p-olivia', 'summaries', 's1'), { text: 'Resumen de Olivia' });
     await set(r('appointments', 't1'), { ...base, status: 'confirmado', date: '2026-10-17' });
+    await set(r('appointments', 't1', 'history', 'h1'), { organizationId: ORG, appointmentId: 't1', action: 'crear' });
+    await set(r('agendaDays', '2026-10-17'), { organizationId: ORG, bloques: {} });
     await set(r('auditLog', 'au1'), { action: 'create', actorId: 'medico-1' });
     await set(r('outbox', 'ev1'), { type: 'turno.confirmado', status: 'pendiente' });
     await set(r('notifications', 'nt1'), { recipientUid: 'medico-1', text: 'Aviso' });

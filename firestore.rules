@@ -74,6 +74,8 @@ service cloud.firestore {
     match /{ruta=**}/certificates/{id} { allow read: if esMedicoDeLaFila(); }
     match /{ruta=**}/documents/{id} { allow read: if esMedicoDeLaFila(); }
     match /{ruta=**}/addresses/{id} { allow read: if esStaff(resource.data.organizationId); }
+    // Historial de todos los turnos (agenda): médico y asistente.
+    match /{ruta=**}/history/{id} { allow read: if esStaff(resource.data.organizationId); }
 
     match /organizations/{orgId} {
       allow read: if esStaff(orgId);
