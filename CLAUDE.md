@@ -4,7 +4,7 @@ App móvil (iOS y Android) de la práctica de pediatría a domicilio del Dr. Ala
 
 Dos roles: el médico (único usuario) y las familias, donde cada adulto responsable tiene su propio acceso.
 
-**Desde el 17/10/2026 manda `docs/PROMPT_MAESTRO.md`** (Pediatric OS, backend Firebase). Donde choque con lo de abajo, gana el prompt maestro. Etapa 0 (exploración y propuesta, sin código): `docs/ETAPA_0_PROPUESTA.md`; respuestas del Dr. en su sección 13 (botón "Escribime por PacienteX", email del enlace por SMTP, región southamerica-east1, Expo Go hasta necesitar un development build, proyecto Firebase nuevo "pediatric-os" más adelante). Etapas 1a (Firebase, ver abajo) y 1b (diseño y navegación) hechas; próximo paso: Etapa 2 (pacientes y familias), con el OK del Dr.
+**Desde el 17/10/2026 manda `docs/PROMPT_MAESTRO.md`** (Pediatric OS, backend Firebase). Donde choque con lo de abajo, gana el prompt maestro. Etapa 0 (exploración y propuesta, sin código): `docs/ETAPA_0_PROPUESTA.md`; respuestas del Dr. en su sección 13 (botón "Escribime por PacienteX", email del enlace por SMTP, región southamerica-east1, Expo Go hasta necesitar un development build, proyecto Firebase nuevo "pediatric-os" más adelante). Etapas 1a (Firebase, ver abajo), 1b (diseño y navegación) y 2a (pacientes y familias sobre los datos de ejemplo) hechas. La Etapa 2 se partió: **2b = conectar la app a Firebase** (ingreso real, capa de datos en Firestore, copias del portal), antes de la Agenda. Próximo paso: 2b, con el OK del Dr.
 
 Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionadas, Expo Router).
 
@@ -45,6 +45,7 @@ src/
     medico/         Médico: (tabs) Hoy, Pacientes, Fiebre, Membresías; hijo/[id] (ficha), paciente/nuevo, adulto/[id], adulto/vincular, accesos, certificado/nuevo, consulta/[id], seguimiento/[id], fiebre/, familia/[id]
   components/     Componentes de interfaz: escritorio/Marco.tsx (barra lateral y superior en pantallas de 1024 px o más; en el teléfono, pestañas), ficha/ (ficha completa del médico), crecimiento/ (curvas P3–P97 y tabla), certificados/, consulta/, fiebre/, formularios.
                   FichaHijo.tsx es la ficha del portal de la familia.
+  shared/         Lógica pura compartida por la app (@shared/…) y las Functions: duplicados (regla 8), teléfonos E.164.
   data/
     types.ts        Modelo de datos (una interfaz = una tabla)
     mock.ts         Datos de ejemplo ficticios
