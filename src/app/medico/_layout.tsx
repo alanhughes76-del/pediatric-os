@@ -31,6 +31,9 @@ export default function MedicoLayout() {
         <Stack.Screen name="familias/nueva" options={{ title: 'Nueva familia' }} />
         <Stack.Screen name="turno/nuevo" options={{ title: 'Nuevo turno' }} />
         <Stack.Screen name="turno/[id]" options={{ title: 'Turno' }} />
+        <Stack.Screen name="historia" options={{ title: 'Historia clínica' }} />
+        <Stack.Screen name="consultas" options={{ title: 'Consultas' }} />
+        <Stack.Screen name="crecimiento" options={{ title: 'Crecimiento' }} />
       </Stack>
     </Marco>
   );
