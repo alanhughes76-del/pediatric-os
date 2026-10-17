@@ -9,7 +9,7 @@ export default function FichaMedico() {
   const { db } = useApp();
   const p = paciente(db, id);
   return (
-    <Pantalla>
+    <Pantalla ancho>
       <Stack.Screen options={{ title: p ? p.firstName : 'Ficha' }} />
       <FichaPaciente patientId={id} />
     </Pantalla>

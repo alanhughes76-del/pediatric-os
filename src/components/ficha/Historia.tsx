@@ -26,16 +26,21 @@ export function BloqueCrecimiento({ paciente }: { paciente: Patient }) {
   );
 }
 
-export function BloqueConsultas({ patientId }: { patientId: string }) {
-  const { db, agregar } = useApp();
-  const consultas = consultasDe(db, patientId);
-
-  const nueva = () => {
+/** Crea una consulta nueva para el paciente y la abre. */
+export function useNuevaConsulta(patientId: string) {
+  const { agregar } = useApp();
+  return () => {
     const id = agregar('consultations', {
       patientId, occurredAt: ahoraISO(), modality: 'domicilio', visitType: 'control', status: 'realizada', rawText: '',
     }, 'consulta.crear');
     router.push(`/medico/consulta/${id}`);
   };
+}
+
+export function BloqueConsultas({ patientId }: { patientId: string }) {
+  const { db } = useApp();
+  const consultas = consultasDe(db, patientId);
+  const nueva = useNuevaConsulta(patientId);
 
   return (
     <Seccion titulo="Consultas">

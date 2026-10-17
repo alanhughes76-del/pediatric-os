@@ -6,13 +6,15 @@ interface P {
   children: ReactNode;
   /** Contenido fijo al pie (por ejemplo, el botón de PacienteX). */
   pie?: ReactNode;
+  /** Columna ancha (tableros como la ficha del paciente). */
+  ancho?: boolean;
 }
 
-export function Pantalla({ children, pie }: P) {
+export function Pantalla({ children, pie, ancho }: P) {
   return (
     <View style={s.root}>
       <ScrollView contentContainerStyle={s.contenido} keyboardShouldPersistTaps="handled">
-        <View style={s.columna}>{children}</View>
+        <View style={[s.columna, ancho && { maxWidth: 1180 }]}>{children}</View>
       </ScrollView>
       {pie}
     </View>

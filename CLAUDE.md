@@ -76,10 +76,11 @@ Pedido de etapas A a F terminado. Detalle punto por punto en `VERIFICACION.md`.
 
 Rediseño visual en curso (etapas G a K, referencia: imagen tipo tablero de Pediatric OS que mandó el Dr.):
 - **G (hecha):** paleta de categorías, tarjetas con sombra suave, versión web con barra lateral y barra superior con buscador. Módulos que todavía no existen (Agenda, Prescripciones, Estudios, Comunicaciones, Reportes, IA Asistente) aparecen en gris como "Próximamente" y no se abren.
-- **Pendientes:** H ficha del paciente como tablero, I "Hoy" y lista de pacientes, J portal de la familia, K verificación.
+- **H (hecha):** ficha del paciente como tablero (`ficha/FichaPaciente.tsx`): encabezado con iniciales, edad, último peso y talla, DNI y etiquetas; botones Nueva consulta y Emitir certificado; solapas Resumen, Datos y familia, Historia clínica, Consultas, Crecimiento, Plan y vacunas, Fiebre, Documentos. "Resumen" (`ficha/Resumen.tsx`) son tarjetas de solo lectura más el plan por plazo (`lib/planPorPlazo.ts`: Hoy, Próximos 30 días, Próximos meses, Prevención). Las demás solapas usan los bloques de siempre.
+- **Pendientes:** I "Hoy" y lista de pacientes, J portal de la familia, K verificación.
 
 - **Médico:** Hoy (visitas, seguimientos pendientes, registro de accesos), Pacientes (solapas por ámbito, búsqueda, alta con aviso de duplicado), ficha completa (encabezado con ámbito y DNI, Contacto, Adultos responsables con domicilios, Problemas, Alergias, Plan de cuidado y vacunas aplicadas, Crecimiento con curvas P3–P97 y tabla, Consultas, Registro de fiebre, Certificados y documentos), consulta (antropometría con el motor de percentilos, hitos, nota clínica versionada), fiebre.
 - **Familia:** ingreso con enlace mágico simulado, Inicio con selector de hijo y secciones por hijo, Pedir visita (bloqueado con membresía vencida), registro de fiebre, certificados en PDF. Los datos llegan filtrados por `vistaFamilia`.
-- **Calidad:** 227 tests (percentilos, búsqueda, vista de familia para cada adulto, enlace mágico, certificados).
+- **Calidad:** 232 tests (percentilos, plan por plazo, búsqueda, vista de familia para cada adulto, enlace mágico, certificados).
 - **Pendiente para la etapa del backend (Vibecode Cloud):** base de datos y archivos reales, envío real del enlace mágico, subir el PDF del certificado al almacenamiento, conexión real con IA. Siguen sin tocar: Plaud, mails, Notion y firma digital.
 - **Sin verificar por Claude:** la app en un iPhone real y el PDF generado en el teléfono.

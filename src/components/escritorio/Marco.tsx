@@ -63,12 +63,14 @@ export function useEscritorio() {
 }
 
 export function Marco({ rol, children }: { rol: Rol; children: ReactNode }) {
-  if (!useEscritorio()) return <>{children}</>;
+  const escritorio = useEscritorio();
+  // La pantalla (children) queda siempre en el mismo lugar del árbol: así, al girar
+  // una tablet o achicar la ventana, la navegación no vuelve al inicio.
   return (
     <View style={s.raiz}>
-      <BarraLateral rol={rol} />
+      {escritorio ? <BarraLateral rol={rol} /> : null}
       <View style={s.principal}>
-        <BarraSuperior rol={rol} />
+        {escritorio ? <BarraSuperior rol={rol} /> : null}
         <View style={{ flex: 1 }}>{children}</View>
       </View>
     </View>
