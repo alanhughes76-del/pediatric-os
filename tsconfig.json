@@ -10,5 +10,11 @@
     "types": [
       "jest"
     ]
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "functions",
+    "tests",
+    "scripts"
+  ]
 }

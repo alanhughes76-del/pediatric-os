@@ -1,0 +1,39 @@
+rules_version = '2';
+
+// Pediatric OS · reglas de Cloud Storage.
+// - Archivos del paciente (certificados, resultados, recetas en PDF): solo el médico los sube y los lee.
+//   La familia los descarga con un enlace firmado de pocos minutos que genera el servidor,
+//   después de verificar que ese documento está habilitado para ella. Nunca enlaces públicos.
+// - Materiales educativos: los sube el médico; los lee el equipo.
+// - Nada se borra desde el cliente.
+service firebase.storage {
+  match /b/{bucket}/o {
+    function rol() { return request.auth.token.rol; }
+    function enOrg(orgId) { return request.auth != null && request.auth.token.organizationId == orgId; }
+    function esMedico(orgId) { return enOrg(orgId) && rol() == 'medico'; }
+    function esStaff(orgId) { return enOrg(orgId) && (rol() == 'medico' || rol() == 'asistente'); }
+
+    function archivoOk() {
+      return request.resource.size < 20 * 1024 * 1024
+        && (request.resource.contentType == 'application/pdf'
+            || request.resource.contentType.matches('image/(png|jpeg|heic|webp)'));
+    }
+
+    match /orgs/{orgId}/patients/{patientId}/{allPaths=**} {
+      allow read: if esMedico(orgId);
+      allow create: if esMedico(orgId) && archivoOk() && resource == null; // no se pisa un archivo existente
+      allow update, delete: if false;
+    }
+
+    match /orgs/{orgId}/materials/{allPaths=**} {
+      allow read: if esStaff(orgId);
+      allow create: if esMedico(orgId) && archivoOk() && resource == null; // no se pisa un archivo existente
+      allow update, delete: if false;
+    }
+
+    // Cualquier otra ruta: cerrada.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

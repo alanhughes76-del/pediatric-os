@@ -1,0 +1,282 @@
+rules_version = '2';
+
+// Pediatric OS · reglas de Firestore.
+// Detalle de cada colección (quién lee, quién escribe, qué se valida): docs/MODELO_DE_DATOS.md.
+//
+// Principios:
+// - El rol y la organización vienen de los custom claims de Auth (los asigna solo el servidor).
+// - Lo clínico lo lee solo el médico. El asistente nunca. La familia lee copias filtradas (portal/).
+// - Nada se borra desde el cliente: se archiva. Lo crítico (turnos, aprobar notas, emitir o anular
+//   certificados, auditoría, eventos) lo escribe solo el servidor (Cloud Functions, que no pasa por estas reglas).
+// - Toda escritura del cliente firma con `updatedBy` = su uid; la auditoría lo usa.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Quién es ----------
+    function conSesion() { return request.auth != null; }
+    function rol() { return request.auth.token.rol; }
+    function enOrg(orgId) { return conSesion() && request.auth.token.organizationId == orgId; }
+    function esMedico(orgId) { return enOrg(orgId) && rol() == 'medico'; }
+    function esAsistente(orgId) { return enOrg(orgId) && rol() == 'asistente'; }
+    function esStaff(orgId) { return esMedico(orgId) || esAsistente(orgId); }
+    function esFamilia(orgId) { return enOrg(orgId) && rol() == 'familia'; }
+
+    function rutaAcceso(orgId) {
+      return /databases/$(database)/documents/organizations/$(orgId)/portalAccess/$(request.auth.uid);
+    }
+    /** El adulto tiene acceso vigente a ese paciente (lo mantiene el servidor). */
+    function accedeA(orgId, patientId) {
+      return esFamilia(orgId)
+        && exists(rutaAcceso(orgId))
+        && get(rutaAcceso(orgId)).data.enabled == true
+        && patientId in get(rutaAcceso(orgId)).data.patientIds;
+    }
+
+    // ---------- Cómo escribe ----------
+    function datos() { return request.resource.data; }
+    function cambiados() { return datos().diff(resource.data).affectedKeys(); }
+    function soloCambia(campos) { return cambiados().hasOnly(campos); }
+    function noCambia(campos) { return !cambiados().hasAny(campos); }
+
+    /** Firma y organización: en el alta, autor = quien escribe; después, el autor no cambia. */
+    function firmaOk(orgId) {
+      return datos().updatedBy == request.auth.uid
+        && datos().organizationId == orgId
+        && (resource == null
+              ? datos().createdBy == request.auth.uid
+              : datos().createdBy == resource.data.createdBy && resource.data.organizationId == orgId);
+    }
+
+    /** Teléfono en formato E.164 (+549…), si viene. */
+    function telefonoOk() {
+      return !('phone' in datos()) || datos().phone == null || datos().phone.matches('^\\+[1-9][0-9]{7,14}$');
+    }
+
+    // ---------- Usuarios ----------
+    match /users/{uid} {
+      allow read: if conSesion() && request.auth.uid == uid;
+      allow write: if false; // solo el servidor
+    }
+
+    match /organizations/{orgId} {
+      allow read: if esStaff(orgId);
+      allow write: if false;
+
+      // ---------- Configuración ----------
+      match /settings/{docId} {
+        allow read: if esMedico(orgId) || (esAsistente(orgId) && docId != 'ia');
+        allow create, update: if esMedico(orgId) && firmaOk(orgId);
+        allow delete: if false;
+      }
+
+      match /professionals/{id} {
+        allow read: if esStaff(orgId);
+        allow create, update: if esMedico(orgId) && firmaOk(orgId);
+        allow delete: if false;
+      }
+
+      // ---------- Administrativo (médico y asistente) ----------
+      match /families/{id} {
+        allow read: if esStaff(orgId);
+        allow create, update: if esStaff(orgId) && firmaOk(orgId);
+        allow delete: if false;
+      }
+
+      match /relationships/{id} {
+        allow read: if esStaff(orgId);
+        allow create, update: if esStaff(orgId) && firmaOk(orgId);
+        allow delete: if false; // se cierra con validTo
+      }
+
+      match /patients/{id} {
+        allow read: if esStaff(orgId);
+        allow create: if false; // el alta pasa por el servidor (control de duplicados)
+        allow update: if esStaff(orgId) && firmaOk(orgId) && noCambia(['createdAt']);
+        allow delete: if false;
+      }
+
+      match /guardians/{guardianId} {
+        function esElAdulto() { return esFamilia(orgId) && resource.data.authUid == request.auth.uid; }
+        /** Sin email no se habilita el portal, y habilitarlo es decisión del médico. */
+        function portalOk() {
+          return (datos().get('portalEnabled', false) != true || datos().get('email', '') != '')
+            && (resource == null
+                  ? datos().get('portalEnabled', false) == false
+                  : (!('portalEnabled' in cambiados()) || esMedico(orgId)));
+        }
+
+        allow read: if esStaff(orgId) || esElAdulto();
+        allow create: if esStaff(orgId) && firmaOk(orgId) && telefonoOk() && portalOk();
+        allow update: if (esStaff(orgId) && firmaOk(orgId) && telefonoOk() && portalOk() && noCambia(['authUid']))
+          || (esElAdulto() && firmaOk(orgId) && telefonoOk()
+              && soloCambia(['phone', 'email', 'contactPreference', 'updatedBy', 'updatedAt']));
+        allow delete: if false;
+
+        match /addresses/{addressId} {
+          function esDelAdulto() {
+            return esFamilia(orgId)
+              && get(/databases/$(database)/documents/organizations/$(orgId)/guardians/$(guardianId)).data.authUid == request.auth.uid;
+          }
+          allow read: if esStaff(orgId) || esDelAdulto();
+          allow create, update: if (esStaff(orgId) || esDelAdulto()) && firmaOk(orgId);
+          allow delete: if false; // se archiva
+        }
+      }
+
+      match /memberships/{id} {
+        allow read: if esStaff(orgId);
+        allow create, update: if esStaff(orgId) && firmaOk(orgId);
+        allow delete: if false;
+      }
+
+      match /payments/{id} {
+        allow read: if esStaff(orgId);
+        allow create, update: if esStaff(orgId) && firmaOk(orgId);
+        allow delete: if false;
+      }
+
+      match /communications/{id} {
+        allow read: if esStaff(orgId);
+        allow create, update: if esStaff(orgId) && firmaOk(orgId);
+        allow delete: if false;
+      }
+
+      match /educationalMaterials/{id} {
+        allow read: if esStaff(orgId);
+        allow create, update: if esMedico(orgId) && firmaOk(orgId);
+        allow delete: if false;
+      }
+
+      match /materialDeliveries/{id} {
+        allow read: if esMedico(orgId);
+        allow create, update: if esMedico(orgId) && firmaOk(orgId);
+        allow delete: if false;
+      }
+
+      match /consents/{id} {
+        function esSuyo() { return esFamilia(orgId) && resource.data.guardianUid == request.auth.uid; }
+        allow read: if esMedico(orgId) || esSuyo();
+        allow create: if firmaOk(orgId)
+          && (esMedico(orgId) || (esFamilia(orgId) && datos().guardianUid == request.auth.uid))
+          && !('revokedAt' in datos());
+        // Un consentimiento no se borra ni se edita: solo se revoca.
+        allow update: if (esMedico(orgId) || esSuyo()) && firmaOk(orgId)
+          && soloCambia(['revokedAt', 'updatedBy', 'updatedAt']) && !('revokedAt' in resource.data);
+        allow delete: if false;
+      }
+
+      // ---------- Agenda: la escribe solo el servidor (superposición en transacción) ----------
+      match /appointments/{id} {
+        allow read: if esStaff(orgId);
+        allow write: if false;
+        match /history/{h} {
+          allow read: if esStaff(orgId);
+          allow write: if false;
+        }
+      }
+      match /agendaDays/{day} {
+        allow read: if esStaff(orgId);
+        allow write: if false;
+      }
+      match /availabilityRules/{id} {
+        allow read: if esStaff(orgId);
+        allow create, update: if esStaff(orgId) && firmaOk(orgId);
+        allow delete: if false;
+      }
+      match /blocks/{id} {
+        allow read: if esStaff(orgId);
+        allow create, update: if esStaff(orgId) && firmaOk(orgId);
+        allow delete: if false;
+      }
+      match /zones/{id} {
+        allow read: if esStaff(orgId);
+        allow create, update: if esStaff(orgId) && firmaOk(orgId);
+        allow delete: if false;
+      }
+
+      // ---------- Clínico: solo el médico ----------
+      // Reglas generales; notas, certificados, seguimientos y fiebre tienen reglas propias abajo.
+      match /clinical/{patientId}/{sub}/{docId} {
+        allow read: if esMedico(orgId);
+        allow create, update: if esMedico(orgId) && firmaOk(orgId)
+          && datos().patientId == patientId
+          && !(sub in ['notes', 'certificates', 'followUps', 'fever']);
+        allow delete: if false;
+      }
+
+      match /clinical/{patientId}/studyOrders/{orderId}/results/{resultId} {
+        allow read: if esMedico(orgId);
+        allow create, update: if esMedico(orgId) && firmaOk(orgId);
+        allow delete: if false;
+      }
+
+      // Nota clínica: solo se edita en borrador. Aprobar y corregir lo hace el servidor.
+      match /clinical/{patientId}/notes/{noteId} {
+        allow create: if esMedico(orgId) && firmaOk(orgId)
+          && datos().patientId == patientId
+          && datos().status == 'borrador'
+          && !('approvedAt' in datos()) && !('approvedBy' in datos());
+        allow update: if esMedico(orgId) && firmaOk(orgId)
+          && resource.data.status == 'borrador'
+          && datos().status == 'borrador'
+          && noCambia(['patientId', 'consultationId', 'version', 'previousVersionId', 'approvedAt', 'approvedBy', 'createdAt']);
+      }
+
+      // Certificados: emitir y anular pasan por el servidor.
+      // (La regla general ya permite leerlos al médico y no permite escribirlos.)
+
+      // Seguimientos: los crea el servidor al aprobar una nota con bandera.
+      match /clinical/{patientId}/followUps/{id} {
+        allow update: if esMedico(orgId) && firmaOk(orgId)
+          && soloCambia(['message', 'status', 'resolvedAt', 'updatedBy', 'updatedAt']);
+      }
+
+      // Registro de fiebre: lo carga el médico o un adulto con acceso a ese chico.
+      match /clinical/{patientId}/fever/{id} {
+        allow create: if firmaOk(orgId)
+          && datos().patientId == patientId
+          && !('reviewedAt' in datos())
+          && ((esMedico(orgId) && datos().origin == 'medico')
+              || (accedeA(orgId, patientId) && datos().origin == 'familia'));
+        allow update: if esMedico(orgId) && firmaOk(orgId)
+          && soloCambia(['reviewedAt', 'reviewedBy', 'consultationId', 'archivedAt', 'updatedBy', 'updatedAt']);
+      }
+
+      // ---------- Portal: copias filtradas que arma el servidor ----------
+      match /portal/{patientId}/{sub}/{docId} {
+        allow read: if esMedico(orgId) || accedeA(orgId, patientId);
+        allow write: if false;
+      }
+      match /portalAccess/{uid} {
+        allow read: if esMedico(orgId) || (conSesion() && request.auth.uid == uid);
+        allow write: if false;
+      }
+
+      // ---------- Avisos de la campana ----------
+      match /notifications/{id} {
+        allow read: if enOrg(orgId) && resource.data.recipientUid == request.auth.uid;
+        allow update: if enOrg(orgId) && resource.data.recipientUid == request.auth.uid
+          && soloCambia(['readAt']);
+        allow create, delete: if false;
+      }
+
+      // ---------- Trazabilidad y automatización: solo el servidor escribe ----------
+      match /auditLog/{id} {
+        allow read: if esMedico(orgId);
+        allow write: if false;
+      }
+      match /aiInteractions/{id} {
+        allow read: if esMedico(orgId);
+        allow write: if false;
+      }
+      match /outbox/{id} {
+        allow read: if esMedico(orgId);
+        allow write: if false;
+      }
+      match /inbound/{id} {
+        allow read: if esMedico(orgId);
+        allow write: if false;
+      }
+    }
+  }
+}
