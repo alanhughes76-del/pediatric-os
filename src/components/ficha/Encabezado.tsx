@@ -67,8 +67,8 @@ export function Encabezado({ paciente: p, acciones }: { paciente: Patient; accio
       <View style={s.etiquetas}>
         <Etiqueta texto={TEXTO_AMBITO[p.scope]} tono={TONO_AMBITO[p.scope]} />
         {confirmadas.map((a) => <Etiqueta key={a.id} texto={`Alergia: ${a.allergen}`} tono="alerta" />)}
-        {referidas.map((a) => <Etiqueta key={a.id} texto={`Alergia referida: ${a.allergen}`} tono="arena" />)}
-        {alergias.length === 0 ? <Etiqueta texto="Sin alergias cargadas" tono="verdeAgua" /> : null}
+        {referidas.map((a) => <Etiqueta key={a.id} texto={`Alergia referida: ${a.allergen}`} tono="naranja" />)}
+        {alergias.length === 0 ? <Etiqueta texto="Sin alergias cargadas" tono="verde" /> : null}
       </View>
     </Tarjeta>
   );

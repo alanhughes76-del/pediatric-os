@@ -1,6 +1,6 @@
 import { Pressable, Text, View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, fonts, size } from '@/theme';
+import { anilloFoco, colors, fonts, size } from '@/theme';
 
 type Variante = 'principal' | 'secundario' | 'contorno' | 'alerta' | 'contacto';
 
@@ -16,9 +16,9 @@ interface P {
 }
 
 const estilos: Record<Variante, { bg: string; fg: string; border: string }> = {
-  principal: { bg: colors.primary, fg: colors.white, border: colors.primary },
-  secundario: { bg: colors.bgSoft, fg: colors.primary, border: colors.bgSoft },
-  contorno: { bg: colors.white, fg: colors.primary, border: colors.primary3 },
+  principal: { bg: colors.accion, fg: colors.white, border: colors.accion },
+  secundario: { bg: colors.accionSuave, fg: colors.accionTexto, border: colors.accionSuave },
+  contorno: { bg: colors.white, fg: colors.accionTexto, border: colors.accion },
   alerta: { bg: colors.alert, fg: colors.white, border: colors.alert },
   contacto: { bg: colors.contacto, fg: colors.white, border: colors.contacto },
 };
@@ -31,10 +31,12 @@ export function Boton({ titulo, onPress, variante = 'principal', icono, detalle,
       disabled={deshabilitado}
       accessibilityRole="button"
       accessibilityLabel={detalle ? `${titulo}. ${detalle}` : titulo}
-      style={({ pressed }) => [
+      // `focused` existe en la web (react-native-web): anillo de foco visible al navegar con teclado.
+      style={(estado) => [
         s.base,
         compacto && s.compacto,
-        { backgroundColor: e.bg, borderColor: e.border, opacity: deshabilitado ? 0.5 : pressed ? 0.85 : 1 },
+        { backgroundColor: e.bg, borderColor: e.border, opacity: deshabilitado ? 0.5 : estado.pressed ? 0.85 : 1 },
+        (estado as { focused?: boolean }).focused && anilloFoco,
       ]}
     >
       {icono ? <Ionicons name={icono} size={compacto ? 22 : 26} color={e.fg} /> : null}

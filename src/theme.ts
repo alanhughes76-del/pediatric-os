@@ -1,64 +1,86 @@
+/**
+ * Tokens de diseño de Pediatric OS: único archivo de colores, tipografía y medidas.
+ * Colores medidos sobre docs/referencia-ui.png y ajustados para contraste AA
+ * (Etapa 0, sección 9.1). Texto sobre fondo de color: siempre el tono `texto` de su familia.
+ */
+import { Platform } from 'react-native';
+
 export const colors = {
-  primary: '#1B4D7E',
-  primary2: '#2E6FA8',
-  primary3: '#3C87BE',
-  sky: '#6FB3DA',
-  bgSoft: '#E8F3FA',
-  bg: '#F4F8FB',
-  text: '#22415A',
-  textMuted: '#5A7389',
+  /** Acción principal (botones, ítem activo, enlaces). Blanco encima: 5,2:1. */
+  accion: '#2563EB',
+  /** Texto de acción sobre fondo claro (6,4:1 sobre accionSuave). */
+  accionTexto: '#1D4ED8',
+  accionSuave: '#EAF1FE',
+  /** Títulos y texto fuerte (azul marino casi negro, como en la imagen). */
+  primary: '#1F2A44',
+  primary2: '#2563EB',
+  primary3: '#3B8FE0',
+  sky: '#93C5FD',
+  bgSoft: '#EAF1FE',
+  bg: '#F4F8FC',
+  text: '#1F2A44',
+  textMuted: '#5B6585',
   white: '#FFFFFF',
-  border: '#DCE7F0',
+  border: '#E3EAF3',
   // Barra lateral (pantallas anchas).
-  sidebar: '#16324F',
-  sidebarTexto: '#A9BCD0',
-  sidebarActivo: '#24496F',
-  sidebarApagado: '#7590AC',
-  // Verde: solo para el botón de contacto por PacienteX (pedido del Dr.).
+  sidebar: '#1E2B4D',
+  sidebarTexto: '#AEB9D3',
+  sidebarActivo: '#2F4A8A',
+  sidebarApagado: '#8A96B2',
+  // Verde intenso: solo el botón de PacienteX (pedido del Dr.).
   contacto: '#1F7A4D',
-  // Rojo: solo para alertas (alergias, signos de alarma, vencimientos).
-  alert: '#B42318',
-  alertBg: '#FDECEA',
-  alertBorder: '#F5C2BE',
+  // Rojo intenso: solo alertas, siempre con ícono y palabra (nunca solo el color).
+  alert: '#C62828',
+  alertBg: '#FDECEC',
+  alertBorder: '#F6C7C7',
+  /** Anillo de foco visible (teclado, web). */
+  foco: '#2563EB',
 };
 
 /**
- * Colores de categoría (paleta aprobada por el Dr., 17/10/2026): tonos suaves, sin saturar.
- * `fondo` va detrás, `acento` para íconos, `texto` para letras sobre `fondo` (contraste AA).
- * No reemplazan al rojo (solo alertas) ni al verde de PacienteX.
+ * Un color pastel por sección (prompt maestro 5.1): celeste para crecimiento y agenda,
+ * rosado para vacunas y próximas acciones, verde para lo que está al día, violeta para la IA,
+ * naranja para prevención. `fondo` va detrás, `acento` en íconos, `texto` para letras sobre `fondo`.
  */
 export const categorias = {
-  celeste: { fondo: '#E6F3FA', acento: '#3C87BE', texto: '#1F5A85' },
-  verdeAgua: { fondo: '#E3F4F1', acento: '#2E8A80', texto: '#1E6A62' },
-  lavanda: { fondo: '#EEEDF8', acento: '#6E66B0', texto: '#4C4590' },
-  durazno: { fondo: '#FBEEE6', acento: '#C9784A', texto: '#8F4A22' },
-  arena: { fondo: '#F8F1DE', acento: '#B08A2E', texto: '#6E5414' },
+  celeste: { fondo: '#E3F1FD', acento: '#3B8FE0', texto: '#1D5C99' },
+  rosado: { fondo: '#FDEEF3', acento: '#D9467A', texto: '#A12B57' },
+  verde: { fondo: '#E5F5EC', acento: '#3E9B63', texto: '#1F6B40' },
+  violeta: { fondo: '#F0EBFC', acento: '#7C5CD6', texto: '#5B3FB0' },
+  naranja: { fondo: '#FEF0E4', acento: '#E07A2E', texto: '#9A4A12' },
 } as const;
 export type Categoria = keyof typeof categorias;
 
 /** Sombra suave de las tarjetas. */
-export const sombra = '0px 1px 2px rgba(22, 50, 79, 0.06), 0px 4px 14px rgba(22, 50, 79, 0.06)';
+export const sombra = '0px 1px 2px rgba(30, 43, 77, 0.06), 0px 4px 14px rgba(30, 43, 77, 0.06)';
+
+/** Anillo de foco para elementos tocables (se ve al navegar con teclado en la web). */
+export const anilloFoco = { outlineColor: colors.foco, outlineStyle: 'solid', outlineWidth: 2, outlineOffset: 2 } as object;
 
 /** Desde este ancho (computadora o tablet apaisada) se usa barra lateral en vez de pestañas. */
 export const ANCHO_ESCRITORIO = 1024;
 
+/** Inter (prompt maestro 5.1). */
 export const fonts = {
-  title: 'PlayfairDisplay_700Bold',
-  titleSemi: 'PlayfairDisplay_600SemiBold',
-  body: 'SourceSans3_400Regular',
-  bodySemi: 'SourceSans3_600SemiBold',
-  bodyBold: 'SourceSans3_700Bold',
+  title: 'Inter_700Bold',
+  titleSemi: 'Inter_600SemiBold',
+  body: 'Inter_400Regular',
+  bodySemi: 'Inter_600SemiBold',
+  bodyBold: 'Inter_700Bold',
 };
 
+const web = Platform.OS === 'web';
+
 export const size = {
-  base: 18,
-  small: 15,
-  large: 21,
-  h1: 30,
-  h2: 24,
-  h3: 20,
-  /** Alto mínimo de un botón: cómodo con una sola mano. */
-  touch: 56,
-  radius: 16,
+  /** Cuerpo: 16 en la web y 17 en el celular. */
+  base: web ? 16 : 17,
+  small: web ? 13.5 : 14.5,
+  large: web ? 18 : 19,
+  h1: 28,
+  h2: 22,
+  h3: 18,
+  /** Alto mínimo de un botón: cómodo con una sola mano (y mayor a 44 px). */
+  touch: 52,
+  radius: 14,
   gutter: 20,
 };

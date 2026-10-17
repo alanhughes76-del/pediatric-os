@@ -25,8 +25,8 @@ import type { SolapaFicha } from './FichaPaciente';
 
 type NombreIcono = keyof typeof Ionicons.glyphMap;
 
-const COLOR_CATEGORIA: Record<CarePlanCategory, Categoria> = { control: 'celeste', vacuna: 'verdeAgua', prevencion: 'durazno', otro: 'lavanda' };
-const COLOR_PLAZO: Record<Plazo, Categoria> = { hoy: 'celeste', treinta: 'arena', meses: 'lavanda', prevencion: 'durazno' };
+const COLOR_CATEGORIA: Record<CarePlanCategory, Categoria> = { control: 'celeste', vacuna: 'rosado', prevencion: 'naranja', otro: 'celeste' };
+const COLOR_PLAZO: Record<Plazo, Categoria> = { hoy: 'celeste', treinta: 'verde', meses: 'violeta', prevencion: 'naranja' };
 const ICONO_PLAZO: Record<Plazo, NombreIcono> = { hoy: 'today-outline', treinta: 'time-outline', meses: 'calendar-outline', prevencion: 'shield-outline' };
 
 export function Resumen({ paciente: p, irA }: { paciente: Patient; irA: (s: SolapaFicha) => void }) {
@@ -121,7 +121,7 @@ function ProximasAcciones({ paciente: p, irA }: PropsTarjeta) {
   const plan = [...g.hoy, ...g.treinta].slice(0, 4);
   const nada = seguimientos.length === 0 && fiebre === 0 && plan.length === 0;
   return (
-    <Caja titulo="Próximas acciones" icono="flag-outline" color="arena" ver={{ texto: 'Ver plan de cuidado', onPress: () => irA('plan') }}>
+    <Caja titulo="Próximas acciones" icono="flag-outline" color="rosado" ver={{ texto: 'Ver plan de cuidado', onPress: () => irA('plan') }}>
       {nada ? <Vacio>Nada pendiente en los próximos 30 días.</Vacio> : null}
       {seguimientos.map((f) => {
         const vencido = f.dueAt < ahora;
@@ -138,7 +138,7 @@ function ProximasAcciones({ paciente: p, irA }: PropsTarjeta) {
         );
       })}
       {fiebre > 0 ? (
-        <Accion color="lavanda" icono="thermometer-outline" titulo="Registro de fiebre" detalle={`${fiebre} sin revisar`} onPress={() => router.push(`/medico/fiebre/${p.id}`)} />
+        <Accion color="naranja" icono="thermometer-outline" titulo="Registro de fiebre" detalle={`${fiebre} sin revisar`} onPress={() => router.push(`/medico/fiebre/${p.id}`)} />
       ) : null}
       {plan.map((i) => <ItemPlan key={i.id} item={i} />)}
     </Caja>
@@ -211,7 +211,7 @@ function Vacunas({ paciente: p, irA }: PropsTarjeta) {
   const aplicadas = vacunas.filter((v) => v.done).sort((a, b) => (b.doneAt ?? '').localeCompare(a.doneAt ?? ''));
   const pendientes = vacunas.filter((v) => !v.done).sort((a, b) => (a.targetDate ?? '9').localeCompare(b.targetDate ?? '9'));
   return (
-    <Caja titulo="Vacunas" icono="shield-checkmark-outline" color="verdeAgua" ver={{ texto: 'Ver plan y vacunas', onPress: () => irA('plan') }}>
+    <Caja titulo="Vacunas" icono="shield-checkmark-outline" color="rosado" ver={{ texto: 'Ver plan y vacunas', onPress: () => irA('plan') }}>
       {vacunas.length === 0 ? <Vacio>Sin vacunas cargadas.</Vacio> : null}
       {aplicadas[0] ? (
         <View><Rotulo>Última aplicada</Rotulo><Texto>{aplicadas[0].description}{aplicadas[0].doneAt ? ` · ${fechaCorta(aplicadas[0].doneAt)}` : ''}</Texto></View>
@@ -231,11 +231,11 @@ function Documentos({ paciente: p, irA }: PropsTarjeta) {
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 3);
   return (
-    <Caja titulo="Documentos" icono="document-attach-outline" color="lavanda" ver={{ texto: 'Ver certificados y documentos', onPress: () => irA('documentos') }}>
+    <Caja titulo="Documentos" icono="document-attach-outline" color="celeste" ver={{ texto: 'Ver certificados y documentos', onPress: () => irA('documentos') }}>
       {certificados.length === 0 ? <Vacio>Todavía no hay certificados.</Vacio> : null}
       {certificados.map((c) => (
         <View key={c.id} style={s.fila}>
-          <Ionicons name="document-outline" size={20} color={categorias.lavanda.acento} />
+          <Ionicons name="document-outline" size={20} color={categorias.celeste.acento} />
           <View style={{ flex: 1 }}>
             <Texto>{tipoCertificado(c.type).titulo}</Texto>
             <TextoChico>{fechaCorta(c.date)}</TextoChico>

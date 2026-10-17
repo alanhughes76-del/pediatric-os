@@ -56,7 +56,7 @@ export function FichaHijo({ hijoId, conEncabezado = true }: { hijoId: string; co
           <TarjetaCrecimiento paciente={p} vista="familia" />
         </Caja>
 
-        <Caja titulo="Registro de fiebre" icono="thermometer-outline" color="lavanda">
+        <Caja titulo="Registro de fiebre" icono="thermometer-outline" color="naranja">
           <Texto>Anotá temperaturas y antitérmicos.</Texto>
           <Boton titulo="Abrir el registro de fiebre" icono="thermometer-outline" variante="secundario" onPress={() => router.push(`/familia/fiebre/${p.id}`)} />
         </Caja>
@@ -97,12 +97,12 @@ function PlanVigente({ patientId }: { patientId: string }) {
     .sort((a, b) => (b.doneAt ?? '').localeCompare(a.doneAt ?? ''));
   return (
     <>
-      <Caja titulo="Plan vigente" icono="list-outline" color="arena">
+      <Caja titulo="Plan vigente" icono="list-outline" color="rosado">
         {pendientes.length === 0 ? <Texto color={colors.textMuted}>No hay nada pendiente.</Texto> : (
           <View style={{ gap: 12 }}>
             {pendientes.map((i, n) => (
               <View key={i.id} style={[s.fila, n > 0 && s.separador]}>
-                <Ionicons name="ellipse-outline" size={22} color={categorias.arena.acento} />
+                <Ionicons name="ellipse-outline" size={22} color={categorias.rosado.acento} />
                 <View style={{ flex: 1 }}>
                   <TextoFuerte>{i.description}</TextoFuerte>
                   <TextoChico>{CATEGORIA[i.category]}{i.targetDate ? ` · ${fechaCorta(i.targetDate)}` : ''}</TextoChico>
@@ -113,11 +113,11 @@ function PlanVigente({ patientId }: { patientId: string }) {
         )}
       </Caja>
       {vacunas.length > 0 ? (
-        <Caja titulo="Vacunas aplicadas" icono="shield-checkmark-outline" color="verdeAgua">
+        <Caja titulo="Vacunas aplicadas" icono="shield-checkmark-outline" color="rosado">
           <View style={{ gap: 12 }}>
             {vacunas.map((v, n) => (
               <View key={v.id} style={[s.fila, n > 0 && s.separador]}>
-                <Ionicons name="shield-checkmark" size={22} color={categorias.verdeAgua.acento} />
+                <Ionicons name="shield-checkmark" size={22} color={categorias.rosado.acento} />
                 <TextoFuerte style={{ flex: 1 }}>{v.description}</TextoFuerte>
                 {v.doneAt ? <TextoChico>{fechaCorta(v.doneAt)}</TextoChico> : null}
               </View>
@@ -133,7 +133,7 @@ function AlergiasYTemas({ patientId }: { patientId: string }) {
   const { db } = useApp();
   const problemas = problemasDe(db, patientId, 'familia');
   return (
-    <Caja titulo="Alergias y temas de salud" icono="medkit-outline" color="durazno">
+    <Caja titulo="Alergias y temas de salud" icono="medkit-outline" color="celeste">
       <AlergiasDestacadas alergias={alergiasDe(db, patientId, 'familia')} />
       {problemas.length > 0 ? (
         <View style={[{ gap: 14 }, s.separador]}>

@@ -8,10 +8,10 @@ import { categorias, fonts, type Categoria } from '@/theme';
 
 export const TONO_AMBITO: Record<Scope, Categoria> = {
   membresia: 'celeste',
-  cardales: 'verdeAgua',
-  hepta: 'lavanda',
-  esporadico: 'durazno',
-  'sin-asignar': 'arena',
+  cardales: 'verde',
+  hepta: 'violeta',
+  esporadico: 'naranja',
+  'sin-asignar': 'rosado',
 };
 
 export function Avatar({ paciente: p, tamano = 48 }: { paciente: Pick<Patient, 'firstName' | 'lastName' | 'scope'>; tamano?: number }) {
