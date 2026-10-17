@@ -4,7 +4,7 @@ App móvil (iOS y Android) de la práctica de pediatría a domicilio del Dr. Ala
 
 Dos roles: el médico (único usuario) y las familias, donde cada adulto responsable tiene su propio acceso.
 
-**Desde el 17/10/2026 manda `docs/PROMPT_MAESTRO.md`** (Pediatric OS, backend Firebase). Donde choque con lo de abajo, gana el prompt maestro. Etapa 0 (exploración y propuesta, sin código): `docs/ETAPA_0_PROPUESTA.md`; respuestas del Dr. en su sección 13 (botón "Escribime por PacienteX", email del enlace por SMTP, región southamerica-east1, Expo Go hasta necesitar un development build, proyecto Firebase nuevo "pediatric-os" más adelante). Etapa 1a hecha (ver "Firebase" abajo); próximo paso: Etapa 1b (diseño y navegación), con el OK del Dr.
+**Desde el 17/10/2026 manda `docs/PROMPT_MAESTRO.md`** (Pediatric OS, backend Firebase). Donde choque con lo de abajo, gana el prompt maestro. Etapa 0 (exploración y propuesta, sin código): `docs/ETAPA_0_PROPUESTA.md`; respuestas del Dr. en su sección 13 (botón "Escribime por PacienteX", email del enlace por SMTP, región southamerica-east1, Expo Go hasta necesitar un development build, proyecto Firebase nuevo "pediatric-os" más adelante). Etapas 1a (Firebase, ver abajo) y 1b (diseño y navegación) hechas; próximo paso: Etapa 2 (pacientes y familias), con el OK del Dr.
 
 Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionadas, Expo Router).
 
@@ -13,7 +13,7 @@ Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionad
 - Expo SDK 57 + React Native 0.86 + TypeScript, Expo Router (rutas en `src/app/`).
 - **SDK 57 a propósito**: es la versión que corre el Expo Go del iPhone del Dr. No subir de SDK sin preguntarle.
 - La app todavía usa datos de ejemplo **ficticios** en memoria (`src/data/mock.ts`). El backend es **Firebase** (prompt maestro); desde la Etapa 1a existen reglas, Functions y datos de demostración en los emuladores, pero la app todavía no está conectada (llega en las Etapas 1b y 2).
-- Gráficos con `react-native-svg`. Tipografías Playfair Display y Source Sans 3 (`@expo-google-fonts`).
+- Gráficos con `react-native-svg`. Tipografía Inter (`@expo-google-fonts/inter`).
 - Probar en el teléfono: `npx expo start --tunnel --clear` y abrir en Expo Go. `@expo/ngrok` está instalado en el proyecto, porque la instalación global falla por permisos.
 - Tests con jest-expo. `expo-modules-core` está mapeado en la config de jest a la copia anidada en `node_modules/expo`, porque instalarlo en la raíz choca con una dependencia opcional.
 
@@ -80,11 +80,12 @@ Doctor, Family, Guardian (acceso habilitado sí/no), PatientRelationship (tipo, 
 ## Reglas generales
 
 - Interfaz en español rioplatense con voseo ("Cargá", "Tocá"). Nunca "tú" ni "vosotros".
-- Marca: "Dr. Alan Hughes · Pediatría a domicilio" (logotipo tipográfico).
-- Colores base: #1B4D7E (principal), #2E6FA8, #3C87BE, #6FB3DA, #E8F3FA y #F4F8FB (fondos), #22415A (texto), #16324F (barra lateral).
-- Colores de categoría (paleta aprobada el 17/10/2026, `categorias` en `theme.ts`): celeste, verde agua, lavanda, durazno y arena, en tonos suaves sin saturar. Cada uno tiene fondo, acento (íconos) y texto oscuro con contraste AA. Rojo únicamente para alertas.
+- Marca del lado médico: "Pediatric OS" con "Cuidando hoy su mañana"; la frase "Pequeños pacientes, grandes historias" va en el encabezado. En el portal de las familias: "Dr. Alan Hughes · Pediatría a domicilio".
+- Tokens en un único archivo, `src/theme.ts` (medidos sobre `docs/referencia-ui.png`): barra lateral #1E2B4D, acción #2563EB (`colors.accion`), fondo #F4F8FC, texto #1F2A44.
+- Un pastel por sección (`categorias`): celeste (crecimiento y agenda), rosado (vacunas y próximas acciones), verde (al día), violeta (IA), naranja (prevención). Cada uno tiene fondo, acento (íconos) y texto con contraste AA. Rojo intenso únicamente para alertas, siempre con ícono y palabra.
 - Única excepción: el botón de PacienteX es verde (#1F7A4D, `colors.contacto`), a pedido del Dr.
-- Tipografías: Playfair Display (títulos) y Source Sans 3 (resto).
+- Tipografía Inter. Áreas táctiles de 44 px o más, foco visible (`anilloFoco`), estados vacío, de carga, de error y de confirmación en `components/Estados.tsx`.
+- Navegación: una sola lista de módulos en `src/navegacion/modulos.ts`. Web y tablet: barra lateral con los 16 módulos. Celular: Inicio · Agenda · Pacientes · Avisos · Más. Los módulos sin construir dicen en qué etapa llegan. Los avisos salen de datos reales (`src/data/avisos.ts`).
 - Tono cálido y profesional, nada comercial. Botones grandes y pocos pasos (padres con un bebé en brazos).
 - Contacto: **no hay WhatsApp en ningún lado**. Botón "Escribime por PacienteX" (texto elegido por el Dr. el 17/10/2026), que abre `CONFIG.pacienteXUrl` en el navegador del teléfono.
 - La app nunca sugiere dosis ni diagnósticos a las familias.
