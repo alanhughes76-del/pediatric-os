@@ -107,8 +107,12 @@ export const textoDomicilio = (a?: Address) => (a ? `${a.street}, ${a.locality}`
 
 // ---------- Membresía ----------
 
-export type EstadoMembresia = 'activa' | 'por-vencer' | 'vencida' | 'sin-membresia';
+export type EstadoMembresia = 'activa' | 'por-vencer' | 'vencida' | 'suspendida' | 'cancelada' | 'sin-membresia';
 const AVISO_DIAS = 30;
+
+export const TEXTO_ESTADO_MEMBRESIA: Record<EstadoMembresia, string> = {
+  activa: 'Activa', 'por-vencer': 'Por renovar', vencida: 'Vencida', suspendida: 'Suspendida', cancelada: 'Cancelada', 'sin-membresia': 'Sin membresía',
+};
 
 export function membresiaDeFamilia(db: Database, familyId?: ID) {
   const membership = db.memberships
@@ -117,18 +121,21 @@ export function membresiaDeFamilia(db: Database, familyId?: ID) {
   if (!membership) return { estado: 'sin-membresia' as EstadoMembresia };
   const diasRestantes = diasEntre(hoyISO(), membership.renewalDate);
   const estado: EstadoMembresia =
-    membership.status !== 'activa' || diasRestantes < 0 ? 'vencida' : diasRestantes <= AVISO_DIAS ? 'por-vencer' : 'activa';
+    membership.status === 'suspendida' || membership.status === 'cancelada' ? membership.status
+      : membership.status === 'vencida' || diasRestantes < 0 ? 'vencida'
+        : diasRestantes <= AVISO_DIAS ? 'por-vencer' : 'activa';
   return { membership, estado, diasRestantes };
 }
 
 /**
- * ¿Puede pedir visitas como miembro? No, si la membresía de su familia está vencida.
- * (Las familias sin membresía —otros ámbitos— siguen pidiendo como hasta ahora.)
+ * ¿Puede pedir visitas como miembro? No, si la membresía de su familia está vencida o suspendida.
+ * (Las familias sin membresía —otros ámbitos— o con la membresía cancelada piden como cualquier familia.)
  */
 export function puedePedirVisitas(db: Database, guardianId: ID): boolean {
   const g = db.guardians.find((x) => x.id === guardianId);
   const familyId = pacientesDeAdulto(db, guardianId)[0]?.familyId ?? g?.familyId;
-  return membresiaDeFamilia(db, familyId).estado !== 'vencida';
+  const { estado } = membresiaDeFamilia(db, familyId);
+  return estado !== 'vencida' && estado !== 'suspendida';
 }
 
 export const TEXTO_MEMBRESIA_VENCIDA = 'Tu membresía venció. Para pedir una visita, contactame por PacienteX.';

@@ -12,7 +12,6 @@ import type { Patient } from '@/data/types';
 import { medicacionDe, prescripcionesDe } from '@/data/seguimientoClinico';
 import { consultasDe, TEXTO_VISITA } from '@/data/selectores';
 import { aCampos, ahoraISO, deFecha, fechaCorta, hoyISO } from '@/lib/fechas';
-import { CONFIG } from '@/config';
 import { Seccion } from '../Seccion';
 import { Tarjeta } from '../Tarjeta';
 import { Etiqueta } from '../Etiqueta';
@@ -97,7 +96,7 @@ export function BloquePrescripciones({ paciente: p }: { paciente: Patient }) {
   const { db, agregar, actualizar } = useApp();
   const lista = prescripcionesDe(db, p.id);
   const consultas = consultasDe(db, p.id).slice(0, 5);
-  const plataforma = CONFIG.recetasNombre || 'tu plataforma de recetas';
+  const plataforma = db.links.recetasNombre || 'tu plataforma de recetas';
   const [fecha, setFecha] = useState(aCampos(ahoraISO()).fecha);
   const [detalle, setDetalle] = useState('');
   const [consulta, setConsulta] = useState<string>('ninguna');
@@ -109,9 +108,9 @@ export function BloquePrescripciones({ paciente: p }: { paciente: Patient }) {
         titulo={`Emitir receta en ${plataforma}`}
         icono="open-outline"
         variante="secundario"
-        deshabilitado={!CONFIG.recetasUrl}
-        detalle={CONFIG.recetasUrl ? undefined : 'Falta cargar el link de tu plataforma de recetas (se carga en Configuración, Etapa 7).'}
-        onPress={() => { void Linking.openURL(CONFIG.recetasUrl); }}
+        deshabilitado={!db.links.recetasUrl}
+        detalle={db.links.recetasUrl ? undefined : 'Falta cargar el link de tu plataforma de recetas en Configuración › Links.'}
+        onPress={() => { void Linking.openURL(db.links.recetasUrl); }}
       />
       {lista.length === 0 ? <Texto color={colors.textMuted}>Sin prescripciones registradas.</Texto> : null}
       {lista.map((x) => {

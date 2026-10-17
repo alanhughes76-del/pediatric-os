@@ -51,12 +51,12 @@ export default function InicioFamilia() {
         </Tarjeta>
 
         <View style={s.costado}>
-          {membership ? (
-            estado === 'vencida' ? (
+          {membership && estado !== 'cancelada' ? (
+            estado === 'vencida' || estado === 'suspendida' ? (
               <View style={[s.banner, s.bannerVencida]}>
                 <Ionicons name="information-circle" size={24} color={colors.alert} />
                 <Texto style={{ flex: 1 }}>
-                  Membresía vencida. Seguís teniendo acceso de lectura a toda la información de tus hijos.
+                  Membresía {estado}. Seguís teniendo acceso de lectura a toda la información de tus hijos.
                 </Texto>
               </View>
             ) : (

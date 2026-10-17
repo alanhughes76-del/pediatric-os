@@ -28,6 +28,7 @@ import { firebase } from './config';
 import { ADMINISTRATIVAS, CLINICAS, aFirestore, coleccion, desdeFirestore, diferencias, ruta } from './mapeo';
 import { ahoraISO } from '@/lib/fechas';
 import { FIRMA } from '@/lib/certificados';
+import { conLinks, conPrecios, LINKS_INICIALES, PRECIOS_INICIALES } from '../configuracion';
 
 /** Copias del portal que lee la familia, por chico (ver functions/src/portal/proyeccion.ts). */
 const SUBS_PORTAL = ['datos', 'summaries', 'allergies', 'problems', 'plan', 'growth', 'vaccines', 'certificates', 'fever', 'turnos'];
@@ -40,7 +41,7 @@ const VACIA: Database = {
   families: [], guardians: [], relationships: [], addresses: [], patients: [], memberships: [], payments: [],
   backgrounds: [], problems: [], allergies: [], consultations: [], measurements: [], milestoneChecks: [], notes: [], followUps: [],
   carePlan: [], vaccineDoses: [], medications: [], prescriptions: [], studies: [], fever: [], certificates: [], documents: [], appointments: [], appointmentHistory: [], blocks: [], communications: [], educationalMaterials: [], materialDeliveries: [], notifications: [],
-  agenda: CONFIG_AGENDA_INICIAL, ia: { enabled: false }, vacunas: { calendarioVerificado: false }, auditLog: [],
+  agenda: CONFIG_AGENDA_INICIAL, ia: { enabled: false }, vacunas: { calendarioVerificado: false }, links: LINKS_INICIALES, precios: PRECIOS_INICIALES, auditLog: [],
 };
 
 /** Mensajes que se entienden, sin códigos técnicos. */
@@ -68,6 +69,7 @@ export function useFuenteFirebase(): AppState {
   const [acceso, setAcceso] = useState<{ guardianId: string; patientIds: string[] } | null>(null);
   const [direcciones, setDirecciones] = useState<Address[]>([]);
   const [copias, setCopias] = useState<Record<string, CopiasPaciente>>({});
+  const [linksFamilia, setLinksFamilia] = useState(LINKS_INICIALES);
 
   // Sesión: rol y organización salen de los custom claims (los asigna solo el servidor).
   useEffect(() => onAuthStateChanged(auth, async (u) => {
@@ -114,6 +116,8 @@ export function useFuenteFirebase(): AppState {
       const g = adultoDesde(snap.id, snap.data() ?? {});
       setSesion((x) => (x?.rol === 'familia' ? { ...x, guardian: g } : x));
     }, fallo));
+    // Links de PacienteX y Cal.com (la familia puede leer solo este ajuste).
+    subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/links`), (snap) => setLinksFamilia(conLinks(snap.data())), fallo));
     subs.push(onSnapshot(collection(fs, `organizations/${org}/guardians/${acceso.guardianId}/addresses`), (snap) => {
       setDirecciones(snap.docs.map((x) => desdeFirestore('addresses', x.id, x.data()) as unknown as Address));
     }, fallo));
@@ -164,6 +168,12 @@ export function useFuenteFirebase(): AppState {
     subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/vacunas`), (snap) => {
       setDatos((d) => ({ ...d, vacunas: { calendarioVerificado: snap.data()?.calendarioVerificado === true } }));
     }, fallo));
+    subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/links`), (snap) => {
+      setDatos((d) => ({ ...d, links: conLinks(snap.data()) }));
+    }, fallo));
+    subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/precios`), (snap) => {
+      setDatos((d) => ({ ...d, precios: conPrecios(snap.data()) }));
+    }, fallo));
     subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/ia`), (snap) => {
       setDatos((d) => ({ ...d, ia: { enabled: snap.data()?.enabled === true } }));
     }, fallo));
@@ -176,7 +186,8 @@ export function useFuenteFirebase(): AppState {
     }, fallo));
     subs.push(onSnapshot(collection(fs, `organizations/${org}/professionals`), (snap) => {
       const p = snap.docs[0];
-      if (p) setDatos((d) => ({ ...d, doctor: { id: uid, name: String(p.data().name ?? d.doctor.name), email: '', signature: String(p.data().signature ?? FIRMA) } }));
+      const x = snap.docs.find((y) => y.id === uid)?.data() ?? p?.data();
+      if (x) setDatos((d) => ({ ...d, doctor: { id: uid, name: String(x.name ?? d.doctor.name), email: '', signature: String(x.signature ?? FIRMA), mn: x.mn ? String(x.mn) : undefined, mp: x.mp ? String(x.mp) : undefined } }));
     }, fallo));
     return () => subs.forEach((u) => u());
   }, [fs, org, uid, sesion?.rol]);
@@ -270,6 +281,24 @@ export function useFuenteFirebase(): AppState {
           } catch (e2) { return mensajeDeError(e2); }
         }
       },
+      guardarAjustes: async (ajuste) => {
+        // settings/* y professionals/{uid}: solo el médico, con su firma (reglas). Se actualiza o se crea.
+        const ref = ajuste.clave === 'profesional' ? doc(fs, `organizations/${org}/professionals/${uid}`) : doc(fs, `organizations/${org}/settings/${ajuste.clave}`);
+        const datosAjuste = ajuste.clave === 'profesional'
+          ? { name: ajuste.datos.name, signature: ajuste.datos.signature, mn: ajuste.datos.mn ?? '', mp: ajuste.datos.mp ?? '' }
+          : { ...ajuste.datos };
+        const ahora = ahoraISO();
+        try {
+          await updateDoc(ref, { ...datosAjuste, updatedBy: uid, updatedAt: ahora });
+          return null;
+        } catch (e) {
+          if (!(e instanceof FirebaseError && e.code === 'not-found')) return mensajeDeError(e);
+          try {
+            await setDoc(ref, { ...datosAjuste, organizationId: org, createdBy: uid, createdAt: ahora, updatedBy: uid, updatedAt: ahora });
+            return null;
+          } catch (e2) { return mensajeDeError(e2); }
+        }
+      },
       enviarResumen: ({ nota, asunto, texto }) => llamar('enviarResumenFamilia', { patientId: nota.patientId, noteId: nota.id, asunto, texto }),
 
       // ---- Familia ----
@@ -355,8 +384,8 @@ export function useFuenteFirebase(): AppState {
 
   // La familia ve SOLO lo que armaron sus copias del portal.
   const vistaDeFamilia = useMemo(() => (sesion?.rol === 'familia'
-    ? armarVistaFamilia({ copias, guardian: sesion.guardian, addresses: direcciones, doctor: VACIA.doctor, vacia: VACIA })
-    : null), [sesion, copias, direcciones]);
+    ? armarVistaFamilia({ copias, guardian: sesion.guardian, addresses: direcciones, doctor: VACIA.doctor, vacia: { ...VACIA, links: linksFamilia } })
+    : null), [sesion, copias, direcciones, linksFamilia]);
 
   return useMemo<AppState>(() => ({
     fuente: 'firebase',

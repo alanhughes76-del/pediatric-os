@@ -7,6 +7,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '@/data/store';
 import { membresiaDeFamilia } from '@/data/selectores';
+import { EtiquetaMembresia } from '@/components/membresia/EtiquetaMembresia';
 import { filtrarFamilias } from '@/lib/busquedaFamilias';
 import { Pantalla } from '@/components/Pantalla';
 import { Campo } from '@/components/Formulario';
@@ -50,9 +51,7 @@ export default function Familias() {
                 </TextoChico>
                 <View style={s.etiquetas}>
                   {f.zone ? <Etiqueta texto={f.zone} tono="celeste" /> : null}
-                  {estado === 'activa' ? <Etiqueta texto="Membresía activa" tono="verde" /> : null}
-                  {estado === 'por-vencer' ? <Etiqueta texto="Membresía por renovar" tono="naranja" /> : null}
-                  {estado === 'vencida' ? <Etiqueta texto="Membresía vencida" tono="alerta" /> : null}
+                  <EtiquetaMembresia estado={estado} ocultarSinMembresia />
                   {f.status === 'inactiva' ? <Etiqueta texto="Inactiva" tono="neutro" /> : null}
                 </View>
               </View>

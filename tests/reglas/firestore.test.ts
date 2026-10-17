@@ -263,6 +263,15 @@ describe('administrativo y agenda', () => {
     await assertFails(leer('asistente', r('settings', 'ia')));
     await assertSucceeds(leer('asistente', r('settings', 'agenda')));
   });
+  test('configuración: la familia lee solo los links; solo el médico la cambia', async () => {
+    await assertSucceeds(leer('lucia', r('settings', 'links')));
+    await assertFails(leer('lucia', r('settings', 'precios')));
+    await assertFails(leer('lucia', r('settings', 'agenda')));
+    await assertFails(leer('otraOrg', r('settings', 'links')));
+    await assertSucceeds(setDoc(doc(db('medico'), r('settings', 'precios')), firma(uid('medico'), { membresia: { anual: 2000 } })));
+    await assertFails(setDoc(doc(db('asistente'), r('settings', 'links')), firma(uid('asistente'), { pacienteXUrl: 'https://x' })));
+    await assertFails(setDoc(doc(db('lucia'), r('settings', 'links')), firma(uid('lucia'), { pacienteXUrl: 'https://x' })));
+  });
   test('el médico de otra organización no ve nada', async () => {
     await assertFails(leer('otraOrg', r('patients', 'p-tomas')));
     await assertFails(leer('otraOrg', `organizations/${ORG}`));

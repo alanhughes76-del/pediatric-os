@@ -136,7 +136,7 @@ export function useFuenteDemo(): AppState {
         const base = { createdAt: ahora, createdBy: uid };
         const certId = nuevoId('cert');
         const docId = nuevoId('doc');
-        const certificado: Certificate = { ...base, ...datos, id: certId, signature: FIRMA, status: 'emitido', documentId: docId };
+        const certificado: Certificate = { ...base, ...datos, id: certId, signature: d.doctor.signature || FIRMA, status: 'emitido', documentId: docId };
         const documento: Document = {
           ...base, id: docId, patientId: datos.patientId, title: titulo, date: datos.date,
           file: `certificados/${datos.patientId}/${certId}.pdf`, certificateId: certId,
@@ -171,6 +171,17 @@ export function useFuenteDemo(): AppState {
       enLote((d, { log }) => {
         log({ action: verificado ? 'vacunas.calendario-verificado' : 'vacunas.calendario-borrador', entity: 'settings', entityId: 'vacunas' });
         return { ...d, vacunas: { calendarioVerificado: verificado } };
+      });
+      return null;
+    },
+
+    guardarAjustes: async (ajuste) => {
+      enLote((d, { log }) => {
+        log({ action: `configuracion.${ajuste.clave}`, entity: 'settings', entityId: ajuste.clave });
+        if (ajuste.clave === 'profesional') return { ...d, doctor: { ...d.doctor, ...ajuste.datos } };
+        if (ajuste.clave === 'agenda') return { ...d, agenda: ajuste.datos };
+        if (ajuste.clave === 'links') return { ...d, links: ajuste.datos };
+        return { ...d, precios: ajuste.datos };
       });
       return null;
     },

@@ -1,6 +1,6 @@
 /**
- * Configuración que completa el Dr. Hughes.
- * Cuando los links de Cal.com estén listos, pegalos acá.
+ * Links iniciales. Desde la Etapa 7 el Dr. los cambia en Configuración › Links (settings/links);
+ * estos valores solo se usan mientras no haya nada guardado.
  */
 export const CONFIG = {
   /**

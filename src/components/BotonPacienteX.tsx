@@ -1,16 +1,13 @@
 import { Linking, View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Boton } from './Boton';
-import { CONFIG } from '@/config';
+import { useApp } from '@/data/store';
 import { colors } from '@/theme';
 
-/** Abre PacienteX en el navegador del teléfono (fuera de la app). */
-export function abrirPacienteX() {
-  Linking.openURL(CONFIG.pacienteXUrl);
-}
-
+/** Abre PacienteX en el navegador del teléfono (fuera de la app). El link se carga en Configuración. */
 export function BotonPacienteX() {
-  return <Boton titulo="Escribime por PacienteX" icono="chatbubbles-outline" variante="contacto" onPress={abrirPacienteX} />;
+  const { db } = useApp();
+  return <Boton titulo="Escribime por PacienteX" icono="chatbubbles-outline" variante="contacto" onPress={() => { void Linking.openURL(db.links.pacienteXUrl); }} />;
 }
 
 /** Barra fija al pie de las pantallas de la familia: el contacto directo siempre a mano. */

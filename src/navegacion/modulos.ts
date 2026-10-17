@@ -59,7 +59,7 @@ export const MODULOS: Modulo[] = [
 ];
 
 /** Abajo en la barra lateral (y al final de "Más"). */
-export const CONFIGURACION: Modulo = mod('configuracion', 'Configuración', 'settings-outline', 'Etapa 7', 'Datos profesionales, agenda, ámbitos, membresía y precios, links, calendario de vacunas, plantillas, automatizaciones e IA.');
+export const CONFIGURACION: Modulo = { clave: 'configuracion', titulo: 'Configuración', icono: 'settings-outline', href: '/medico/configuracion', rutas: ['/medico/configuracion'] };
 
 export const todosLosModulos = () => [...MODULOS, CONFIGURACION];
 

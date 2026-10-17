@@ -8,7 +8,7 @@ import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useApp } from '@/data/store';
 import { adultosDe, adultoPrincipal, nombreCompleto, paciente as buscarPaciente } from '@/data/selectores';
 import type { CertificateType } from '@/data/types';
-import { FIRMA, LUGAR_POR_DEFECTO, TIPOS_CERTIFICADO, lugarYFecha, textoCertificado, tipoCertificado } from '@/lib/certificados';
+import { LUGAR_POR_DEFECTO, TIPOS_CERTIFICADO, lugarYFecha, textoCertificado, tipoCertificado } from '@/lib/certificados';
 import { edades } from '@/lib/edad';
 import { aCampos, ahoraISO, deFecha, hoyISO } from '@/lib/fechas';
 import { Pantalla } from '@/components/Pantalla';
@@ -102,7 +102,7 @@ export default function NuevoCertificado() {
       {!p.dni ? <TextoChico>Sin DNI cargado: el certificado sale sin DNI. Podés cargarlo en la ficha.</TextoChico> : null}
 
       <Seccion titulo="Vista previa">
-        <VistaCertificado titulo={tipoCertificado(tipo).titulo} cuerpo={cuerpo} lugarFecha={lugarYFecha(lugar, fechaISO ?? hoyISO())} firma={FIRMA} />
+        <VistaCertificado titulo={tipoCertificado(tipo).titulo} cuerpo={cuerpo} lugarFecha={lugarYFecha(lugar, fechaISO ?? hoyISO())} firma={db.doctor.signature} />
       </Seccion>
 
       {error ? <Aviso tono="alerta" texto={error} /> : null}

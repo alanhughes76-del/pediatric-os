@@ -6,6 +6,7 @@ import { View, StyleSheet } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '@/data/store';
+import { EtiquetaMembresia } from '@/components/membresia/EtiquetaMembresia';
 import { fiebreDe, membresiaDeFamilia, nombreCompleto, sinRevisar, TEXTO_VISITA } from '@/data/selectores';
 import { telefonoLegible } from '@shared/telefono';
 import { TEXTO_TIPO_TURNO, TEXTO_ESTADO_TURNO } from '@shared/agenda';
@@ -55,10 +56,7 @@ export default function FichaFamilia() {
           <Titulo>{familia.name}</Titulo>
           <View style={s.etiquetas}>
             <Etiqueta texto={familia.zone ?? 'Zona sin cargar'} tono={familia.zone ? 'celeste' : 'neutro'} />
-            {estado === 'activa' ? <Etiqueta texto="Membresía activa" tono="verde" /> : null}
-            {estado === 'por-vencer' ? <Etiqueta texto="Membresía por renovar" tono="naranja" /> : null}
-            {estado === 'vencida' ? <Etiqueta texto="Membresía vencida" tono="alerta" /> : null}
-            {estado === 'sin-membresia' ? <Etiqueta texto="Sin membresía" tono="neutro" /> : null}
+            <EtiquetaMembresia estado={estado} />
           </View>
         </View>
         <View style={{ minWidth: 220 }}>

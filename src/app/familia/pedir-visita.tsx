@@ -10,7 +10,6 @@ import { useApp, useSesionFamilia } from '@/data/store';
 import { pacientesDeAdulto } from '@/data/selectores';
 import { abrirAgenda } from '@/lib/agenda';
 import { deFecha, hoyISO } from '@/lib/fechas';
-import { CONFIG } from '@/config';
 import { Pantalla } from '@/components/Pantalla';
 import { BarraPacienteX } from '@/components/BotonPacienteX';
 import { Campo, Casilla, Opciones, Aviso } from '@/components/Formulario';
@@ -34,7 +33,7 @@ export default function PedirVisitaFormulario() {
   const [error, setError] = useState<string | null>(null);
   const [listo, setListo] = useState(false);
   const [sinLink, setSinLink] = useState(false);
-  const linkCal = tipo === 'urgencia' ? CONFIG.calUrgenciaUrl : CONFIG.calControlUrl;
+  const linkCal = tipo === 'urgencia' ? db.links.calUrgenciaUrl : db.links.calControlUrl;
 
   const pedir = async () => {
     setError(null);

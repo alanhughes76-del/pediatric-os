@@ -35,6 +35,9 @@ export interface Doctor {
   name: string;
   email: string;
   signature: string; // "Dr. Alan Hughes · Médico Pediatra · MN 111.725 · MP 448.970"
+  /** Matrículas (Configuración). */
+  mn?: string;
+  mp?: string;
 }
 
 // ---------- Familias y adultos ----------
@@ -121,24 +124,81 @@ export const GRUPOS_SANGUINEOS: BloodType[] = ['0+', '0-', 'A+', 'A-', 'B+', 'B-
 
 export type Plan = 'anual' | 'semestral';
 
+/**
+ * Estado que carga el Dr. "Por vencer" y "vencida" se calculan con la fecha de renovación
+ * (`membresiaDeFamilia`); "vencida" guardado queda por los datos viejos.
+ */
+export type EstadoMembresiaGuardado = 'activa' | 'suspendida' | 'cancelada' | 'vencida';
+
 export interface Membership extends Base {
   familyId: ID;
   plan: Plan;
-  status: 'activa' | 'vencida' | 'cancelada';
+  status: EstadoMembresiaGuardado;
   startDate: ISODate;
   renewalDate: ISODate;
   patientIds: ID[];
+  /** Observaciones del Dr. (la familia no las ve). */
+  notes?: string;
+  updatedAt?: ISODateTime;
+  updatedBy?: ID;
 }
 
 export type Currency = 'ARS' | 'USD';
 export type PaymentMethod = 'efectivo' | 'transferencia' | 'mercadopago';
+/** "A confirmar": lo cargó una automatización (por ejemplo, el bot de Telegram, Etapa 8) y falta que el Dr. lo confirme. */
+export type EstadoPago = 'confirmado' | 'a_confirmar';
 
 export interface Payment extends Base {
-  membershipId: ID;
+  /** La membresía que paga, si es un pago de membresía. */
+  membershipId?: ID;
+  /** La familia (los pagos viejos solo tienen la membresía). */
+  familyId?: ID;
   date: ISODate;
   amount: number;
   currency: Currency;
   method: PaymentMethod;
+  /** Concepto: "Membresía anual", "Visita del 12/10"… */
+  concept?: string;
+  /** Sin estado = confirmado (datos viejos). */
+  status?: EstadoPago;
+  updatedAt?: ISODateTime;
+  updatedBy?: ID;
+}
+
+// ---------- Configuración (Etapa 7) ----------
+
+/** Links que usa la app (settings/links). La familia también los lee (PacienteX y Cal.com). */
+export interface Links {
+  pacienteXUrl: string;
+  calControlUrl: string;
+  calUrgenciaUrl: string;
+  /** Plataforma de recetas registrada en ReNaPDiS: la app no emite recetas, abre esta plataforma. */
+  recetasNombre: string;
+  recetasUrl: string;
+}
+
+/** Precios y condiciones (settings/precios). Los carga el Dr.; no van en el código. */
+export interface Precios {
+  membresia: {
+    /** Precio por familia, en la moneda indicada. */
+    anual: number;
+    semestral: number;
+    moneda: Currency;
+    /** Descuento por cada hijo adicional, en %, para el plan anual. */
+    descuentoHijoAdicionalPct: number;
+    /** Cómo se convierte si se paga en pesos (texto, lo escribe el Dr.). */
+    conversion: string;
+  };
+  /** Visitas sueltas, en pesos. */
+  visitas: {
+    controlOUrgenciaDia: number;
+    hermanoMismaVisita: number;
+    urgenciaNocheFinDeSemanaFeriado: number;
+    prenatalVideollamada: number;
+    prenatalDomicilio: number;
+  };
+  /** El prenatal se descuenta de la membresía si la familia se suma dentro de estos días del nacimiento. */
+  prenatalDescuentaDias: number;
 }
 
 // ---------- Historia clínica ----------
@@ -568,5 +628,9 @@ export interface Database {
   ia: { enabled: boolean };
   /** settings/vacunas: el calendario es un borrador hasta que el Dr. lo verifique. */
   vacunas: { calendarioVerificado: boolean };
+  /** settings/links. */
+  links: Links;
+  /** settings/precios. */
+  precios: Precios;
   auditLog: AuditLog[];
 }
