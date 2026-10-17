@@ -58,6 +58,23 @@ service cloud.firestore {
       allow write: if false; // solo el servidor
     }
 
+    // ---------- Lecturas por grupo de colecciones ----------
+    // La app del médico lee lo clínico de todos sus pacientes con una consulta por colección
+    // (collectionGroup), filtrando por organizationId. Solo lectura y solo de su organización.
+    function esMedicoDeLaFila() { return esMedico(resource.data.organizationId); }
+    match /{ruta=**}/problems/{id} { allow read: if esMedicoDeLaFila(); }
+    match /{ruta=**}/allergies/{id} { allow read: if esMedicoDeLaFila(); }
+    match /{ruta=**}/consultations/{id} { allow read: if esMedicoDeLaFila(); }
+    match /{ruta=**}/growth/{id} { allow read: if esMedicoDeLaFila(); }
+    match /{ruta=**}/milestones/{id} { allow read: if esMedicoDeLaFila(); }
+    match /{ruta=**}/notes/{id} { allow read: if esMedicoDeLaFila(); }
+    match /{ruta=**}/followUps/{id} { allow read: if esMedicoDeLaFila(); }
+    match /{ruta=**}/carePlan/{id} { allow read: if esMedicoDeLaFila(); }
+    match /{ruta=**}/fever/{id} { allow read: if esMedicoDeLaFila(); }
+    match /{ruta=**}/certificates/{id} { allow read: if esMedicoDeLaFila(); }
+    match /{ruta=**}/documents/{id} { allow read: if esMedicoDeLaFila(); }
+    match /{ruta=**}/addresses/{id} { allow read: if esStaff(resource.data.organizationId); }
+
     match /organizations/{orgId} {
       allow read: if esStaff(orgId);
       allow write: if false;

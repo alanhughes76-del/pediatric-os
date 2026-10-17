@@ -3,7 +3,7 @@
  * Cada bloque prueba una promesa del prompt maestro: quién lee y quién escribe qué.
  */
 import { assertFails, assertSucceeds, type RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { deleteDoc, doc, getDoc, getDocs, collection, setDoc, updateDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, getDocs, collection, collectionGroup, query, where, setDoc, updateDoc } from 'firebase/firestore';
 import { AHORA, ORG, USUARIOS, como, crearEntorno, firma, r, sembrar, type Quien } from './entorno';
 
 let env: RulesTestEnvironment;
@@ -228,5 +228,27 @@ describe('trazabilidad', () => {
   test('un usuario sin sesión no lee su ficha de usuario ni la de otros', async () => {
     await assertFails(leer('anonimo', 'users/medico-1'));
     await assertSucceeds(leer('medico', 'users/medico-1'));
+  });
+});
+
+describe('lecturas por grupo de colecciones (la app del médico)', () => {
+  const grupo = (quien: Quien, nombre: string, org = ORG) =>
+    getDocs(query(collectionGroup(db(quien), nombre), where('organizationId', '==', org)));
+
+  test('el médico lee los problemas de todos sus pacientes de una vez', async () => {
+    await assertSucceeds(grupo('medico', 'problems'));
+    await assertSucceeds(grupo('medico', 'notes'));
+  });
+  test('el asistente, la familia y otro consultorio no', async () => {
+    await assertFails(grupo('asistente', 'problems'));
+    await assertFails(grupo('lucia', 'problems'));
+    await assertFails(grupo('otraOrg', 'notes'));
+  });
+  test('sin filtrar por organización, la consulta se rechaza', async () => {
+    await assertFails(getDocs(collectionGroup(db('medico'), 'problems')));
+  });
+  test('el equipo lee los domicilios de todos los adultos', async () => {
+    await assertSucceeds(grupo('asistente', 'addresses'));
+    await assertFails(grupo('lucia', 'addresses'));
   });
 });
