@@ -4,7 +4,7 @@ App móvil (iOS y Android) de la práctica de pediatría a domicilio del Dr. Ala
 
 Dos roles: el médico (único usuario) y las familias, donde cada adulto responsable tiene su propio acceso.
 
-**Desde el 17/10/2026 manda `docs/PROMPT_MAESTRO.md`** (Pediatric OS, backend Firebase). Donde choque con lo de abajo, gana el prompt maestro. Etapa 0 (exploración y propuesta, sin código): `docs/ETAPA_0_PROPUESTA.md`; respuestas del Dr. en su sección 13 (botón "Escribime por PacienteX", email del enlace por SMTP, región southamerica-east1, Expo Go hasta necesitar un development build, proyecto Firebase nuevo "pediatric-os" más adelante). Próximo paso: Etapa 1a, con el OK del Dr.
+**Desde el 17/10/2026 manda `docs/PROMPT_MAESTRO.md`** (Pediatric OS, backend Firebase). Donde choque con lo de abajo, gana el prompt maestro. Etapa 0 (exploración y propuesta, sin código): `docs/ETAPA_0_PROPUESTA.md`; respuestas del Dr. en su sección 13 (botón "Escribime por PacienteX", email del enlace por SMTP, región southamerica-east1, Expo Go hasta necesitar un development build, proyecto Firebase nuevo "pediatric-os" más adelante). Etapa 1a hecha (ver "Firebase" abajo); próximo paso: Etapa 1b (diseño y navegación), con el OK del Dr.
 
 Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionadas, Expo Router).
 
@@ -12,10 +12,27 @@ Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionad
 
 - Expo SDK 57 + React Native 0.86 + TypeScript, Expo Router (rutas en `src/app/`).
 - **SDK 57 a propósito**: es la versión que corre el Expo Go del iPhone del Dr. No subir de SDK sin preguntarle.
-- Sin backend: datos de ejemplo **ficticios** en memoria (`src/data/mock.ts`). Se reinician al recargar la app. Vibecode Cloud (base de datos, autenticación y archivos) llega en la etapa del backend.
+- La app todavía usa datos de ejemplo **ficticios** en memoria (`src/data/mock.ts`). El backend es **Firebase** (prompt maestro); desde la Etapa 1a existen reglas, Functions y datos de demostración en los emuladores, pero la app todavía no está conectada (llega en las Etapas 1b y 2).
 - Gráficos con `react-native-svg`. Tipografías Playfair Display y Source Sans 3 (`@expo-google-fonts`).
 - Probar en el teléfono: `npx expo start --tunnel --clear` y abrir en Expo Go. `@expo/ngrok` está instalado en el proyecto, porque la instalación global falla por permisos.
 - Tests con jest-expo. `expo-modules-core` está mapeado en la config de jest a la copia anidada en `node_modules/expo`, porque instalarlo en la raíz choca con una dependencia opcional.
+
+## Firebase (desde la Etapa 1a)
+
+- Proyecto de desarrollo: `demo-pediatric-os`, solo emuladores; el prefijo `demo-` impide tocar nada real. El proyecto real "pediatric-os" se crea más adelante, con el Dr.
+- Región de las Functions: `southamerica-east1` (sujeta a revisión legal del Dr.).
+- `firestore.rules`, `storage.rules`, `firestore.indexes.json`. Modelo y permisos: `docs/MODELO_DE_DATOS.md`.
+- `functions/`: Cloud Functions (TypeScript, Node 22) con `asignarRol`, auditoría por triggers, `portalAccess` y rol de familia, y outbox hacia Make (HMAC y reintentos). firebase-admin 13; la 14 no carga en el emulador.
+- `scripts/sembrar.ts`: datos de demostración en el emulador (40 pacientes, 36 adultos). Usuarios de prueba: `medico@ejemplo.com` y `asistente@ejemplo.com` (la clave está en el script, solo para el emulador).
+- **Usar la CLI del proyecto** (`npx firebase`, o los scripts de npm), no la de `/usr/local/bin`: esa trae su propio Node 20.
+- Requiere Java 21 (Temurin, ya instalado).
+- Comandos:
+  - `npm run emuladores` levanta Auth, Firestore, Functions y Storage, con la interfaz en http://127.0.0.1:4000.
+  - `npm run sembrar` carga los datos de demostración, con los emuladores corriendo.
+  - `npm run test:reglas` corre los 60 tests de reglas.
+  - `npm run test:funciones` corre la lógica de las Functions.
+  - `npm run test:integracion` prueba los triggers en el emulador.
+  - `npm run typecheck` revisa la app, los tests, los scripts y las Functions.
 
 ## Estructura
 
@@ -85,6 +102,6 @@ Rediseño visual terminado (etapas G a K, referencia: imagen tipo tablero de Ped
 
 - **Médico:** Hoy (visitas, seguimientos pendientes, registro de accesos), Pacientes (solapas por ámbito, búsqueda, alta con aviso de duplicado), ficha completa (encabezado con ámbito y DNI, Contacto, Adultos responsables con domicilios, Problemas, Alergias, Plan de cuidado y vacunas aplicadas, Crecimiento con curvas P3–P97 y tabla, Consultas, Registro de fiebre, Certificados y documentos), consulta (antropometría con el motor de percentilos, hitos, nota clínica versionada), fiebre.
 - **Familia:** ingreso con enlace mágico simulado, Inicio con selector de hijo y secciones por hijo, Pedir visita (bloqueado con membresía vencida), registro de fiebre, certificados en PDF. Los datos llegan filtrados por `vistaFamilia`.
-- **Calidad:** 232 tests (percentilos, plan por plazo, búsqueda, vista de familia para cada adulto, enlace mágico, certificados).
+- **Calidad:** 246 tests de la app (percentilos, plan por plazo, teléfono E.164, búsqueda, vista de familia para cada adulto, enlace mágico, certificados).
 - **Pendiente para la etapa del backend (Vibecode Cloud):** base de datos y archivos reales, envío real del enlace mágico, subir el PDF del certificado al almacenamiento, conexión real con IA. Siguen sin tocar: Plaud, mails, Notion y firma digital.
 - **Sin verificar por Claude:** la app en un iPhone real y el PDF generado en el teléfono.
