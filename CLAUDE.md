@@ -4,7 +4,7 @@ App móvil (iOS y Android) de la práctica de pediatría a domicilio del Dr. Ala
 
 Dos roles: el médico (único usuario) y las familias, donde cada adulto responsable tiene su propio acceso.
 
-**Desde el 17/10/2026 manda `docs/PROMPT_MAESTRO.md`** (Pediatric OS, backend Firebase). Donde choque con lo de abajo, gana el prompt maestro. Etapa 0 (exploración y propuesta, sin código): `docs/ETAPA_0_PROPUESTA.md`; respuestas del Dr. en su sección 13 (botón "Escribime por PacienteX", email del enlace por SMTP, región southamerica-east1, Expo Go hasta necesitar un development build, proyecto Firebase nuevo "pediatric-os" más adelante). Etapas 1a (Firebase, ver abajo), 1b (diseño y navegación) y 2a (pacientes y familias sobre los datos de ejemplo) hechas. Etapa 2b hecha: la app se conecta a Firebase (ver "Datos de la app"). Etapa 3 hecha: agenda y turnos (ver "Agenda"). Etapa 4 hecha: clínica (ver "Clínica"). Etapa 5 hecha en dos partes: 5a (vacunas, medicación y prescripciones, estudios, plan de cuidado) y 5b (archivos, certificados y prevención); ver "Seguimiento". Etapa 6 partida en dos: 6a hecha (servidor del portal: enlace mágico y copias filtradas; ver "Portal"). Próximo paso: Etapa 6b (la app del portal conectada a Firebase: ingreso con el enlace, lectura de las copias, fiebre, pedir visita, Mis datos, descarga con enlace temporal), con el OK del Dr.
+**Desde el 17/10/2026 manda `docs/PROMPT_MAESTRO.md`** (Pediatric OS, backend Firebase). Donde choque con lo de abajo, gana el prompt maestro. Etapa 0 (exploración y propuesta, sin código): `docs/ETAPA_0_PROPUESTA.md`; respuestas del Dr. en su sección 13 (botón "Escribime por PacienteX", email del enlace por SMTP, región southamerica-east1, Expo Go hasta necesitar un development build, proyecto Firebase nuevo "pediatric-os" más adelante). Etapas 1a (Firebase, ver abajo), 1b (diseño y navegación) y 2a (pacientes y familias sobre los datos de ejemplo) hechas. Etapa 2b hecha: la app se conecta a Firebase (ver "Datos de la app"). Etapa 3 hecha: agenda y turnos (ver "Agenda"). Etapa 4 hecha: clínica (ver "Clínica"). Etapa 5 hecha en dos partes: 5a (vacunas, medicación y prescripciones, estudios, plan de cuidado) y 5b (archivos, certificados y prevención); ver "Seguimiento". Etapa 6 hecha en dos partes: 6a (servidor del portal: enlace mágico y copias filtradas) y 6b (la app del portal conectada a Firebase); ver "Portal". Próximo paso: Etapa 7 (gestión), con el OK del Dr.
 
 **Ubicación:** desde el 17/10/2026 la app vive en `Downloads/Proyecto Lanzamiento Domicilios Premium/pediatria-domicilio` (pedido del Dr.; antes estaba dentro de `Downloads/Telepediatría`, que es otro proyecto: telemedicina escolar). El resto de esa carpeta es material del negocio de domicilios, de referencia (no manda sobre el prompt maestro); también `Downloads/Consultorio/`. **No abrir** las planillas y carpetas con pacientes reales (`base_pacientes*.xlsx`, `pacientes_pediatricos DrApp.xlsx`, `Consultorio/Pacientes/`, `informe_ejemplo.pdf`). La ruta tiene espacios: en scripts, siempre entre comillas.
 
@@ -25,7 +25,7 @@ Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionad
   - `demo` (por defecto): datos ficticios en memoria y selector de rol (`src/data/fuenteDemo.tsx`).
   - `firebase`: ingreso real del médico con email y contraseña, lecturas en vivo de Firestore y escrituras con la firma que piden las reglas (`src/data/firebase/`). Se elige con `EXPO_PUBLIC_DATOS=firebase` (`npm run web:firebase`, con `npm run emuladores` y `npm run sembrar`).
 - Lo crítico va por Functions (`operaciones` del contrato): `crearPaciente`, `aprobarNota`, `corregirNota`, `emitirCertificado`, `anularCertificado`, `crearTurno`, `accionTurno` y `enviarResumen` (`enviarResumenFamilia`). En demostración hacen lo mismo en memoria.
-- En `firebase`, el portal de las familias todavía no entra: las copias filtradas del portal llegan en la Etapa 6. El asistente tampoco tiene pantallas todavía.
+- En `firebase`, la familia entra con el enlace mágico y lee solo las copias del portal (ver "Portal"). El asistente todavía no tiene pantallas.
 - El servidor escribe las fechas como la app (hora de Argentina con `-03:00`, `shared/fechaHora.ts`), porque la app compara fechas como texto.
 - En el celular la sesión de Firebase no queda guardada: se vuelve a ingresar al abrir la app. La sesión persistente llega con la versión propia de la app (EAS).
 
@@ -64,6 +64,10 @@ Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionad
 - La familia lee SOLO las copias `portal/{paciente}/{sub}`, que arman los triggers de `functions/src/portal/triggers.ts` con `proyeccion.ts` (lógica pura: qué ve la familia de cada dato). Los originales clínicos están cerrados para ella. La fiebre la escribe en `clinical/{paciente}/fever` (origin familia) y la lee en su copia.
 - Enlace mágico (`functions/src/portal/enlace.ts`): `pedirEnlace` (misma respuesta exista o no el email; huella SHA-256, 15 minutos, un solo uso, 3 pedidos por ventana) y `entrarConEnlace` (crea el usuario si hace falta, calcula el acceso y devuelve un token con rol familia; registra el ingreso). El mail sale por SMTP con `SMTP_USUARIO` y `SMTP_CLAVE` (Secret Manager); sin ellos no sale nada y solo en el emulador se devuelve `enlaceDePrueba`. `URL_APP` arma el enlace (`/ingresar?token=…`).
 - Parámetros comunes en `functions/src/params.ts` (`ORGANIZACION_ID`, `URL_APP`).
+- Las copias no llevan `organizationId` (si no, se mezclarían con lo clínico que el médico lee por grupo de colecciones).
+- App (Etapa 6b): `ingresar.tsx` pide el enlace (`pedirEnlaceEmail`) y entra solo con `?token=`; en el emulador muestra "Abrir el enlace" en lugar del mail. En Firebase, `fuenteFirebase` escucha `portalAccess`, el adulto, sus direcciones y cada copia, y `portalFamilia.ts` (`armarVistaFamilia`) las arma con la forma de las pantallas. Si se le quita el acceso, se cierra la sesión.
+- Acciones de la familia: pedir visita (`familia/pedir-visita`, servidor `pedirVisita`: solicitud, nunca confirmación; tope de 3 abiertas), Mis datos (`familia/(tabs)/membresia.tsx`: teléfono, email, preferencia y direcciones; al Dr. le llega el aviso "Datos actualizados"), documentos y materiales con "Bajar" (`enlaceDescarga`: enlace firmado de 5 minutos; en el emulador, el archivo en base64). Todo queda en el `auditLog`.
+- Para que salgan mails reales faltan las credenciales SMTP del Dr. (`SMTP_USUARIO`, `SMTP_CLAVE`).
 
 ## Firebase (desde la Etapa 1a)
 
@@ -88,8 +92,8 @@ Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionad
 src/
   app/            Pantallas (Expo Router)
     index.tsx       Selector de rol (modo prueba)
-    ingresar.tsx    Ingreso de familias con enlace mágico simulado (lib/enlaceMagico.ts: punto de integración)
-    familia/        Portal de la familia: (tabs) Inicio, Pedir visita, Fiebre, Membresía; hijo/[id], fiebre/, urgencia
+    ingresar.tsx    Ingreso de familias con enlace mágico (simulado en la demostración, real en Firebase)
+    familia/        Portal de la familia: (tabs) Inicio, Pedir visita, Fiebre, Mis datos; hijo/[id], fiebre/, urgencia, pedir-visita
     medico/         Médico: (tabs) Hoy, Pacientes, Fiebre, Membresías; hijo/[id] (ficha), paciente/nuevo, adulto/[id], adulto/vincular, accesos, certificado/nuevo, consulta/[id], seguimiento/[id], fiebre/, familia/[id]
   components/     Componentes de interfaz: escritorio/Marco.tsx (barra lateral y superior en pantallas de 1024 px o más; en el teléfono, pestañas), ficha/ (ficha completa del médico), crecimiento/ (curvas P3–P97 y tabla), certificados/, consulta/, fiebre/, formularios.
                   FichaHijo.tsx es la ficha del portal de la familia.

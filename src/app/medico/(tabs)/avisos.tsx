@@ -10,11 +10,11 @@ import { EstadoVacio } from '@/components/Estados';
 import { TextoFuerte, TextoChico } from '@/components/Texto';
 import { categorias, colors, type Categoria } from '@/theme';
 
-const ICONO: Record<TipoAviso, keyof typeof Ionicons.glyphMap> = { seguimiento: 'flag', fiebre: 'thermometer-outline', estudio: 'flask-outline', vacuna: 'shield-checkmark-outline', membresia: 'wallet-outline' };
-const COLOR: Record<TipoAviso, Categoria> = { seguimiento: 'rosado', fiebre: 'naranja', estudio: 'violeta', vacuna: 'rosado', membresia: 'verde' };
+const ICONO: Record<TipoAviso, keyof typeof Ionicons.glyphMap> = { seguimiento: 'flag', fiebre: 'thermometer-outline', estudio: 'flask-outline', vacuna: 'shield-checkmark-outline', membresia: 'wallet-outline', datos: 'person-circle-outline' };
+const COLOR: Record<TipoAviso, Categoria> = { seguimiento: 'rosado', fiebre: 'naranja', estudio: 'violeta', vacuna: 'rosado', membresia: 'verde', datos: 'celeste' };
 
 export default function Avisos() {
-  const { db } = useApp();
+  const { db, operaciones } = useApp();
   const avisos = avisosDelMedico(db);
   return (
     <Pantalla>
@@ -24,7 +24,7 @@ export default function Avisos() {
       {avisos.map((a) => {
         const c = categorias[COLOR[a.tipo]];
         return (
-          <Tarjeta key={a.id} onPress={() => router.push(a.href)} accessibilityLabel={`${a.alerta ? 'Vencido. ' : ''}${a.titulo}. ${a.detalle}`}
+          <Tarjeta key={a.id} onPress={() => { if (a.notificacionId) void operaciones.marcarAvisoVisto(a.notificacionId); router.push(a.href); }} accessibilityLabel={`${a.alerta ? 'Vencido. ' : ''}${a.titulo}. ${a.detalle}`}
             style={[s.fila, a.alerta && { backgroundColor: colors.alertBg, borderColor: colors.alertBorder }]}>
             <View style={[s.icono, { backgroundColor: a.alerta ? colors.white : c.fondo }]}>
               <Ionicons name={a.alerta ? 'alert-circle' : ICONO[a.tipo]} size={22} color={a.alerta ? colors.alert : c.acento} />

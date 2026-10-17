@@ -9,7 +9,7 @@ import { fechaCorta, hoyISO } from '@/lib/fechas';
 import { estadoDosis } from '@shared/vacunas';
 import { resultadosSinRevisar } from './seguimientoClinico';
 
-export type TipoAviso = 'seguimiento' | 'fiebre' | 'estudio' | 'vacuna' | 'membresia';
+export type TipoAviso = 'seguimiento' | 'fiebre' | 'estudio' | 'vacuna' | 'membresia' | 'datos';
 
 export interface Aviso {
   id: string;
@@ -19,7 +19,11 @@ export interface Aviso {
   /** Rojo, con ícono y palabra: vencido. */
   alerta: boolean;
   href: Href;
+  /** Si sale de un aviso guardado (campana del servidor): al abrirlo se marca visto. */
+  notificacionId?: string;
 }
+
+const CAMPO: Record<string, string> = { phone: 'teléfono', email: 'email', contactPreference: 'preferencia de contacto', direccion: 'dirección' };
 
 export function avisosDelMedico(db: Database, ahora = new Date().toISOString()): Aviso[] {
   const avisos: Aviso[] = [];
@@ -65,6 +69,16 @@ export function avisosDelMedico(db: Database, ahora = new Date().toISOString()):
       titulo: `Vacunas atrasadas · ${nombreCompleto(p)}`,
       detalle: `${atrasadas.length} ${atrasadas.length === 1 ? 'dosis' : 'dosis'}${db.vacunas.calendarioVerificado ? '' : ' (calendario sin verificar)'}`,
       href: { pathname: '/medico/hijo/[id]', params: { id: p.id, solapa: 'vacunas' } },
+    });
+  }
+
+  // Una familia cambió sus datos desde el portal.
+  for (const n of db.notifications.filter((x) => !x.readAt && x.kind === 'datos_familia')) {
+    avisos.push({
+      id: `dat-${n.id}`, tipo: 'datos', alerta: false, notificacionId: n.id,
+      titulo: `Datos actualizados · ${n.titulo ?? 'Una familia'}`,
+      detalle: `Cambió: ${(n.campos ?? []).map((c) => CAMPO[c] ?? c).join(', ') || 'sus datos'}`,
+      href: n.guardianId ? `/medico/adulto/${n.guardianId}` : '/medico/familias',
     });
   }
 

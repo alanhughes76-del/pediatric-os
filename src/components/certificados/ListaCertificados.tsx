@@ -2,7 +2,7 @@
  * Certificados de un paciente.
  * - Médico: ver o compartir el PDF y anular (con motivo; queda visible como "Anulado").
  * - Familia: descargar o compartir el PDF de los emitidos; los anulados se ven como "Anulado".
- * También lista los otros documentos del paciente (los que no son certificados emitidos acá).
+ * Al médico también le lista los otros documentos del paciente; la familia los ve (y baja) en "Documentos".
  */
 import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
@@ -25,7 +25,7 @@ import { colors } from '@/theme';
 export function ListaCertificados({ patientId, vista }: { patientId: string; vista: 'medico' | 'familia' }) {
   const { db } = useApp();
   const certificados = db.certificates.filter((c) => c.patientId === patientId).sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
-  const otros = db.documents.filter((d) => d.patientId === patientId && !d.certificateId && !d.archivedAt).sort((a, b) => b.date.localeCompare(a.date));
+  const otros = vista === 'familia' ? [] : db.documents.filter((d) => d.patientId === patientId && !d.certificateId && !d.archivedAt).sort((a, b) => b.date.localeCompare(a.date));
 
   if (certificados.length === 0 && otros.length === 0) {
     return <Texto color={colors.textMuted}>{vista === 'familia' ? 'Todavía no hay certificados.' : 'Sin certificados ni documentos.'}</Texto>;

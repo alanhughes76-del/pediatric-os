@@ -3,11 +3,11 @@
  * con las mismas reglas de shared/agenda.ts. Lógica pura, con tests.
  */
 import {
-  accionPermitida, avisosDeTurno, diaDe, estadoDespues, ocupaLugar, zonaDe, TEXTO_ESTADO_TURNO,
+  accionPermitida, avisosDeTurno, diaDe, estadoDespues, horaDe, inicioDe, ocupaLugar, zonaDe, TEXTO_ESTADO_TURNO,
   type AccionTurno,
 } from '@shared/agenda';
 import type { Appointment, AppointmentChange, Database } from './types';
-import type { DatosTurno, PedidoAccionTurno, ResultadoTurno } from './contrato';
+import type { DatosTurno, PedidoAccionTurno, PedidoVisita, ResultadoTurno } from './contrato';
 
 export interface Contexto { ahora: string; ahoraMs: number; usuarioId: string; nuevoId: (prefijo: string) => string }
 
@@ -104,4 +104,40 @@ export function accionTurnoDemo(db: Database, ctx: Contexto, p: PedidoAccionTurn
     if (freno) return { db, resultado: freno };
   }
   return { db: guardar(db, ctx, actual, final, accion, motivo || undefined), resultado: { estado: 'guardado', id: actual.id } };
+}
+
+/** Pedidos sin confirmar que puede tener abiertos una familia (igual que en el servidor). */
+export const PEDIDOS_ABIERTOS_MAXIMO = 3;
+
+/**
+ * Familia: pide una visita desde el portal. Queda como SOLICITUD (la confirma el Dr.), solo para
+ * sus hijos y con tope de pedidos abiertos. Misma regla que `pedirVisita` del servidor.
+ */
+export function pedirVisitaDemo(db: Database, ctx: Contexto, guardianId: string, p: PedidoVisita): Salida {
+  const error = (mensaje: string): Salida => ({ db, resultado: { estado: 'error', mensaje } });
+  const hoy = ctx.ahora.slice(0, 10);
+  const propios = new Set(db.relationships.filter((r) => r.guardianId === guardianId && !r.archivedAt && (!r.validTo || r.validTo > hoy)).map((r) => r.patientId));
+  const ids = [...new Set(p.patientIds)];
+  if (ids.length === 0) return error('Elegí para quién es la visita.');
+  if (ids.some((x) => !propios.has(x))) return error('Solo podés pedir visitas para tus hijos.');
+  const abiertos = db.appointments.filter((a) => a.createdBy === ctx.usuarioId && a.status === 'solicitado').length;
+  if (abiertos >= PEDIDOS_ABIERTOS_MAXIMO) return error(`Ya tenés ${abiertos} pedidos sin confirmar. El Dr. te va a responder; si es urgente, escribile por PacienteX.`);
+  let start = ctx.ahora;
+  if (p.tipo === 'control') {
+    const inicio = p.fecha && p.hora ? inicioDe(p.fecha, p.hora) : null;
+    if (!inicio) return error('Elegí el día y la hora que prefieren.');
+    if (Date.parse(inicio) < ctx.ahoraMs - 60_000) return error('Elegí un día de hoy en adelante.');
+    start = inicio;
+  }
+  const h = Number(horaDe(start).slice(0, 2));
+  const type = p.tipo === 'control' ? 'control' : h >= 20 || h < 8 ? 'urgencia-noche' : 'urgencia-dia';
+  const dir = p.addressId ? db.addresses.find((a) => a.id === p.addressId && a.guardianId === guardianId) : undefined;
+  const turno = completar({
+    id: ctx.nuevoId('t'), createdAt: ctx.ahora, createdBy: ctx.usuarioId, updatedAt: ctx.ahora, updatedBy: ctx.usuarioId,
+    start, day: '', durationMin: db.agenda.duracionMin[type], type, modality: 'domicilio',
+    familyId: db.patients.find((x) => x.id === ids[0])?.familyId ?? null, patientIds: ids,
+    address: dir ? { text: dir.street, locality: dir.locality, addressId: dir.id } : null, zone: null,
+    reason: p.motivo.trim().slice(0, 200), opsNotes: '', status: 'solicitado', origin: 'portal',
+  }, db);
+  return { db: guardar(db, ctx, null, turno, 'solicitud'), resultado: { estado: 'guardado', id: turno.id } };
 }

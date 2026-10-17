@@ -5,7 +5,6 @@
 import type { Appointment, AuditLog, Certificate, ClinicalNote, Consultation, Database, Document, DocumentKind, EducationalMaterial, Guardian, Patient } from './types';
 import type { ArchivoElegido } from '@/lib/archivos';
 import type { AccionTurno, Aviso } from '@shared/agenda';
-import type { ResultadoEnlace } from '@/lib/enlaceMagico';
 import type { Fuente } from './fuente';
 
 export type Sesion =
@@ -16,7 +15,7 @@ export type Sesion =
  * Tablas que la app escribe fila por fila (todas menos `doctor`, la configuración de la agenda,
  * la auditoría y los turnos con su historial, que pasan por `operaciones`).
  */
-export type Tabla = Exclude<keyof Database, 'doctor' | 'agenda' | 'ia' | 'vacunas' | 'auditLog' | 'communications' | 'materialDeliveries' | 'appointments' | 'appointmentHistory'>;
+export type Tabla = Exclude<keyof Database, 'doctor' | 'agenda' | 'ia' | 'vacunas' | 'auditLog' | 'communications' | 'materialDeliveries' | 'notifications' | 'appointments' | 'appointmentHistory'>;
 export type Fila<T extends Tabla> = Database[T][number];
 
 export interface CamposNota {
@@ -75,8 +74,26 @@ export interface Operaciones {
   enviarResumen: (p: { nota: ClinicalNote; asunto: string; texto: string }) => Promise<string | null>;
   /** "Enviar material": queda disponible en el portal y sale el aviso para Make. */
   enviarMaterial: (p: { material: EducationalMaterial; patientId: string }) => Promise<string | null>;
+  /** Familia: pide una visita (queda como solicitud; la confirma el Dr.). */
+  pedirVisita: (p: PedidoVisita) => Promise<string | null>;
+  /** Familia: actualiza su contacto. Al Dr. le llega un aviso. */
+  actualizarMisDatos: (p: { phone?: string; email?: string; contactPreference?: Guardian['contactPreference'] }) => Promise<string | null>;
+  /** Familia: agrega o corrige una de sus direcciones. Al Dr. le llega un aviso. */
+  guardarDireccion: (p: { id?: string; street: string; locality: string; notes?: string }) => Promise<string | null>;
+  /** El Dr. marca un aviso de la campana como visto. */
+  marcarAvisoVisto: (id: string) => Promise<void>;
   /** El Dr. marca el calendario de vacunas como verificado (o lo vuelve a borrador). */
   verificarCalendario: (verificado: boolean) => Promise<string | null>;
+}
+
+export interface PedidoVisita {
+  patientIds: string[];
+  tipo: 'control' | 'urgencia';
+  /** Control: día ("AAAA-MM-DD") y hora ("HH:MM") que prefieren. La urgencia es para ahora. */
+  fecha?: string;
+  hora?: string;
+  addressId?: string;
+  motivo: string;
 }
 
 export interface DatosDocumento {
@@ -101,6 +118,8 @@ export interface Archivos {
   /** PDF (con archivo) o enlace (sin archivo). */
   guardarMaterial: (datos: DatosMaterial, archivo?: ArchivoElegido) => Promise<string | null>;
   abrirMaterial: (m: EducationalMaterial) => Promise<string | null>;
+  /** Familia: baja un documento o material habilitado (en Firebase, con un enlace firmado de pocos minutos). */
+  descargarDelPortal: (p: { patientId: string; documentId?: string; deliveryId?: string }) => Promise<string | null>;
 }
 
 export interface AppState {
@@ -125,9 +144,13 @@ export interface AppState {
   /** Demostración: selector de rol. */
   entrarComoMedico: () => void;
   entrarComoAdulto: (guardianId: string) => void;
-  /** Demostración: enlace mágico simulado; devuelve el token si el email es de un adulto habilitado. */
-  pedirEnlaceEmail: (email: string) => string | null;
-  entrarConEnlace: (token: string) => ResultadoEnlace;
+  /**
+   * Familias: pide el enlace mágico. La respuesta es la misma exista o no el email.
+   * `enlaceDePrueba` solo aparece en la demostración y en el emulador (no hay mails de verdad).
+   */
+  pedirEnlaceEmail: (email: string) => Promise<{ error?: string; enlaceDePrueba?: string }>;
+  /** Entra con el código del enlace. Devuelve un mensaje de error, o null si entró. */
+  entrarConEnlace: (token: string) => Promise<string | null>;
   salir: () => void;
 
   // Escrituras (cada una queda en la auditoría)

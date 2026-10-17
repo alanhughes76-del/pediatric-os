@@ -73,6 +73,7 @@ export function vistaFamilia(db: Database, guardianId: ID): Database {
     appointmentHistory: [],
     blocks: [],
     communications: [],
+    notifications: [],
     // Prevención: solo lo que el Dr. le mandó a esta familia.
     materialDeliveries: delPaciente(db.materialDeliveries),
     educationalMaterials: db.educationalMaterials.filter((m) => db.materialDeliveries.some((e) => e.materialId === m.id && pacienteIds.has(e.patientId) && !e.archivedAt)),

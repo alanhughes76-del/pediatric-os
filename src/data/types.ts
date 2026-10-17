@@ -354,6 +354,8 @@ export interface FeverEntry extends Base {
   dose?: string;
   /** Lo cargó el médico (por ejemplo, lo que le dijeron por teléfono). */
   enteredByDoctor?: boolean;
+  /** Quién lo anotó, según la sesión (Firebase). */
+  origin?: 'medico' | 'familia';
   /** No entra a la historia clínica hasta que el médico lo marca revisado. */
   reviewedAt?: ISODateTime;
   reviewedBy?: ID;
@@ -498,6 +500,21 @@ export interface Communication extends Base {
   recipientIds: ID[];
 }
 
+// ---------- Avisos de la campana (Etapa 6) ----------
+
+/** Aviso para el Dr. que genera el servidor (por ejemplo, una familia cambió su contacto). */
+export interface AppNotification {
+  id: ID;
+  recipientUid: ID;
+  kind: 'datos_familia';
+  guardianId?: ID;
+  /** Qué cambió (nunca los datos). */
+  campos?: string[];
+  titulo?: string;
+  createdAt: ISODateTime;
+  readAt?: ISODateTime | null;
+}
+
 // ---------- Auditoría ----------
 
 /** Solo suma filas. Incluye los ingresos al portal (Registro de accesos). */
@@ -543,6 +560,7 @@ export interface Database {
   communications: Communication[];
   educationalMaterials: EducationalMaterial[];
   materialDeliveries: MaterialDelivery[];
+  notifications: AppNotification[];
   /** Horarios, duraciones, buffer y zonas (en Firebase: settings/agenda). */
   agenda: ConfigAgenda;
   /** IA encendida o apagada (settings/ia). Arranca apagada; se enciende en la Etapa 9. */

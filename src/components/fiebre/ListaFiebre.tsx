@@ -29,7 +29,10 @@ export function ListaFiebre({ registros, vista }: { registros: FeverEntry[]; vis
 function ItemFiebre({ r, vista }: { r: FeverEntry; vista: Vista }) {
   const { db } = useApp();
   const fiebre = r.kind === 'toma' && (r.temperatureC ?? 0) >= UMBRAL_FIEBRE;
-  const quien = autor(db, r.createdBy);
+  // En el portal la familia no conoce el usuario del Dr.: lo anotado por él se reconoce por el origen.
+  const quien = r.enteredByDoctor || r.origin === 'medico' ? db.doctor.name
+    : vista === 'familia' && !db.guardians.some((g) => g.id === r.createdBy) && r.createdBy !== db.doctor.id ? 'otro adulto de la familia'
+    : autor(db, r.createdBy);
 
   return (
     <Tarjeta style={{ gap: 8 }}>

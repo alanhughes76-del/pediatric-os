@@ -324,6 +324,7 @@ const base: Database = {
   // La biblioteca de prevención arranca vacía: los materiales los carga el Dr.
   educationalMaterials: [],
   materialDeliveries: [],
+  notifications: [],
   agenda: CONFIG_AGENDA_INICIAL,
   ia: { enabled: false },
   vacunas: { calendarioVerificado: false },

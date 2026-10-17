@@ -11,6 +11,7 @@ import { Pantalla } from './Pantalla';
 import { Tarjeta } from './Tarjeta';
 import { Campo } from './Formulario';
 import { Boton } from './Boton';
+import { router } from 'expo-router';
 import { ErrorComprensible } from './Estados';
 import { Subtitulo, Texto, TextoChico } from './Texto';
 import { colors, fonts } from '@/theme';
@@ -48,9 +49,11 @@ export function IngresoEquipo() {
           Conectado a los emuladores de Firebase en esta computadora: solo hay datos de demostración. El usuario de prueba
           del médico y su contraseña están en scripts/sembrar.ts.
         </TextoChico>
-        <Texto color={colors.textMuted}>
-          Las familias van a entrar con un enlace que les llega por email. Eso se conecta en la Etapa 6.
-        </Texto>
+        <Tarjeta style={{ gap: 10 }}>
+          <Subtitulo>¿Sos de una familia?</Subtitulo>
+          <Texto>Entrás con un enlace que te llega por email, sin contraseña.</Texto>
+          <Boton titulo="Entrar con mi email" icono="mail-outline" variante="secundario" onPress={() => router.push('/ingresar')} />
+        </Tarjeta>
       </Pantalla>
     </SafeAreaView>
   );

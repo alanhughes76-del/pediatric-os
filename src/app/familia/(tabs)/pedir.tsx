@@ -1,18 +1,13 @@
-import { useState } from 'react';
 import { router } from 'expo-router';
 import { Pantalla } from '@/components/Pantalla';
 import { BarraPacienteX, BotonPacienteX } from '@/components/BotonPacienteX';
 import { useApp, useSesionFamilia } from '@/data/store';
 import { puedePedirVisitas, TEXTO_MEMBRESIA_VENCIDA } from '@/data/selectores';
 import { Aviso } from '@/components/Formulario';
-import { Texto, TextoChico } from '@/components/Texto';
+import { Texto } from '@/components/Texto';
 import { Boton } from '@/components/Boton';
-import { abrirAgenda } from '@/lib/agenda';
-import { CONFIG } from '@/config';
-import { colors } from '@/theme';
 
 export default function PedirVisita() {
-  const [sinLink, setSinLink] = useState(false);
   const { db } = useApp();
   const { guardian } = useSesionFamilia();
 
@@ -34,7 +29,7 @@ export default function PedirVisita() {
         titulo="Control de salud"
         detalle="Controles programados de tu hijo"
         icono="heart-outline"
-        onPress={async () => setSinLink(!(await abrirAgenda(CONFIG.calControlUrl)))}
+        onPress={() => router.push({ pathname: '/familia/pedir-visita', params: { tipo: 'control' } })}
       />
       <Boton
         titulo="Consulta por urgencia"
@@ -44,9 +39,6 @@ export default function PedirVisita() {
         onPress={() => router.push('/familia/urgencia')}
       />
 
-      {sinLink ? (
-        <TextoChico color={colors.alert}>Todavía no está configurado el link de turnos. Escribime por PacienteX.</TextoChico>
-      ) : null}
     </Pantalla>
   );
 }

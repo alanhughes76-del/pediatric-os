@@ -1,17 +1,18 @@
 /**
- * Fuente de datos Firebase: ingreso real del equipo y datos en Firestore.
- * - Lee con suscripciones en vivo: las colecciones administrativas de la organización y lo
- *   clínico de todos los pacientes por grupo de colecciones (las reglas lo permiten solo al médico).
+ * Fuente de datos Firebase.
+ * - Médico: ingreso con email y contraseña; lee con suscripciones en vivo las colecciones de la
+ *   organización y lo clínico de todos los pacientes (por grupo de colecciones).
+ * - Familia (Etapa 6b): entra con el enlace mágico (token del servidor) y lee SOLO las copias
+ *   filtradas del portal (`portal/{paciente}/{sub}`), que se arman con `portalFamilia.ts` en la misma
+ *   forma que usan las pantallas. Escribe su fiebre, su contacto y sus direcciones; pedir visitas y
+ *   bajar archivos pasa por el servidor.
  * - Escribe con la firma que exigen las reglas (organizationId, createdBy, updatedBy). La
- *   auditoría la registra el servidor.
- * - Lo crítico (alta de pacientes, aprobar y corregir notas, emitir y anular certificados) va
- *   por Cloud Functions.
- * El portal de las familias se conecta en la Etapa 6 (copias filtradas que arma el servidor).
+ *   auditoría la registra el servidor. Lo crítico va por Cloud Functions.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signInWithCustomToken, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import {
-  collection, collectionGroup, deleteField, doc, onSnapshot, orderBy, query, setDoc, updateDoc, where, writeBatch,
+  collection, collectionGroup, deleteField, doc, getDoc, onSnapshot, orderBy, query, setDoc, updateDoc, where, writeBatch,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
@@ -20,18 +21,25 @@ import * as WebBrowser from 'expo-web-browser';
 import { mostrarBytes, nombreSeguro, problemaDelArchivo, tipoPorNombre } from '@/lib/archivos';
 import { FirebaseError } from 'firebase/app';
 import type { AppState, ResultadoTurno, Sesion, Tabla } from '../contrato';
-import type { Appointment, AppointmentChange, Communication, Database, MaterialDelivery } from '../types';
+import type { Address, AppNotification, Appointment, AppointmentChange, AuditLog, Communication, Database, Guardian, MaterialDelivery } from '../types';
+import { armarVistaFamilia, type CopiasPaciente } from './portalFamilia';
 import { CONFIG_AGENDA_INICIAL } from '@shared/agenda';
 import { firebase } from './config';
 import { ADMINISTRATIVAS, CLINICAS, aFirestore, coleccion, desdeFirestore, diferencias, ruta } from './mapeo';
 import { ahoraISO } from '@/lib/fechas';
 import { FIRMA } from '@/lib/certificados';
 
+/** Copias del portal que lee la familia, por chico (ver functions/src/portal/proyeccion.ts). */
+const SUBS_PORTAL = ['datos', 'summaries', 'allergies', 'problems', 'plan', 'growth', 'vaccines', 'documents', 'certificates', 'materials', 'fever', 'turnos'];
+
+/** Adulto tal como lo usa la app (en Firestore el acceso se llama portalEnabled). */
+const adultoDesde = (id: string, d: Record<string, unknown>) => desdeFirestore('guardians', id, d) as unknown as Guardian;
+
 const VACIA: Database = {
   doctor: { id: '', name: 'Dr. Alan Hughes', email: '', signature: FIRMA },
   families: [], guardians: [], relationships: [], addresses: [], patients: [], memberships: [], payments: [],
   backgrounds: [], problems: [], allergies: [], consultations: [], measurements: [], milestoneChecks: [], notes: [], followUps: [],
-  carePlan: [], vaccineDoses: [], medications: [], prescriptions: [], studies: [], fever: [], certificates: [], documents: [], appointments: [], appointmentHistory: [], blocks: [], communications: [], educationalMaterials: [], materialDeliveries: [],
+  carePlan: [], vaccineDoses: [], medications: [], prescriptions: [], studies: [], fever: [], certificates: [], documents: [], appointments: [], appointmentHistory: [], blocks: [], communications: [], educationalMaterials: [], materialDeliveries: [], notifications: [],
   agenda: CONFIG_AGENDA_INICIAL, ia: { enabled: false }, vacunas: { calendarioVerificado: false }, auditLog: [],
 };
 
@@ -56,26 +64,73 @@ export function useFuenteFirebase(): AppState {
   const [error, setError] = useState<string | null>(null);
   const uid = sesion?.usuarioId ?? '';
 
+  // Familia: a qué chicos accede (portalAccess, lo mantiene el servidor), su adulto, sus direcciones y las copias.
+  const [acceso, setAcceso] = useState<{ guardianId: string; patientIds: string[] } | null>(null);
+  const [direcciones, setDirecciones] = useState<Address[]>([]);
+  const [copias, setCopias] = useState<Record<string, CopiasPaciente>>({});
+
   // Sesión: rol y organización salen de los custom claims (los asigna solo el servidor).
   useEffect(() => onAuthStateChanged(auth, async (u) => {
+    setAcceso(null); setCopias({}); setDirecciones([]);
     if (!u) { setSesion(null); setOrg(null); setDatos(VACIA); setListo(true); return; }
     const { claims } = await u.getIdTokenResult();
-    if (claims.rol === 'medico' && typeof claims.organizationId === 'string') {
+    const orgId = typeof claims.organizationId === 'string' ? claims.organizationId : null;
+    if (claims.rol === 'medico' && orgId) {
       setSesion({ rol: 'medico', usuarioId: u.uid });
-      setOrg(claims.organizationId);
+      setOrg(orgId);
+    } else if (claims.rol === 'familia' && orgId) {
+      try {
+        const a = (await getDoc(doc(fs, `organizations/${orgId}/portalAccess/${u.uid}`))).data();
+        if (!a?.enabled || typeof a.guardianId !== 'string') throw new Error('sin acceso');
+        const g = await getDoc(doc(fs, `organizations/${orgId}/guardians/${a.guardianId}`));
+        setAcceso({ guardianId: a.guardianId, patientIds: (a.patientIds ?? []) as string[] });
+        setSesion({ rol: 'familia', usuarioId: u.uid, guardian: adultoDesde(g.id, g.data() ?? {}) });
+        setOrg(orgId);
+      } catch {
+        await signOut(auth);
+        setError('Tu acceso al portal no está habilitado. Escribile al Dr. por PacienteX.');
+      }
     } else {
-      // Asistente (todavía sin pantallas) o familia (portal en la Etapa 6): no entra a esta app aún.
+      // El asistente todavía no tiene pantallas.
       await signOut(auth);
-      setError(claims.rol === 'asistente'
-        ? 'El acceso del asistente llega más adelante.'
-        : 'Por ahora el ingreso es solo para el médico. El portal de las familias se conecta en la Etapa 6.');
+      setError('El acceso del asistente llega más adelante.');
     }
     setListo(true);
-  }), [auth]);
+  }), [auth, fs]);
 
-  // Suscripciones en vivo a los datos de la organización.
+  // Familia: suscripciones a su acceso, su adulto, sus direcciones y las copias de cada chico.
+  const esFamilia = sesion?.rol === 'familia';
+  const idsFamilia = acceso?.patientIds.join(',') ?? '';
   useEffect(() => {
-    if (!org) return;
+    if (!org || !esFamilia || !acceso) return;
+    const subs: Unsubscribe[] = [];
+    const fallo = (e: unknown) => setError(mensajeDeError(e));
+    subs.push(onSnapshot(doc(fs, `organizations/${org}/portalAccess/${uid}`), (snap) => {
+      const a = snap.data();
+      if (!a?.enabled) { void signOut(auth); return; }
+      setAcceso((x) => ({ guardianId: x?.guardianId ?? String(a.guardianId), patientIds: (a.patientIds ?? []) as string[] }));
+    }, fallo));
+    subs.push(onSnapshot(doc(fs, `organizations/${org}/guardians/${acceso.guardianId}`), (snap) => {
+      const g = adultoDesde(snap.id, snap.data() ?? {});
+      setSesion((x) => (x?.rol === 'familia' ? { ...x, guardian: g } : x));
+    }, fallo));
+    subs.push(onSnapshot(collection(fs, `organizations/${org}/guardians/${acceso.guardianId}/addresses`), (snap) => {
+      setDirecciones(snap.docs.map((x) => desdeFirestore('addresses', x.id, x.data()) as unknown as Address));
+    }, fallo));
+    for (const pid of idsFamilia ? idsFamilia.split(',') : []) {
+      for (const sub of SUBS_PORTAL) {
+        subs.push(onSnapshot(collection(fs, `organizations/${org}/portal/${pid}/${sub}`), (snap) => {
+          setCopias((c) => ({ ...c, [pid]: { ...c[pid], [sub]: snap.docs.map((x) => ({ id: x.id, datos: x.data() })) } }));
+        }, fallo));
+      }
+    }
+    return () => subs.forEach((u) => u());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fs, auth, org, esFamilia, acceso?.guardianId, idsFamilia, uid]);
+
+  // Médico: suscripciones en vivo a los datos de la organización.
+  useEffect(() => {
+    if (!org || sesion?.rol !== 'medico') return;
     const subs: Unsubscribe[] = [];
     const poner = (tabla: Tabla) => (snap: { docs: { id: string; data: () => Record<string, unknown> }[] }) =>
       setDatos((d) => ({ ...d, [tabla]: snap.docs.map((x) => desdeFirestore(tabla, x.id, x.data())) }));
@@ -112,12 +167,19 @@ export function useFuenteFirebase(): AppState {
     subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/ia`), (snap) => {
       setDatos((d) => ({ ...d, ia: { enabled: snap.data()?.enabled === true } }));
     }, fallo));
+    // Avisos de la campana para el Dr. (por ejemplo, una familia cambió su contacto) y registro de accesos.
+    subs.push(onSnapshot(query(collection(fs, `organizations/${org}/notifications`), where('recipientUid', '==', uid), where('readAt', '==', null)), (snap) => {
+      setDatos((d) => ({ ...d, notifications: snap.docs.map((x) => ({ id: x.id, ...x.data() }) as AppNotification) }));
+    }, fallo));
+    subs.push(onSnapshot(query(collection(fs, `organizations/${org}/auditLog`), where('action', '==', 'login')), (snap) => {
+      setDatos((d) => ({ ...d, auditLog: snap.docs.map((x) => ({ id: x.id, ...x.data() }) as AuditLog) }));
+    }, fallo));
     subs.push(onSnapshot(collection(fs, `organizations/${org}/professionals`), (snap) => {
       const p = snap.docs[0];
       if (p) setDatos((d) => ({ ...d, doctor: { id: uid, name: String(p.data().name ?? d.doctor.name), email: '', signature: String(p.data().signature ?? FIRMA) } }));
     }, fallo));
     return () => subs.forEach((u) => u());
-  }, [fs, org, uid]);
+  }, [fs, org, uid, sesion?.rol]);
 
   const fallo = useCallback((e: unknown) => setError(mensajeDeError(e)), []);
   const firmaNueva = useCallback(() => {
@@ -139,10 +201,11 @@ export function useFuenteFirebase(): AppState {
     if (!org) return '';
     const id = fila.id ?? doc(collection(fs, '_')).id;
     const completa: Record<string, unknown> = { ...fila, id };
-    if (tabla === 'fever') completa.origin = 'medico';
+    // La fiebre dice quién la cargó (las reglas lo exigen): el médico o la familia.
+    if (tabla === 'fever') completa.origin = sesion?.rol === 'familia' ? 'familia' : 'medico';
     setDoc(doc(fs, ruta(org, tabla, completa as { id: string })), { ...aFirestore(tabla, completa), ...firmaNueva() }).catch(fallo);
     return id;
-  }, [fs, org, firmaNueva, fallo]);
+  }, [fs, org, firmaNueva, fallo, sesion?.rol]);
 
   const actualizar = useCallback<AppState['actualizar']>((tabla, id, cambios) => {
     if (!org) return;
@@ -208,8 +271,35 @@ export function useFuenteFirebase(): AppState {
         }
       },
       enviarResumen: ({ nota, asunto, texto }) => llamar('enviarResumenFamilia', { patientId: nota.patientId, noteId: nota.id, asunto, texto }),
+
+      // ---- Familia ----
+      pedirVisita: (pedido) => llamar('pedirVisita', pedido),
+      actualizarMisDatos: async (cambios) => {
+        if (!org || !acceso) return 'No hay sesión.';
+        // Las reglas dejan cambiar solo el teléfono, el email y la preferencia, con su firma.
+        const limpio = Object.fromEntries(Object.entries(cambios).filter(([, v]) => v !== undefined));
+        try {
+          await updateDoc(doc(fs, `organizations/${org}/guardians/${acceso.guardianId}`), { ...limpio, updatedBy: uid, updatedAt: ahoraISO() });
+          return null;
+        } catch (e) { return mensajeDeError(e); }
+      },
+      guardarDireccion: async ({ id, ...dir }) => {
+        if (!org || !acceso) return 'No hay sesión.';
+        if (!dir.street.trim() || !dir.locality.trim()) return 'Escribí la calle y la localidad.';
+        const coleccionDir = `organizations/${org}/guardians/${acceso.guardianId}/addresses`;
+        const datosDir = { street: dir.street.trim(), locality: dir.locality.trim(), notes: dir.notes?.trim() ?? '' };
+        try {
+          if (id) await updateDoc(doc(fs, `${coleccionDir}/${id}`), { ...datosDir, updatedBy: uid, updatedAt: ahoraISO() });
+          else await setDoc(doc(collection(fs, coleccionDir)), { ...datosDir, guardianId: acceso.guardianId, ...firmaNueva() });
+          return null;
+        } catch (e) { return mensajeDeError(e); }
+      },
+      marcarAvisoVisto: async (id) => {
+        if (!org) return;
+        await updateDoc(doc(fs, `organizations/${org}/notifications/${id}`), { readAt: ahoraISO() }).catch(fallo);
+      },
     };
-  }, [functions, fs, org, uid]);
+  }, [functions, fs, org, uid, acceso, firmaNueva, fallo]);
 
   /** Archivos en Cloud Storage: se suben y se leen con la sesión del médico. Nunca hay enlaces públicos. */
   const archivos = useMemo<AppState['archivos']>(() => {
@@ -260,13 +350,33 @@ export function useFuenteFirebase(): AppState {
           return null;
         } catch (e) { return mensajeDeError(e); }
       },
+      // Familia: el servidor revisa que esté habilitado y da un enlace firmado de pocos minutos.
+      descargarDelPortal: async (pedido) => {
+        try {
+          const r = await httpsCallable<unknown, { url?: string; base64?: string; nombre: string; tipo: string }>(functions, 'enlaceDescarga')(pedido);
+          if (r.data.url) { await WebBrowser.openBrowserAsync(r.data.url); return null; }
+          if (r.data.base64) {
+            // Solo en el emulador: el servidor no puede firmar enlaces y devuelve el archivo.
+            const binario = atob(r.data.base64);
+            const bytes = Uint8Array.from(binario, (c) => c.charCodeAt(0));
+            await mostrarBytes(bytes.buffer, nombreSeguro(r.data.nombre), r.data.tipo);
+            return null;
+          }
+          return 'No se pudo bajar el archivo.';
+        } catch (e) { return mensajeDeError(e); }
+      },
     };
-  }, [fs, org, storage, firmaNueva]);
+  }, [fs, org, storage, functions, firmaNueva]);
+
+  // La familia ve SOLO lo que armaron sus copias del portal.
+  const vistaDeFamilia = useMemo(() => (sesion?.rol === 'familia'
+    ? armarVistaFamilia({ copias, guardian: sesion.guardian, addresses: direcciones, doctor: VACIA.doctor, vacia: VACIA })
+    : null), [sesion, copias, direcciones]);
 
   return useMemo<AppState>(() => ({
     fuente: 'firebase',
     listo,
-    db: datos,
+    db: vistaDeFamilia ?? datos,
     sesion,
     usuarioId: uid,
     error,
@@ -276,13 +386,25 @@ export function useFuenteFirebase(): AppState {
     },
     entrarComoMedico: () => {},
     entrarComoAdulto: () => {},
-    pedirEnlaceEmail: () => null,
-    entrarConEnlace: () => ({ ok: false, motivo: 'invalido' }),
+    pedirEnlaceEmail: async (email) => {
+      try {
+        const r = await httpsCallable<unknown, { ok: boolean; enlaceDePrueba?: string }>(functions, 'pedirEnlace')({ email });
+        return r.data.enlaceDePrueba ? { enlaceDePrueba: r.data.enlaceDePrueba } : {};
+      } catch (e) { return { error: mensajeDeError(e) }; }
+    },
+    entrarConEnlace: async (token) => {
+      try {
+        const r = await httpsCallable<unknown, { token: string }>(functions, 'entrarConEnlace')({ token });
+        await signInWithCustomToken(auth, r.data.token);
+        setError(null);
+        return null;
+      } catch (e) { return mensajeDeError(e); }
+    },
     salir: () => { signOut(auth).catch(fallo); },
     agregar,
     actualizar,
     enLote,
     operaciones,
     archivos,
-  }), [archivos, listo, datos, sesion, uid, error, auth, agregar, actualizar, enLote, operaciones, fallo]);
+  }), [archivos, listo, datos, vistaDeFamilia, sesion, uid, error, auth, functions, agregar, actualizar, enLote, operaciones, fallo]);
 }

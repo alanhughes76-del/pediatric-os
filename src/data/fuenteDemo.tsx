@@ -5,15 +5,15 @@
  */
 import { useCallback, useMemo, useState } from 'react';
 import { datosDeEjemplo, DOCTOR_ID } from './mock';
-import type { AuditLog, Certificate, ClinicalNote, Communication, Database, Document, FollowUp, MaterialDelivery } from './types';
+import type { AuditLog, Certificate, ClinicalNote, Communication, Database, Document, EducationalMaterial, FollowUp, MaterialDelivery } from './types';
 import type { AppState, Sesion } from './contrato';
 import { vistaFamilia } from './vistaFamilia';
 import { buscarDuplicados } from '@shared/duplicados';
 import { horasDeSeguimiento, mensajeDeSeguimiento, nombreCompleto } from './selectores';
-import { pedirEnlace, usarEnlace, type Enlace } from '@/lib/enlaceMagico';
+import { pedirEnlace, usarEnlace, TEXTO_MOTIVO_ENLACE, type Enlace } from '@/lib/enlaceMagico';
 import { FIRMA } from '@/lib/certificados';
 import { ahoraISO, sumarHoras } from '@/lib/fechas';
-import { accionTurnoDemo, crearTurnoDemo, type Contexto } from './turnosDemo';
+import { accionTurnoDemo, crearTurnoDemo, pedirVisitaDemo, type Contexto } from './turnosDemo';
 import { dosisDelEsquema } from './vacunasApp';
 import { Linking } from 'react-native';
 import { mostrarUri, nombreSeguro, problemaDelArchivo } from '@/lib/archivos';
@@ -21,6 +21,13 @@ import { compartirCertificado } from '@/lib/certificadoPdf';
 
 /** Demostración: los archivos quedan en la memoria del dispositivo (ruta → archivo local). */
 const archivosDemo = new Map<string, { uri: string; mimeType: string }>();
+
+async function abrirMaterialDemo(m: EducationalMaterial): Promise<string | null> {
+  if (m.kind === 'enlace' && m.url) { await Linking.openURL(m.url); return null; }
+  const local = m.file ? archivosDemo.get(m.file) : undefined;
+  if (local) { await mostrarUri(local.uri, local.mimeType); return null; }
+  return 'No encontramos el archivo de este material.';
+}
 
 let contador = 0;
 export const nuevoId = (prefijo: string) => `${prefijo}-${Date.now().toString(36)}-${(contador++).toString(36)}`;
@@ -193,8 +200,53 @@ export function useFuenteDemo(): AppState {
       if (salida.db !== db) setDb(salida.db);
       return salida.resultado;
     },
+
+    pedirVisita: async (pedido) => {
+      if (sesion?.rol !== 'familia') return 'Solo una familia puede pedir visitas desde el portal.';
+      const salida = pedirVisitaDemo(db, contexto(), sesion.guardian.id, pedido);
+      if (salida.db !== db) setDb(salida.db);
+      return salida.resultado.estado === 'error' ? salida.resultado.mensaje : null;
+    },
+
+    actualizarMisDatos: async (cambios) => {
+      if (sesion?.rol !== 'familia') return 'Solo la familia actualiza sus datos.';
+      const g = sesion.guardian;
+      const campos = (Object.keys(cambios) as (keyof typeof cambios)[]).filter((k) => cambios[k] !== g[k]);
+      if (campos.length === 0) return null;
+      enLote((d, { ahora, log }) => {
+        log({ action: 'familia.datos', entity: 'guardians', entityId: g.id, detail: campos.join(', ') });
+        return {
+          ...d,
+          guardians: d.guardians.map((x) => (x.id === g.id ? { ...x, ...cambios } : x)),
+          notifications: [...d.notifications, { id: nuevoId('av'), recipientUid: DOCTOR_ID, kind: 'datos_familia', guardianId: g.id, campos, titulo: `${g.firstName} ${g.lastName}`, createdAt: ahora, readAt: null }],
+        };
+      });
+      setSesion({ ...sesion, guardian: { ...g, ...cambios } });
+      return null;
+    },
+
+    guardarDireccion: async ({ id, ...dir }) => {
+      if (sesion?.rol !== 'familia') return 'Solo la familia actualiza sus direcciones.';
+      const g = sesion.guardian;
+      if (!dir.street.trim() || !dir.locality.trim()) return 'Escribí la calle y la localidad.';
+      enLote((d, { ahora, usuarioId: uid, log }) => {
+        const existente = id ? d.addresses.find((a) => a.id === id && a.guardianId === g.id) : undefined;
+        const nueva = existente ? { ...existente, ...dir } : { id: nuevoId('ad'), createdAt: ahora, createdBy: uid, guardianId: g.id, ...dir };
+        log({ action: existente ? 'familia.direccion.editar' : 'familia.direccion.crear', entity: 'addresses', entityId: nueva.id });
+        return {
+          ...d,
+          addresses: existente ? d.addresses.map((a) => (a.id === nueva.id ? nueva : a)) : [...d.addresses, nueva],
+          notifications: [...d.notifications, { id: nuevoId('av'), recipientUid: DOCTOR_ID, kind: 'datos_familia', guardianId: g.id, campos: ['direccion'], titulo: `${g.firstName} ${g.lastName}`, createdAt: ahora, readAt: null }],
+        };
+      });
+      return null;
+    },
+
+    marcarAvisoVisto: async (id) => {
+      setDb((d) => ({ ...d, notifications: d.notifications.map((n) => (n.id === id ? { ...n, readAt: ahoraISO() } : n)) }));
+    },
   };
-  }, [db, actualizar, enLote, usuarioId]);
+  }, [db, actualizar, enLote, usuarioId, sesion]);
 
   const archivos = useMemo<AppState['archivos']>(() => ({
     subirDocumento: async (datos, archivo) => {
@@ -225,11 +277,18 @@ export function useFuenteDemo(): AppState {
       agregar('educationalMaterials', { ...datos, id, file }, 'material.crear');
       return null;
     },
-    abrirMaterial: async (m) => {
-      if (m.kind === 'enlace' && m.url) { await Linking.openURL(m.url); return null; }
-      const local = m.file ? archivosDemo.get(m.file) : undefined;
-      if (local) { await mostrarUri(local.uri, local.mimeType); return null; }
-      return 'No encontramos el archivo de este material.';
+    abrirMaterial: async (m) => abrirMaterialDemo(m),
+    descargarDelPortal: async ({ patientId, documentId, deliveryId }) => {
+      if (documentId) {
+        const d = db.documents.find((x) => x.id === documentId && x.patientId === patientId);
+        if (!d) return 'No encontramos ese documento.';
+        const local = archivosDemo.get(d.file);
+        if (local) { await mostrarUri(local.uri, local.mimeType); return null; }
+        return 'Es un documento de ejemplo: no tiene archivo para bajar.';
+      }
+      const envio = db.materialDeliveries.find((e) => e.id === deliveryId && e.patientId === patientId);
+      const m = envio ? db.educationalMaterials.find((x) => x.id === envio.materialId) : undefined;
+      return m ? abrirMaterialDemo(m) : 'No encontramos ese material.';
     },
   }), [db, agregar]);
 
@@ -254,20 +313,20 @@ export function useFuenteDemo(): AppState {
       // Registro de accesos
       setDb((d) => ({ ...d, auditLog: [...d.auditLog, filaLog({ action: 'login', detail: 'modo prueba' }, guardian.id)] }));
     },
-    pedirEnlaceEmail: (email) => {
+    // Demostración: no hay mails; el "enlace" se muestra en pantalla para probar.
+    pedirEnlaceEmail: async (email) => {
       const enlace = pedirEnlace(db.guardians, email, Date.now(), nuevoId('enlace'));
       if (enlace) setEnlaces((xs) => [...xs, enlace]);
-      return enlace?.token ?? null;
+      return enlace ? { enlaceDePrueba: enlace.token } : {};
     },
-    entrarConEnlace: (token) => {
+    entrarConEnlace: async (token) => {
       const { resultado, enlaces: nuevos } = usarEnlace(enlaces, token, Date.now(), db.guardians);
       setEnlaces(nuevos);
-      if (resultado.ok) {
-        const guardian = db.guardians.find((g) => g.id === resultado.guardianId)!;
-        setSesion({ rol: 'familia', usuarioId: guardian.id, guardian });
-        setDb((d) => ({ ...d, auditLog: [...d.auditLog, filaLog({ action: 'login', detail: 'enlace por email' }, guardian.id)] }));
-      }
-      return resultado;
+      if (!resultado.ok) return TEXTO_MOTIVO_ENLACE[resultado.motivo];
+      const guardian = db.guardians.find((g) => g.id === resultado.guardianId)!;
+      setSesion({ rol: 'familia', usuarioId: guardian.id, guardian });
+      setDb((d) => ({ ...d, auditLog: [...d.auditLog, filaLog({ action: 'login', detail: 'enlace por email' }, guardian.id)] }));
+      return null;
     },
     salir: () => setSesion(null),
     agregar,

@@ -17,6 +17,7 @@ export default function FamiliaLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="hijo/[id]" options={{ title: 'Ficha' }} />
         <Stack.Screen name="urgencia" options={{ title: 'Consulta por urgencia' }} />
+        <Stack.Screen name="pedir-visita" options={{ title: 'Pedir visita' }} />
         <Stack.Screen name="fiebre/[id]" options={{ title: 'Fiebre' }} />
         <Stack.Screen name="fiebre/nuevo" options={{ title: 'Anotar', presentation: 'modal' }} />
       </Stack>

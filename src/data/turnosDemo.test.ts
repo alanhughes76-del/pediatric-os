@@ -1,5 +1,5 @@
 import { datosDeEjemplo } from './mock';
-import { accionTurnoDemo, crearTurnoDemo, type Contexto } from './turnosDemo';
+import { accionTurnoDemo, crearTurnoDemo, pedirVisitaDemo, type Contexto } from './turnosDemo';
 import { historialDeTurno, nombreDeTurno, porConfirmar, proximoTurno } from './selectores';
 import { vistaFamilia } from './vistaFamilia';
 import type { Database } from './types';
@@ -82,5 +82,23 @@ describe('selectores y vista de la familia', () => {
     expect(v.appointmentHistory).toEqual([]);
     expect(v.blocks).toEqual([]);
     expect(proximoTurno(v, ['p-emma'], '2000-01-01')?.id).toBe('t-prox-emma');
+  });
+});
+
+describe('pedir visita desde el portal (demostración, misma regla que el servidor)', () => {
+  const ctxFamilia = (): Contexto => ({ ahora: '2026-10-17T10:00:00-03:00', ahoraMs: Date.parse('2026-10-17T10:00:00-03:00'), usuarioId: 'g-lucia', nuevoId: (p) => `${p}-${++n}` });
+  test('queda como solicitud del portal, con la dirección elegida', () => {
+    const r = pedirVisitaDemo(datosDeEjemplo, ctxFamilia(), 'g-lucia', { patientIds: ['p-tomas'], tipo: 'control', fecha: '2026-10-20', hora: '10:00', addressId: 'ad-lucia', motivo: 'Control' });
+    expect(r.resultado.estado).toBe('guardado');
+    const t = r.db.appointments.at(-1)!;
+    expect(t).toMatchObject({ status: 'solicitado', origin: 'portal', type: 'control', start: '2026-10-20T10:00:00-03:00', familyId: 'f-ferreyra' });
+    expect(t.address?.addressId).toBe('ad-lucia');
+  });
+  test('solo para sus hijos y con tope de pedidos abiertos', () => {
+    expect(pedirVisitaDemo(datosDeEjemplo, ctxFamilia(), 'g-lucia', { patientIds: ['p-mateo'], tipo: 'urgencia', motivo: '' }).resultado.estado).toBe('error');
+    let db = datosDeEjemplo;
+    for (let i = 0; i < 3; i++) db = pedirVisitaDemo(db, ctxFamilia(), 'g-lucia', { patientIds: ['p-tomas'], tipo: 'urgencia', motivo: '' }).db;
+    expect(pedirVisitaDemo(db, ctxFamilia(), 'g-lucia', { patientIds: ['p-tomas'], tipo: 'urgencia', motivo: '' }).resultado)
+      .toMatchObject({ estado: 'error', mensaje: expect.stringContaining('pedidos sin confirmar') });
   });
 });
