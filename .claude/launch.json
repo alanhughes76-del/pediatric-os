@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "app-web",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "start", "--web", "--port", "8082"],
+      "port": 8082
+    },
+    {
+      "name": "app-web-firebase",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "EXPO_PUBLIC_DATOS=firebase npx expo start --web --port 8083"],
+      "port": 8083
+    }
+  ]
+}
