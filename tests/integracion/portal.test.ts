@@ -5,10 +5,11 @@
  */
 import { initializeApp as initAdmin, deleteApp as deleteAdmin, type App } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
 import { initializeApp, deleteApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator, signInWithCustomToken } from 'firebase/auth';
 import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'firebase/functions';
-import { getFirestore as getCliente, connectFirestoreEmulator, doc, getDoc, getDocs, collection, setDoc } from 'firebase/firestore';
+import { getFirestore as getCliente, connectFirestoreEmulator, doc, getDoc, getDocs, collection, setDoc, updateDoc } from 'firebase/firestore';
 
 const ORG = 'org-demo';
 const P = 'p-portal';
@@ -47,7 +48,10 @@ beforeAll(async () => {
   await fs.doc(`${base}/families/f-portal`).set({ organizationId: ORG, name: 'Familia Portal' });
   await fs.doc(`${base}/patients/${P}`).set({ organizationId: ORG, familyId: 'f-portal', firstName: 'Ana', lastName: 'Portal', birthDate: '2024-01-01', sex: 'F', dni: '50.000.001', bloodType: 'A+' });
   await fs.doc(`${base}/patients/${OTRO}`).set({ organizationId: ORG, firstName: 'Otro', lastName: 'Chico', birthDate: '2023-01-01', sex: 'M' });
-  await fs.doc(`${base}/guardians/${G}`).set({ organizationId: ORG, familyId: 'f-portal', firstName: 'Laura', lastName: 'Portal', email: EMAIL, portalEnabled: true });
+  await fs.doc(`${base}/guardians/${G}`).set({ organizationId: ORG, familyId: 'f-portal', firstName: 'Laura', lastName: 'Portal', email: EMAIL, portalEnabled: true, createdBy: 'medico-x', createdAt: '2026-10-17', updatedBy: 'medico-x', updatedAt: '2026-10-17' });
+  await fs.doc(`${base}/professionals/medico-portal`).set({ organizationId: ORG, name: 'Dr. Prueba' });
+  await fs.doc(`${base}/guardians/${G}/addresses/ad-portal`).set({ organizationId: ORG, guardianId: G, street: 'Calle Falsa 123', locality: 'Olivos' });
+  await getStorage(admin).bucket('demo-pediatric-os.appspot.com').file('orgs/x/visible.pdf').save(Buffer.from('%PDF-1.4 prueba'), { contentType: 'application/pdf' });
   await fs.doc(`${base}/relationships/r-portal`).set({ organizationId: ORG, patientId: P, guardianId: G, type: 'madre', isPrimary: true });
   const c = `${base}/clinical/${P}`;
   await fs.doc(`${c}/consultations/c1`).set({ ...firma, occurredAt: '2026-10-10T10:00:00-03:00', visitType: 'control', modality: 'domicilio', rawText: 'TEXTO INTERNO' });
@@ -138,5 +142,46 @@ describe('lo que ve la familia (prueba 12)', () => {
     await esperar(async () => (await fs.doc(`${portal('fever')}/fv-familia`).get()).exists);
     const copia = (await getDoc(doc(db(), `${portal('fever')}/fv-familia`))).data()!;
     expect(copia).toMatchObject({ temperatureC: 38.4, reviewed: false, origin: 'familia' });
+  });
+});
+
+describe('acciones de la familia', () => {
+  const db = () => getCliente(familia);
+
+  test('pedir un control: queda como solicitud en la agenda, para el día y la hora que prefieren', async () => {
+    const manana = new Date(Date.now() + 2 * 86_400_000 - 3 * 3_600_000).toISOString().slice(0, 10);
+    const r = await llamar<{ id: string }>(familia, 'pedirVisita', { patientIds: [P], tipo: 'control', fecha: manana, hora: '10:00', addressId: 'ad-portal', motivo: 'Control anual' });
+    const t = (await fs.doc(`${base}/appointments/${r.data.id}`).get()).data()!;
+    expect(t).toMatchObject({ status: 'solicitado', origin: 'portal', type: 'control', patientIds: [P], familyId: 'f-portal', start: `${manana}T10:00:00-03:00`, reason: 'Control anual' });
+    expect(t.address).toMatchObject({ text: 'Calle Falsa 123', locality: 'Olivos', addressId: 'ad-portal' });
+    // La familia lo ve en su portal (sin notas internas).
+    await esperar(async () => (await fs.doc(`${portal('turnos')}/${r.data.id}`).get()).exists);
+  });
+
+  test('solo para sus hijos, y con un tope de pedidos sin confirmar', async () => {
+    await expect(llamar(familia, 'pedirVisita', { patientIds: [OTRO], tipo: 'urgencia' })).rejects.toMatchObject({ code: 'functions/permission-denied' });
+    await llamar(familia, 'pedirVisita', { patientIds: [P], tipo: 'urgencia', motivo: 'Fiebre' });
+    await llamar(familia, 'pedirVisita', { patientIds: [P], tipo: 'urgencia' });
+    await expect(llamar(familia, 'pedirVisita', { patientIds: [P], tipo: 'urgencia' })).rejects.toMatchObject({ code: 'functions/resource-exhausted' });
+  });
+
+  test('descarga: solo documentos habilitados', async () => {
+    const r = await llamar<{ base64?: string; url?: string; nombre: string }>(familia, 'enlaceDescarga', { patientId: P, documentId: 'd-visible' });
+    expect(Buffer.from(r.data.base64!, 'base64').toString()).toBe('%PDF-1.4 prueba');
+    expect(r.data.nombre).toBe('Informe');
+    await expect(llamar(familia, 'enlaceDescarga', { patientId: P, documentId: 'd-oculto' })).rejects.toMatchObject({ code: 'functions/permission-denied' });
+    await expect(llamar(familia, 'enlaceDescarga', { patientId: OTRO, documentId: 'd-visible' })).rejects.toMatchObject({ code: 'functions/permission-denied' });
+  });
+
+  test('Mis datos: cambia su teléfono y al Dr. le llega un aviso; no puede habilitarse el portal', async () => {
+    const uid = getAuth(familia).currentUser!.uid;
+    const ahora = '2026-10-17T11:00:00-03:00';
+    await updateDoc(doc(db(), `${base}/guardians/${G}`), { phone: '+5491155559999', updatedBy: uid, updatedAt: ahora });
+    await expect(updateDoc(doc(db(), `${base}/guardians/${G}`), { portalEnabled: false, updatedBy: uid, updatedAt: ahora })).rejects.toMatchObject({ code: 'permission-denied' });
+    await esperar(async () => !(await fs.collection(`${base}/notifications`).where('guardianId', '==', G).get()).empty);
+    const aviso = (await fs.collection(`${base}/notifications`).where('guardianId', '==', G).get()).docs[0].data();
+    expect(aviso).toMatchObject({ recipientUid: 'medico-portal', kind: 'datos_familia', campos: ['phone'], readAt: null });
+    const ev = (await fs.collection(`${base}/outbox`).where('type', '==', 'familia.datos_actualizados').get()).docs.map((d) => d.data()).find((e) => e.data.guardianId === G)!;
+    expect(ev.data).toEqual({ guardianId: G, familyId: 'f-portal', campos: ['phone'] });
   });
 });

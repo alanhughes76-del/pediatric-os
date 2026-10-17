@@ -10,6 +10,7 @@ export { crearTurno, accionTurno } from './turnos/callables';
 export { enviarResumenFamilia } from './resumen';
 export { enviarMaterial } from './prevencion';
 export { pedirEnlace, entrarConEnlace } from './portal/enlace';
+export { pedirVisita, enlaceDescarga, avisoDatosFamilia, avisoDireccionFamilia } from './portal/familia';
 export { reservaCalcom } from './turnos/endpoint';
 export { auditarAdministrativo, auditarClinico, auditarDomicilios } from './auditoria/triggers';
 export { accesoPorAdulto, accesoPorVinculo } from './acceso/triggers';
