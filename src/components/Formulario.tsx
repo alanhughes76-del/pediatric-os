@@ -20,7 +20,7 @@ export function Opciones<T extends string>({ opciones, valor, onCambio, etiqueta
   return (
     <View style={{ gap: 8 }}>
       {etiqueta ? <Text style={s.etiqueta}>{etiqueta}</Text> : null}
-      <View style={[s.opciones, columna && { flexDirection: 'column', flexWrap: 'nowrap' }]} accessibilityRole="radiogroup">
+      <View style={[s.opciones, columna && { flexDirection: 'column', flexWrap: 'nowrap' }]} accessibilityRole="radiogroup" accessibilityLabel={etiqueta}>
         {opciones.map((o) => {
           const activa = o.valor === valor;
           return (
@@ -28,7 +28,8 @@ export function Opciones<T extends string>({ opciones, valor, onCambio, etiqueta
               key={o.valor}
               onPress={() => onCambio(o.valor)}
               accessibilityRole="radio"
-              accessibilityState={{ selected: activa }}
+              accessibilityState={{ selected: activa, checked: activa }}
+              accessibilityLabel={o.detalle ? `${o.texto}. ${o.detalle}` : o.texto}
               style={({ pressed }) => [s.opcion, columna && s.opcionColumna, activa && s.opcionActiva, pressed && !activa && { backgroundColor: colors.bgSoft }]}
             >
               <Text style={[s.opcionTexto, activa && { color: colors.white }]}>{o.texto}</Text>
@@ -54,6 +55,7 @@ export function Campo({ etiqueta, ayuda, error, style, multiline, ...p }: TextIn
         onBlur={(e) => { setFoco(false); p.onBlur?.(e); }}
         multiline={multiline}
         textAlignVertical={multiline ? 'top' : 'center'}
+        accessibilityLabel={p.accessibilityLabel ?? etiqueta}
         style={[s.campo, multiline && s.campoMulti, foco && s.campoFoco, error ? s.campoError : null, style]}
         {...p}
       />

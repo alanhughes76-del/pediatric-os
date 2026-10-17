@@ -12,9 +12,10 @@ import { ahoraISO } from '@/lib/fechas';
 import { Pantalla } from '@/components/Pantalla';
 import { Seccion } from '@/components/Seccion';
 import { Tarjeta } from '@/components/Tarjeta';
-import { Campo, Interruptor, Aviso } from '@/components/Formulario';
+import { Campo, Interruptor, Aviso, Opciones } from '@/components/Formulario';
+import type { ContactPreference } from '@/data/types';
 import { Titulo, Texto, TextoFuerte, TextoChico } from '@/components/Texto';
-import { Agregar, BotonTexto, CampoEditable, validarEmail } from '@/components/ficha/piezas';
+import { Agregar, BotonTexto, CampoEditable, CampoTelefono, TEXTO_PREFERENCIA, validarEmail } from '@/components/ficha/piezas';
 import { colors } from '@/theme';
 
 export default function Adulto() {
@@ -61,8 +62,13 @@ export default function Adulto() {
             onGuardar={(v) => actualizar('guardians', g.id, { lastName: v }, 'adulto.apellido')} />
           <CampoEditable etiqueta="Email" valor={g.email} keyboardType="email-address" validar={validarEmail}
             onGuardar={(v) => actualizar('guardians', g.id, { email: v }, 'adulto.email')} />
-          <CampoEditable etiqueta="WhatsApp" valor={g.phone} keyboardType="phone-pad"
-            onGuardar={(v) => actualizar('guardians', g.id, { phone: v || undefined }, 'adulto.telefono')} />
+          <CampoTelefono valor={g.phone} onGuardar={(v) => actualizar('guardians', g.id, { phone: v }, 'adulto.telefono')} />
+          <Opciones<ContactPreference>
+            etiqueta="Prefiere que lo contacten por"
+            opciones={(Object.keys(TEXTO_PREFERENCIA) as ContactPreference[]).map((v) => ({ valor: v, texto: TEXTO_PREFERENCIA[v] }))}
+            valor={g.contactPreference}
+            onCambio={(v) => actualizar('guardians', g.id, { contactPreference: v }, 'adulto.preferencia')}
+          />
         </Tarjeta>
       </Seccion>
 

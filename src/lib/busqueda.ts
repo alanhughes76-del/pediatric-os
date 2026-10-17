@@ -68,6 +68,10 @@ export function coincide(p: Patient, consulta: string): boolean {
   const q = normalizar(consulta);
   if (!q) return true;
 
+  // DNI: solo números (con o sin puntos), 7 dígitos o más
+  const digitos = q.replace(/[.\s]/g, '');
+  if (/^\d{7,}$/.test(digitos)) return !!p.dni && p.dni.replace(/\D/g, '').includes(digitos);
+
   // Fecha de nacimiento
   if (/^[\d/]+$/.test(q)) return fechaNacimiento(p).includes(completarFecha(q));
 
@@ -96,8 +100,5 @@ export function contarPorSolapa(lista: Patient[]): Record<Solapa, number> {
   return conteo;
 }
 
-/** Pacientes con el mismo apellido y fecha de nacimiento (posible duplicado al dar de alta). */
-export function posiblesDuplicados(lista: Patient[], apellido: string, fechaISO: string): Patient[] {
-  const a = normalizar(apellido);
-  return activos(lista).filter((p) => normalizar(p.lastName) === a && p.birthDate === fechaISO);
-}
+/** Control de duplicados al dar de alta (regla 8): la lógica vive en shared/duplicados.ts. */
+export { buscarDuplicados } from '@shared/duplicados';

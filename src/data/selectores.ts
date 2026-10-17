@@ -8,7 +8,7 @@
  * - Plan de cuidado: los ítems pendientes ("Plan vigente").
  * - Si la membresía vence, conserva acceso de lectura a todo lo anterior.
  */
-import type { Database, Patient, Consultation, ClinicalNote, FeverEntry, VisitType, Modality, ID, Address, PatientRelationship } from './types';
+import type { Database, Patient, Consultation, ClinicalNote, FeverEntry, VisitType, Modality, ID, Address, PatientRelationship, CoverageKind } from './types';
 import { hoyISO, diasEntre, horasEntre } from '@/lib/fechas';
 
 export type Vista = 'medico' | 'familia';
@@ -20,6 +20,11 @@ export const TEXTO_VISITA: Record<VisitType, string> = {
   seguimiento: 'Seguimiento',
   rn: 'RN',
 };
+
+export const TEXTO_COBERTURA: Record<CoverageKind, string> = { prepaga: 'Prepaga', 'obra-social': 'Obra social', particular: 'Particular' };
+
+/** "Prepaga de ejemplo 210" o "Particular". */
+export const textoCobertura = (c?: { kind: CoverageKind; name?: string }) => (!c ? undefined : c.kind === 'particular' ? 'Particular' : c.name || TEXTO_COBERTURA[c.kind]);
 
 export const TEXTO_MODALIDAD: Record<Modality, string> = {
   domicilio: 'Domicilio',

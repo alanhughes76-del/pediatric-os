@@ -1,5 +1,5 @@
 import type { Patient, Scope } from '@/data/types';
-import { coincide, contarPorSolapa, filtrarPacientes, posiblesDuplicados } from './busqueda';
+import { coincide, contarPorSolapa, filtrarPacientes, buscarDuplicados } from './busqueda';
 
 const p = (id: string, firstName: string, lastName: string, birthDate: string, scope: Scope, archivado = false): Patient => ({
   id, firstName, lastName, birthDate, scope, sex: 'F', status: 'activo', createdAt: '', createdBy: '', archivedAt: archivado ? 'x' : undefined,
@@ -39,7 +39,16 @@ test('conteos por solapa (sin archivados)', () => {
   expect(contarPorSolapa(lista)).toEqual({ todos: 5, membresia: 2, cardales: 2, hepta: 0, esporadico: 1, 'sin-asignar': 0 });
 });
 test('posible duplicado: mismo apellido (sin tildes ni mayúsculas) y fecha', () => {
-  expect(posiblesDuplicados(lista, 'ACOSTA', '2023-09-15').length).toBe(2);
-  expect(posiblesDuplicados(lista, 'Nunez', '2026-02-27').length).toBe(1);
-  expect(posiblesDuplicados(lista, 'Acosta', '2023-09-16').length).toBe(0);
+  const posibles = (lastName: string, birthDate: string) => buscarDuplicados(lista, { lastName, birthDate }).posibles.length;
+  expect(posibles('ACOSTA', '2023-09-15')).toBe(2);
+  expect(posibles('Nunez', '2026-02-27')).toBe(1);
+  expect(posibles('Acosta', '2023-09-16')).toBe(0);
+});
+
+test('busca por DNI, con o sin puntos', () => {
+  const conDni = { ...lista[1], dni: '58.912.345' };
+  expect(coincide(conDni, '58912345')).toBe(true);
+  expect(coincide(conDni, '58.912')).toBe(false); // menos de 7 dígitos: se toma como fecha
+  expect(coincide(conDni, '58.912.34')).toBe(true);
+  expect(coincide(lista[0], '58912345')).toBe(false);
 });

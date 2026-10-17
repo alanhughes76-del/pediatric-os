@@ -1,15 +1,18 @@
 /**
- * Nuevo paciente. Obligatorios: nombre, apellido, fecha de nacimiento y sexo.
- * Opcionales: ámbito (por defecto "Sin asignar") y edad gestacional (22 a 44 semanas;
- * vacía = de término). Antes de guardar avisa si ya hay alguien con el mismo apellido
- * y fecha de nacimiento, y ofrece abrir el existente.
+ * Nuevo paciente (prompt maestro 7.4). Obligatorios: nombre, apellido, fecha de nacimiento y sexo.
+ * Opcionales: DNI, ámbito (por defecto "Sin asignar"), cobertura, edad gestacional (22 a 44
+ * semanas; vacía = de término) y grupo sanguíneo. La foto llega con el almacenamiento de archivos.
+ * Control de duplicados (regla 8, shared/duplicados.ts): el mismo DNI no deja guardar; el mismo
+ * apellido y fecha de nacimiento pide confirmar (pueden ser mellizos).
+ * Si se abre desde la ficha de una familia (?familia=…), el paciente queda en esa familia.
  */
 import { useState } from 'react';
 import { View } from 'react-native';
-import { Stack, router } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useApp } from '@/data/store';
-import type { Scope, Sex } from '@/data/types';
-import { posiblesDuplicados, TEXTO_AMBITO } from '@/lib/busqueda';
+import { GRUPOS_SANGUINEOS, type BloodType, type CoverageKind, type Scope, type Sex } from '@/data/types';
+import { buscarDuplicados, TEXTO_AMBITO } from '@/lib/busqueda';
+import { TEXTO_COBERTURA } from '@/data/selectores';
 import { deFecha, diasEntre, hoyISO, fechaCorta } from '@/lib/fechas';
 import { Pantalla } from '@/components/Pantalla';
 import { Campo, Opciones, Aviso } from '@/components/Formulario';
@@ -23,8 +26,12 @@ const SEXOS: { valor: Sex; texto: string }[] = [
   { valor: 'X', texto: 'X' },
 ];
 
+const COBERTURAS = (Object.keys(TEXTO_COBERTURA) as CoverageKind[]).map((v) => ({ valor: v, texto: TEXTO_COBERTURA[v] }));
+
 export default function NuevoPaciente() {
+  const { familia: familiaId } = useLocalSearchParams<{ familia?: string }>();
   const { db, agregar } = useApp();
+  const familia = db.families.find((f) => f.id === familiaId);
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
   const [fecha, setFecha] = useState('');
@@ -32,6 +39,10 @@ export default function NuevoPaciente() {
   const [ambito, setAmbito] = useState<Scope>('sin-asignar');
   const [semanas, setSemanas] = useState('');
   const [dni, setDni] = useState('');
+  const [cobertura, setCobertura] = useState<CoverageKind>();
+  const [nombreCobertura, setNombreCobertura] = useState('');
+  const [numeroAfiliado, setNumeroAfiliado] = useState('');
+  const [grupo, setGrupo] = useState<BloodType>();
   const [intento, setIntento] = useState(false);
   const [duplicadoVisto, setDuplicadoVisto] = useState(false);
 
@@ -46,15 +57,20 @@ export default function NuevoPaciente() {
     semanas: sem !== undefined && !(Number.isInteger(sem) && sem >= 22 && sem <= 44) ? 'Tiene que ser un número entero entre 22 y 44.' : undefined,
   };
   const valido = !Object.values(errores).some(Boolean);
-  const duplicados = valido && nacimiento ? posiblesDuplicados(db.patients, apellido, nacimiento) : [];
+  const { mismoDni, posibles: duplicados } = valido && nacimiento
+    ? buscarDuplicados(db.patients, { lastName: apellido, birthDate: nacimiento, dni })
+    : { mismoDni: [], posibles: [] };
 
   const guardar = (aunqueExista = false) => {
     setIntento(true);
-    if (!valido || !nacimiento || !sexo) return;
+    if (!valido || !nacimiento || !sexo || mismoDni.length > 0) return;
     if (duplicados.length > 0 && !aunqueExista) return setDuplicadoVisto(true);
     const id = agregar('patients', {
       firstName: nombre.trim(), lastName: apellido.trim(), birthDate: nacimiento, sex: sexo,
       gestationalWeeks: sem, scope: ambito, status: 'activo', dni: dni.trim() || undefined,
+      familyId: familia?.id,
+      coverage: cobertura ? { kind: cobertura, name: nombreCobertura.trim() || undefined, memberNumber: numeroAfiliado.trim() || undefined } : undefined,
+      bloodType: grupo,
     }, 'paciente.crear');
     router.replace(`/medico/hijo/${id}`);
   };
@@ -62,6 +78,7 @@ export default function NuevoPaciente() {
   return (
     <Pantalla>
       <Stack.Screen options={{ title: 'Nuevo paciente' }} />
+      {familia ? <Aviso icono="people-outline" texto={`Queda en la ${familia.name}.`} /> : null}
 
       <Campo etiqueta="Nombre" value={nombre} onChangeText={setNombre} autoCapitalize="words" error={intento ? errores.nombre : undefined} />
       <Campo etiqueta="Apellido" value={apellido} onChangeText={(v) => { setApellido(v); setDuplicadoVisto(false); }} autoCapitalize="words" error={intento ? errores.apellido : undefined} />
@@ -77,6 +94,12 @@ export default function NuevoPaciente() {
       {intento && errores.sexo ? <Aviso tono="alerta" texto={errores.sexo} /> : null}
 
       <Campo etiqueta="DNI (opcional)" value={dni} onChangeText={setDni} keyboardType="number-pad" placeholder="Ej.: 55123456" ayuda="Si está cargado, aparece en los certificados." />
+      {mismoDni.length > 0 ? (
+        <Tarjeta style={{ gap: 10 }}>
+          <Aviso tono="alerta" texto={`Ya hay un paciente con ese DNI: ${mismoDni[0].lastName}, ${mismoDni[0].firstName}. No se puede cargar dos veces.`} />
+          <Boton titulo="Abrir el existente" variante="secundario" onPress={() => router.replace(`/medico/hijo/${mismoDni[0].id}`)} />
+        </Tarjeta>
+      ) : null}
       <Opciones
         etiqueta="Ámbito (opcional)"
         opciones={(Object.keys(TEXTO_AMBITO) as Scope[]).map((v) => ({ valor: v, texto: TEXTO_AMBITO[v] }))}
@@ -92,6 +115,15 @@ export default function NuevoPaciente() {
         placeholder="Ej.: 38"
         error={intento ? errores.semanas : undefined}
       />
+
+      <Opciones etiqueta="Cobertura (opcional)" opciones={COBERTURAS} valor={cobertura} onCambio={setCobertura} />
+      {cobertura && cobertura !== 'particular' ? (
+        <>
+          <Campo etiqueta={cobertura === 'prepaga' ? 'Prepaga y plan' : 'Obra social'} value={nombreCobertura} onChangeText={setNombreCobertura} />
+          <Campo etiqueta="Número de afiliado (opcional)" value={numeroAfiliado} onChangeText={setNumeroAfiliado} />
+        </>
+      ) : null}
+      <Opciones etiqueta="Grupo sanguíneo (opcional)" opciones={GRUPOS_SANGUINEOS.map((g) => ({ valor: g, texto: g }))} valor={grupo} onCambio={setGrupo} />
 
       {duplicadoVisto && duplicados.length > 0 ? (
         <Tarjeta style={{ gap: 10 }}>

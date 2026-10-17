@@ -39,7 +39,12 @@ export interface Doctor {
 
 export interface Family extends Base {
   name: string; // "Familia Ruiz Ferreyra"
+  /** Zona de cobertura ("CABA", "GBA Zona Norte"…). */
+  zone?: string;
+  status?: 'activa' | 'inactiva';
 }
+
+export type ContactPreference = 'whatsapp' | 'llamada' | 'email';
 
 /** Adulto responsable. También es el usuario que entra al portal (enlace mágico por email). */
 export interface Guardian extends Base {
@@ -47,7 +52,9 @@ export interface Guardian extends Base {
   firstName: string;
   lastName: string;
   email: string;
-  phone?: string; // WhatsApp
+  /** Teléfono en formato E.164 (+549…). */
+  phone?: string;
+  contactPreference?: ContactPreference;
   /** Solo el médico lo habilita o deshabilita. Nadie se registra solo. */
   accessEnabled: boolean;
 }
@@ -92,7 +99,20 @@ export interface Patient extends Base {
   status: 'activo' | 'inactivo';
   /** Si el sexo es X: qué referencia de crecimiento usar. */
   growthReferenceSex?: 'M' | 'F';
+  coverage?: Coverage;
+  bloodType?: BloodType;
 }
+
+export type CoverageKind = 'prepaga' | 'obra-social' | 'particular';
+export interface Coverage {
+  kind: CoverageKind;
+  /** "OSDE 210", "IOMA"… */
+  name?: string;
+  memberNumber?: string;
+}
+
+export type BloodType = '0+' | '0-' | 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-';
+export const GRUPOS_SANGUINEOS: BloodType[] = ['0+', '0-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'];
 
 // ---------- Membresía ----------
 

@@ -1,6 +1,6 @@
 /**
  * Bloques "Contacto" y "Adultos responsables".
- * - Contacto: nombre, email y WhatsApp del adulto principal. Sin email no se puede habilitar el portal.
+ * - Contacto: nombre, email, teléfono (E.164) y preferencia de contacto del adulto principal. Sin email no se puede habilitar el portal.
  * - Adultos: vínculos vigentes con su relación y domicilios; marcar principal, quitar vínculo
  *   (cierra el vínculo con la fecha de hoy, no se borra) y agregar un adulto (existente o nuevo).
  */
@@ -16,7 +16,8 @@ import { Etiqueta } from '../Etiqueta';
 import { Boton } from '../Boton';
 import { Aviso } from '../Formulario';
 import { Texto, TextoFuerte, TextoChico } from '../Texto';
-import { BotonTexto, CampoEditable, validarEmail } from './piezas';
+import { BotonTexto, CampoEditable, CampoTelefono, TEXTO_PREFERENCIA, validarEmail } from './piezas';
+import { telefonoLegible } from '@shared/telefono';
 import { colors } from '@/theme';
 
 export function BloqueContacto({ patientId }: { patientId: string }) {
@@ -42,13 +43,8 @@ export function BloqueContacto({ patientId }: { patientId: string }) {
               validar={validarEmail}
               onGuardar={(v) => actualizar('guardians', principal.guardian.id, { email: v }, 'adulto.email')}
             />
-            <CampoEditable
-              etiqueta="WhatsApp"
-              valor={principal.guardian.phone}
-              keyboardType="phone-pad"
-              placeholder="11 5555-0000"
-              onGuardar={(v) => actualizar('guardians', principal.guardian.id, { phone: v || undefined }, 'adulto.telefono')}
-            />
+            <CampoTelefono valor={principal.guardian.phone} onGuardar={(v) => actualizar('guardians', principal.guardian.id, { phone: v }, 'adulto.telefono')} />
+            {principal.guardian.contactPreference ? <TextoChico>Prefiere: {TEXTO_PREFERENCIA[principal.guardian.contactPreference]}</TextoChico> : null}
             {!principal.guardian.email ? <Aviso tono="alerta" texto="Sin email no se puede habilitar el portal para este adulto." /> : null}
           </>
         )}
@@ -91,7 +87,7 @@ export function BloqueAdultos({ patientId }: { patientId: string }) {
           <View style={s.fila}>
             <View style={{ flex: 1 }}>
               <TextoFuerte style={{ fontSize: 19 }}>{g.firstName} {g.lastName}</TextoFuerte>
-              <TextoChico>{textoRelacion(rel)}{g.phone ? ` · ${g.phone}` : ''}</TextoChico>
+              <TextoChico>{textoRelacion(rel)}{g.phone ? ` · ${telefonoLegible(g.phone)}` : ''}</TextoChico>
             </View>
             {rel.isPrimary ? <Etiqueta texto="Contacto principal" tono="azul" /> : null}
           </View>

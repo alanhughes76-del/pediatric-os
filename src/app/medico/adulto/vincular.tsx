@@ -6,6 +6,7 @@
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { normalizarTelefono, telefonoLegible } from '@shared/telefono';
 import { useApp, nuevoId } from '@/data/store';
 import { adultosDe, paciente as buscarPaciente, nombreCompleto } from '@/data/selectores';
 import type { Address, Guardian, PatientRelationship, RelationshipType } from '@/data/types';
@@ -60,6 +61,7 @@ export default function VincularAdulto() {
     adulto: modo === 'buscar' && !elegido ? 'Elegí un adulto de la lista o creá uno nuevo.' : undefined,
     nombre: modo === 'nuevo' && (!nombre.trim() || !apellido.trim()) ? 'Completá nombre y apellido.' : undefined,
     email: modo === 'nuevo' ? validarEmail(email.trim()) : undefined,
+    telefono: modo === 'nuevo' && telefono.trim() && !normalizarTelefono(telefono) ? 'Revisá el número: código de área y número (por ejemplo, 11 5555-0000).' : undefined,
     domicilio: modo === 'nuevo' && !!calle.trim() !== !!localidad.trim() ? 'Para el domicilio, completá calle y localidad (o dejá los dos vacíos).' : undefined,
     relacion: !relacion ? 'Elegí la relación.' : relacion === 'otro' && !detalle.trim() ? 'Aclará la relación (por ejemplo, "abuela").' : undefined,
   };
@@ -76,7 +78,7 @@ export default function VincularAdulto() {
       if (modo === 'nuevo') {
         const g: Guardian = {
           ...base, id: nuevoId('g'), familyId: p.familyId, firstName: nombre.trim(), lastName: apellido.trim(),
-          email: email.trim(), phone: telefono.trim() || undefined, accessEnabled: false,
+          email: email.trim(), phone: normalizarTelefono(telefono) ?? undefined, accessEnabled: false,
         };
         guardians = [...guardians, g];
         guardianId = g.id;
@@ -116,7 +118,7 @@ export default function VincularAdulto() {
           {resultados.map((g) => (
             <Tarjeta key={g.id} onPress={() => setElegido(g)} style={elegido?.id === g.id ? { borderColor: colors.accion, borderWidth: 2 } : undefined}>
               <TextoFuerte>{g.firstName} {g.lastName}</TextoFuerte>
-              <TextoChico>{g.email}{g.phone ? ` · ${g.phone}` : ''}</TextoChico>
+              <TextoChico>{g.email}{g.phone ? ` · ${telefonoLegible(g.phone)}` : ''}</TextoChico>
             </Tarjeta>
           ))}
           {intento && errores.adulto ? <Aviso tono="alerta" texto={errores.adulto} /> : null}
@@ -127,7 +129,7 @@ export default function VincularAdulto() {
           <Campo etiqueta="Apellido" value={apellido} onChangeText={setApellido} autoCapitalize="words" error={intento ? errores.nombre : undefined} />
           <Campo etiqueta="Email (opcional)" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" error={intento ? errores.email : undefined}
             ayuda="Sin email no se puede habilitar el portal." />
-          <Campo etiqueta="WhatsApp (opcional)" value={telefono} onChangeText={setTelefono} keyboardType="phone-pad" />
+          <Campo etiqueta="Teléfono (opcional)" value={telefono} onChangeText={setTelefono} keyboardType="phone-pad" placeholder="11 5555-0000" error={intento ? errores.telefono : undefined} />
           <Campo etiqueta="Domicilio: calle y número (opcional)" value={calle} onChangeText={setCalle} />
           <Campo etiqueta="Localidad" value={localidad} onChangeText={setLocalidad} error={intento ? errores.domicilio : undefined} />
         </View>

@@ -6,6 +6,8 @@ import { Campo } from '../Formulario';
 import { Boton } from '../Boton';
 import { Tarjeta } from '../Tarjeta';
 import { TextoChico, Texto } from '../Texto';
+import { normalizarTelefono, telefonoLegible } from '@shared/telefono';
+import type { ContactPreference } from '@/data/types';
 
 /** Botón de texto, para acciones secundarias dentro de una fila ("Reabrir", "Quitar vínculo"). */
 export function BotonTexto({ texto, onPress, tono = 'normal' }: { texto: string; onPress: () => void; tono?: 'normal' | 'alerta' }) {
@@ -74,6 +76,22 @@ export function CampoEditable({ etiqueta, valor, onGuardar, keyboardType, placeh
     </View>
   );
 }
+
+/** Teléfono: se guarda en E.164 (+549…) y se muestra legible. Acepta cómo lo escriban. */
+export function CampoTelefono({ valor, onGuardar }: { valor?: string; onGuardar: (e164: string | undefined) => void }) {
+  return (
+    <CampoEditable
+      etiqueta="Teléfono"
+      valor={valor ? telefonoLegible(valor) : undefined}
+      keyboardType="phone-pad"
+      placeholder="11 5555-0000"
+      validar={(v) => (v && !normalizarTelefono(v) ? 'Revisá el número: código de área y número (por ejemplo, 11 5555-0000).' : undefined)}
+      onGuardar={(v) => onGuardar(v ? normalizarTelefono(v) ?? undefined : undefined)}
+    />
+  );
+}
+
+export const TEXTO_PREFERENCIA: Record<ContactPreference, string> = { whatsapp: 'WhatsApp', llamada: 'Llamada', email: 'Email' };
 
 export const validarEmail = (v: string) => (v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? 'Revisá el email.' : undefined);
 

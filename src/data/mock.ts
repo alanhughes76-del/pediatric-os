@@ -7,6 +7,7 @@ import type { Database, Base } from './types';
 import { enDias, hoyISO, sumarDias, sumarHoras } from '@/lib/fechas';
 import { pacientesExtra } from './mockPacientes';
 import { FIRMA, textoCertificado, tipoCertificado } from '@/lib/certificados';
+import { normalizarTelefono } from '@shared/telefono';
 
 export const DOCTOR_ID = 'dr';
 const hoy = hoyISO();
@@ -249,7 +250,8 @@ const extra = pacientesExtra();
 export const datosDeEjemplo: Database = {
   ...base,
   families: [...base.families, ...extra.families],
-  guardians: [...base.guardians, ...extra.guardians],
+  // Teléfonos guardados en E.164, como en Firestore.
+  guardians: [...base.guardians, ...extra.guardians].map((g) => ({ ...g, phone: g.phone ? normalizarTelefono(g.phone) ?? g.phone : undefined })),
   addresses: [...base.addresses, ...extra.addresses],
   patients: [...base.patients, ...extra.patients],
   relationships: [...base.relationships, ...extra.relationships],
