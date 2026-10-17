@@ -1,11 +1,13 @@
 /**
- * Cloud Functions de Pediatric OS (Etapa 1a: roles, auditoría, acceso al portal y outbox).
- * Lo que falta (turnos, notas, certificados, endpoints entrantes, IA) llega en sus etapas.
+ * Cloud Functions de Pediatric OS: roles, auditoría, acceso al portal, outbox, pacientes, notas,
+ * certificados y turnos (con el endpoint de Cal.com). Lo que falta (portal, IA…) llega en sus etapas.
  */
 export { asignarRol } from './roles';
 export { crearPaciente } from './pacientes';
 export { aprobarNota, corregirNota } from './notas';
 export { emitirCertificado, anularCertificado } from './certificados';
+export { crearTurno, accionTurno } from './turnos/callables';
+export { reservaCalcom } from './turnos/endpoint';
 export { auditarAdministrativo, auditarClinico, auditarDomicilios } from './auditoria/triggers';
 export { accesoPorAdulto, accesoPorVinculo } from './acceso/triggers';
 export { despacharEvento, reintentarEventos } from './outbox/triggers';
