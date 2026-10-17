@@ -67,7 +67,7 @@ Doctor, Family, Guardian (acceso habilitado sí/no), PatientRelationship (tipo, 
 - Única excepción: el botón de PacienteX es verde (#1F7A4D, `colors.contacto`), a pedido del Dr.
 - Tipografías: Playfair Display (títulos) y Source Sans 3 (resto).
 - Tono cálido y profesional, nada comercial. Botones grandes y pocos pasos (padres con un bebé en brazos).
-- Contacto: **no hay WhatsApp en ningún lado**. Botón "Contactá al Dr. por PacienteX", que abre `CONFIG.pacienteXUrl` en el navegador del teléfono.
+- Contacto: **no hay WhatsApp en ningún lado**. Botón "Escribime por PacienteX" (texto elegido por el Dr. el 17/10/2026), que abre `CONFIG.pacienteXUrl` en el navegador del teléfono.
 - La app nunca sugiere dosis ni diagnósticos a las familias.
 
 ## Estado (17/10/2026)

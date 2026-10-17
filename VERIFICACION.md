@@ -181,6 +181,6 @@ Recorrido hecho el 17/10/2026 con los datos de ejemplo, en el navegador en dos t
 - La ficha abre siempre en "Resumen".
 - Al girar la tablet o cambiar el ancho de la ventana, la pantalla abierta no se pierde.
 
-## Pendiente de tu decisión
+## Después de la verificación
 
-- El botón "Contactá al Dr. por PacienteX" ocupa dos renglones en el teléfono. Se puede acortar, por ejemplo a "Escribile al Dr. por PacienteX".
+- El botón de contacto pasó a decir "Escribime por PacienteX" (elegido por el Dr.): entra en un renglón en el teléfono.
