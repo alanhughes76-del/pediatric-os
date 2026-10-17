@@ -17,9 +17,9 @@ import { ahoraISO, fechaCorta, fechaLarga, hoyISO } from '@/lib/fechas';
 import { tipoCertificado } from '@/lib/certificados';
 import { PLAZOS, planPorPlazo, type Plazo } from '@/lib/planPorPlazo';
 import { Tarjeta } from '../Tarjeta';
+import { Caja, Grilla } from '../Caja';
 import { Etiqueta } from '../Etiqueta';
-import { Subtitulo, Texto, TextoFuerte, TextoChico } from '../Texto';
-import { BotonTexto } from './piezas';
+import { Texto, TextoFuerte, TextoChico } from '../Texto';
 import { categorias, colors, fonts, type Categoria } from '@/theme';
 import type { SolapaFicha } from './FichaPaciente';
 
@@ -32,36 +32,20 @@ const ICONO_PLAZO: Record<Plazo, NombreIcono> = { hoy: 'today-outline', treinta:
 export function Resumen({ paciente: p, irA }: { paciente: Patient; irA: (s: SolapaFicha) => void }) {
   return (
     <>
-      <View style={s.grilla}>
+      <Grilla>
         <ResumenClinico paciente={p} irA={irA} />
         <UltimaConsulta paciente={p} irA={irA} />
         <ProximasAcciones paciente={p} irA={irA} />
         <Crecimiento paciente={p} irA={irA} />
         <Vacunas paciente={p} irA={irA} />
         <Documentos paciente={p} irA={irA} />
-      </View>
-      <PlanPorPlazo paciente={p} irA={irA} />
+        <PlanPorPlazo paciente={p} irA={irA} />
+      </Grilla>
     </>
   );
 }
 
 type PropsTarjeta = { paciente: Patient; irA: (s: SolapaFicha) => void };
-
-function Caja({ titulo, icono, color, ver, children, ancha }: {
-  titulo: string; icono: NombreIcono; color: Categoria; ver?: { texto: string; onPress: () => void }; children: ReactNode; ancha?: boolean;
-}) {
-  const c = categorias[color];
-  return (
-    <Tarjeta style={[s.caja, ancha && s.cajaAncha]}>
-      <View style={s.cabecera}>
-        <View style={[s.icono, { backgroundColor: c.fondo }]}><Ionicons name={icono} size={20} color={c.acento} /></View>
-        <Subtitulo style={s.titulo}>{titulo}</Subtitulo>
-      </View>
-      <View style={{ gap: 10, flex: 1 }}>{children}</View>
-      {ver ? <View style={s.pie}><BotonTexto texto={ver.texto} onPress={ver.onPress} /></View> : null}
-    </Tarjeta>
-  );
-}
 
 const Rotulo = ({ children }: { children: ReactNode }) => <TextoChico style={s.rotulo}>{children}</TextoChico>;
 const Vacio = ({ children }: { children: ReactNode }) => <Texto color={colors.textMuted}>{children}</Texto>;
@@ -288,14 +272,6 @@ function PlanPorPlazo({ paciente: p, irA }: PropsTarjeta) {
 }
 
 const s = StyleSheet.create({
-  grilla: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
-  caja: { flexGrow: 1, flexBasis: 320, minWidth: 0, gap: 14 },
-  // Fuera de la grilla (columna): sin crecer ni base, o se estira a lo alto.
-  cajaAncha: { flexGrow: 0, flexBasis: 'auto' },
-  cabecera: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  icono: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  titulo: { flex: 1, fontSize: 21 },
-  pie: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 4 },
   rotulo: { fontFamily: fonts.bodySemi, textTransform: 'uppercase', letterSpacing: 0.6, fontSize: 13 },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   etiquetas: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },

@@ -3,8 +3,8 @@
  * Los datos ya llegan filtrados por la vista de familia (data/vistaFamilia.ts):
  * acá no hay nada oculto que esconder.
  *
- * Secciones: Informes de las visitas, Plan vigente, Alergias y temas de salud,
- * Crecimiento, Registro de fiebre y Certificados.
+ * Secciones (tarjetas en grilla; en el teléfono, una debajo de otra): Informes de las visitas,
+ * Plan vigente, Vacunas aplicadas, Alergias y temas de salud, Crecimiento, Registro de fiebre y Certificados.
  */
 import { View, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
@@ -14,10 +14,9 @@ import { paciente, nombreCompleto, alergiasDe, problemasDe, informesFamilia, TEX
 import type { CarePlanCategory } from '@/data/types';
 import { edades } from '@/lib/edad';
 import { fechaLarga, fechaCorta } from '@/lib/fechas';
-import { colors, fonts, size } from '@/theme';
+import { categorias, colors, fonts, size } from '@/theme';
 import { Titulo, Texto, TextoFuerte, TextoChico } from './Texto';
-import { Tarjeta } from './Tarjeta';
-import { Seccion } from './Seccion';
+import { Caja, Grilla } from './Caja';
 import { Etiqueta } from './Etiqueta';
 import { Boton } from './Boton';
 import { AlergiasDestacadas } from './Alergias';
@@ -48,19 +47,22 @@ export function FichaHijo({ hijoId, conEncabezado = true }: { hijoId: string; co
         </View>
       ) : null}
 
-      <Informes patientId={p.id} />
-      <PlanVigente patientId={p.id} />
-      <AlergiasYTemas patientId={p.id} />
+      <Grilla>
+        <Informes patientId={p.id} />
+        <PlanVigente patientId={p.id} />
+        <AlergiasYTemas patientId={p.id} />
 
-      <Seccion titulo="Crecimiento">
-        <Tarjeta><TarjetaCrecimiento paciente={p} vista="familia" /></Tarjeta>
-      </Seccion>
+        <Caja titulo="Crecimiento" icono="trending-up-outline" color="celeste" ancha>
+          <TarjetaCrecimiento paciente={p} vista="familia" />
+        </Caja>
 
-      <Seccion titulo="Registro de fiebre">
-        <Boton titulo="Abrir el registro de fiebre" icono="thermometer-outline" variante="secundario" onPress={() => router.push(`/familia/fiebre/${p.id}`)} />
-      </Seccion>
+        <Caja titulo="Registro de fiebre" icono="thermometer-outline" color="lavanda">
+          <Texto>Anotá temperaturas y antitérmicos.</Texto>
+          <Boton titulo="Abrir el registro de fiebre" icono="thermometer-outline" variante="secundario" onPress={() => router.push(`/familia/fiebre/${p.id}`)} />
+        </Caja>
 
-      <Certificados patientId={p.id} />
+        <Certificados patientId={p.id} />
+      </Grilla>
     </>
   );
 }
@@ -69,19 +71,19 @@ function Informes({ patientId }: { patientId: string }) {
   const { db } = useApp();
   const informes = informesFamilia(db, patientId);
   return (
-    <Seccion titulo="Informes de las visitas">
+    <Caja titulo="Informes de las visitas" icono="document-text-outline" color="celeste">
       {informes.length === 0 ? <Texto color={colors.textMuted}>Todavía no hay informes.</Texto> : null}
-      {informes.map((i) => (
-        <Tarjeta key={i.consulta.id} style={{ gap: 8 }}>
+      {informes.map((i, n) => (
+        <View key={i.consulta.id} style={[{ gap: 8 }, n > 0 && s.separador]}>
           <View style={s.filaEntre}>
             <TextoFuerte>{fechaLarga(i.consulta.occurredAt)}</TextoFuerte>
             <Etiqueta texto={TEXTO_VISITA[i.consulta.visitType]} tono="celeste" />
           </View>
           <Texto>{i.resumen}</Texto>
           {i.version > 1 ? <TextoChico>Corregido el {fechaCorta(i.aprobadaEn)}</TextoChico> : null}
-        </Tarjeta>
+        </View>
       ))}
-    </Seccion>
+    </Caja>
   );
 }
 
@@ -95,33 +97,33 @@ function PlanVigente({ patientId }: { patientId: string }) {
     .sort((a, b) => (b.doneAt ?? '').localeCompare(a.doneAt ?? ''));
   return (
     <>
-      <Seccion titulo="Plan vigente">
+      <Caja titulo="Plan vigente" icono="list-outline" color="arena">
         {pendientes.length === 0 ? <Texto color={colors.textMuted}>No hay nada pendiente.</Texto> : (
-          <Tarjeta style={{ gap: 12 }}>
+          <View style={{ gap: 12 }}>
             {pendientes.map((i, n) => (
               <View key={i.id} style={[s.fila, n > 0 && s.separador]}>
-                <Ionicons name="ellipse-outline" size={22} color={colors.primary2} />
+                <Ionicons name="ellipse-outline" size={22} color={categorias.arena.acento} />
                 <View style={{ flex: 1 }}>
                   <TextoFuerte>{i.description}</TextoFuerte>
                   <TextoChico>{CATEGORIA[i.category]}{i.targetDate ? ` · ${fechaCorta(i.targetDate)}` : ''}</TextoChico>
                 </View>
               </View>
             ))}
-          </Tarjeta>
+          </View>
         )}
-      </Seccion>
+      </Caja>
       {vacunas.length > 0 ? (
-        <Seccion titulo="Vacunas aplicadas">
-          <Tarjeta style={{ gap: 12 }}>
+        <Caja titulo="Vacunas aplicadas" icono="shield-checkmark-outline" color="verdeAgua">
+          <View style={{ gap: 12 }}>
             {vacunas.map((v, n) => (
               <View key={v.id} style={[s.fila, n > 0 && s.separador]}>
-                <Ionicons name="shield-checkmark" size={22} color={colors.primary3} />
+                <Ionicons name="shield-checkmark" size={22} color={categorias.verdeAgua.acento} />
                 <TextoFuerte style={{ flex: 1 }}>{v.description}</TextoFuerte>
                 {v.doneAt ? <TextoChico>{fechaCorta(v.doneAt)}</TextoChico> : null}
               </View>
             ))}
-          </Tarjeta>
-        </Seccion>
+          </View>
+        </Caja>
       ) : null}
     </>
   );
@@ -131,10 +133,10 @@ function AlergiasYTemas({ patientId }: { patientId: string }) {
   const { db } = useApp();
   const problemas = problemasDe(db, patientId, 'familia');
   return (
-    <Seccion titulo="Alergias y temas de salud">
+    <Caja titulo="Alergias y temas de salud" icono="medkit-outline" color="durazno">
       <AlergiasDestacadas alergias={alergiasDe(db, patientId, 'familia')} />
       {problemas.length > 0 ? (
-        <Tarjeta style={{ gap: 14 }}>
+        <View style={[{ gap: 14 }, s.separador]}>
           {problemas.map((pr, i) => (
             <View key={pr.id} style={[s.fila, i > 0 && s.separador]}>
               <View style={{ flex: 1, gap: 4 }}>
@@ -144,17 +146,17 @@ function AlergiasYTemas({ patientId }: { patientId: string }) {
               <Etiqueta texto={pr.status === 'activo' ? 'En seguimiento' : 'Resuelto'} tono={pr.status === 'activo' ? 'celeste' : 'neutro'} />
             </View>
           ))}
-        </Tarjeta>
+        </View>
       ) : null}
-    </Seccion>
+    </Caja>
   );
 }
 
 function Certificados({ patientId }: { patientId: string }) {
   return (
-    <Seccion titulo="Certificados">
+    <Caja titulo="Certificados" icono="document-attach-outline" color="celeste">
       <ListaCertificados patientId={patientId} vista="familia" />
-    </Seccion>
+    </Caja>
   );
 }
 

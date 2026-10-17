@@ -18,7 +18,10 @@ export function BarraPacienteX({ conInsetInferior = false }: { conInsetInferior?
   const insets = useSafeAreaInsets();
   return (
     <View style={[s.barra, conInsetInferior && { paddingBottom: 12 + insets.bottom }]}>
-      <BotonPacienteX />
+      {/* En pantalla ancha el botón no se estira de punta a punta. */}
+      <View style={{ width: '100%', maxWidth: 520, alignSelf: 'center' }}>
+        <BotonPacienteX />
+      </View>
     </View>
   );
 }

@@ -11,7 +11,8 @@ import { Titulo, Subtitulo, Texto, TextoChico } from '@/components/Texto';
 import { FichaHijo } from '@/components/FichaHijo';
 import { Tarjeta } from '@/components/Tarjeta';
 import { Boton } from '@/components/Boton';
-import { colors, fonts, size } from '@/theme';
+import { Avatar } from '@/components/Avatar';
+import { categorias, colors, fonts, size } from '@/theme';
 
 export default function InicioFamilia() {
   const { db } = useApp();
@@ -25,42 +26,45 @@ export default function InicioFamilia() {
   const elegido = hijos.find((h) => h.id === elegidoId) ?? hijos[0];
 
   return (
-    <Pantalla pie={<BarraPacienteX />}>
+    <Pantalla ancho pie={<BarraPacienteX />}>
       <View>
         <Titulo>Hola, {guardian.firstName}</Titulo>
         {familia ? <Texto color={colors.textMuted}>{familia.name}</Texto> : null}
       </View>
 
-      {membership ? (
-        estado === 'vencida' ? (
-          <View style={[s.banner, s.bannerVencida]}>
-            <Ionicons name="information-circle" size={24} color={colors.alert} />
-            <Texto style={{ flex: 1 }}>
-              Membresía vencida. Seguís teniendo acceso de lectura a toda la información de tus hijos.
-            </Texto>
-          </View>
-        ) : (
-          <View style={s.banner}>
-            <Ionicons name="checkmark-circle" size={24} color={colors.primary2} />
-            <Texto style={{ flex: 1 }}>Membresía activa · se renueva el {fechaCorta(membership.renewalDate)}</Texto>
-          </View>
-        )
-      ) : null}
+      <View style={s.arriba}>
+        <Tarjeta style={s.proxima}>
+          <TextoChico color={colors.bgSoft}>PRÓXIMA VISITA</TextoChico>
+          {proxima ? (
+            <>
+              <Subtitulo color={colors.white}>{cuandoEs(proxima.occurredAt)}, {hora(proxima.occurredAt)} h</Subtitulo>
+              <Texto color={colors.white}>{TEXTO_VISITA[proxima.visitType]} · {nombreDe(proxima.patientId)}</Texto>
+              <TextoChico color={colors.bgSoft}>{textoDomicilio(domicilioDe(db, proxima))}</TextoChico>
+            </>
+          ) : (
+            <Texto color={colors.white}>No tenés visitas programadas.</Texto>
+          )}
+        </Tarjeta>
 
-      <Tarjeta style={s.proxima}>
-        <TextoChico color={colors.bgSoft}>PRÓXIMA VISITA</TextoChico>
-        {proxima ? (
-          <>
-            <Subtitulo color={colors.white}>{cuandoEs(proxima.occurredAt)}, {hora(proxima.occurredAt)} h</Subtitulo>
-            <Texto color={colors.white}>{TEXTO_VISITA[proxima.visitType]} · {nombreDe(proxima.patientId)}</Texto>
-            <TextoChico color={colors.bgSoft}>{textoDomicilio(domicilioDe(db, proxima))}</TextoChico>
-          </>
-        ) : (
-          <Texto color={colors.white}>No tenés visitas programadas.</Texto>
-        )}
-      </Tarjeta>
-
-      <Boton titulo="Pedí una visita" icono="calendar" variante="secundario" onPress={() => router.navigate('/familia/pedir')} />
+        <View style={s.costado}>
+          {membership ? (
+            estado === 'vencida' ? (
+              <View style={[s.banner, s.bannerVencida]}>
+                <Ionicons name="information-circle" size={24} color={colors.alert} />
+                <Texto style={{ flex: 1 }}>
+                  Membresía vencida. Seguís teniendo acceso de lectura a toda la información de tus hijos.
+                </Texto>
+              </View>
+            ) : (
+              <View style={s.banner}>
+                <Ionicons name="checkmark-circle" size={24} color={categorias.verdeAgua.acento} />
+                <Texto style={{ flex: 1 }} color={categorias.verdeAgua.texto}>Membresía activa · se renueva el {fechaCorta(membership.renewalDate)}</Texto>
+              </View>
+            )
+          ) : null}
+          <Boton titulo="Pedí una visita" icono="calendar" variante="secundario" onPress={() => router.navigate('/familia/pedir')} />
+        </View>
+      </View>
 
       {hijos.length > 1 ? (
         <View style={{ gap: 8 }}>
@@ -70,6 +74,7 @@ export default function InicioFamilia() {
               const activo = h.id === elegido?.id;
               return (
                 <Pressable key={h.id} onPress={() => setElegidoId(h.id)} accessibilityRole="tab" accessibilityState={{ selected: activo }} style={[s.hijo, activo && s.hijoActivo]}>
+                  <Avatar paciente={h} tamano={36} />
                   <Text style={[s.hijoTexto, activo && { color: colors.white }]}>{h.firstName}</Text>
                 </Pressable>
               );
@@ -84,14 +89,16 @@ export default function InicioFamilia() {
 }
 
 const s = StyleSheet.create({
+  arriba: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
+  costado: { flexGrow: 1, flexBasis: 280, gap: 12, justifyContent: 'center' },
   banner: {
     flexDirection: 'row', gap: 10, alignItems: 'center',
-    backgroundColor: colors.bgSoft, borderColor: colors.border, borderWidth: 1, borderRadius: size.radius, padding: 14,
+    backgroundColor: categorias.verdeAgua.fondo, borderRadius: size.radius, padding: 14,
   },
-  bannerVencida: { backgroundColor: colors.alertBg, borderColor: colors.alertBorder, alignItems: 'flex-start' },
-  proxima: { backgroundColor: colors.primary, borderColor: colors.primary, gap: 6 },
+  bannerVencida: { backgroundColor: colors.alertBg, borderWidth: 1, borderColor: colors.alertBorder, alignItems: 'flex-start' },
+  proxima: { flexGrow: 2, flexBasis: 340, backgroundColor: colors.primary, borderColor: colors.primary, gap: 6, padding: 22 },
   selector: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  hijo: { minHeight: 52, paddingHorizontal: 22, borderRadius: 999, borderWidth: 1.5, borderColor: colors.primary3, backgroundColor: colors.white, justifyContent: 'center' },
+  hijo: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 8, paddingRight: 22, borderRadius: 999, borderWidth: 1.5, borderColor: colors.primary3, backgroundColor: colors.white, justifyContent: 'center' },
   hijoActivo: { backgroundColor: colors.primary, borderColor: colors.primary },
   hijoTexto: { fontFamily: fonts.titleSemi, fontSize: 20, color: colors.primary },
 });
