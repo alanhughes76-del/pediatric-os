@@ -1,5 +1,5 @@
 import { View, Pressable, StyleSheet, type ViewProps } from 'react-native';
-import { colors, size } from '@/theme';
+import { colors, size, sombra } from '@/theme';
 
 type P = ViewProps & { onPress?: () => void; accessibilityLabel?: string };
 
@@ -21,6 +21,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     padding: 18,
+    boxShadow: sombra,
   },
   pressed: { backgroundColor: colors.bgSoft },
 });

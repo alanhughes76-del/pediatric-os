@@ -24,7 +24,7 @@ src/
     ingresar.tsx    Ingreso de familias con enlace mágico simulado (lib/enlaceMagico.ts: punto de integración)
     familia/        Portal de la familia: (tabs) Inicio, Pedir visita, Fiebre, Membresía; hijo/[id], fiebre/, urgencia
     medico/         Médico: (tabs) Hoy, Pacientes, Fiebre, Membresías; hijo/[id] (ficha), paciente/nuevo, adulto/[id], adulto/vincular, accesos, certificado/nuevo, consulta/[id], seguimiento/[id], fiebre/, familia/[id]
-  components/     Componentes de interfaz: ficha/ (ficha completa del médico), crecimiento/ (curvas P3–P97 y tabla), certificados/, consulta/, fiebre/, formularios.
+  components/     Componentes de interfaz: escritorio/Marco.tsx (barra lateral y superior en pantallas de 1024 px o más; en el teléfono, pestañas), ficha/ (ficha completa del médico), crecimiento/ (curvas P3–P97 y tabla), certificados/, consulta/, fiebre/, formularios.
                   FichaHijo.tsx es la ficha del portal de la familia.
   data/
     types.ts        Modelo de datos (una interfaz = una tabla)
@@ -62,16 +62,21 @@ Doctor, Family, Guardian (acceso habilitado sí/no), PatientRelationship (tipo, 
 
 - Interfaz en español rioplatense con voseo ("Cargá", "Tocá"). Nunca "tú" ni "vosotros".
 - Marca: "Dr. Alan Hughes · Pediatría a domicilio" (logotipo tipográfico).
-- Colores: #1B4D7E (principal), #2E6FA8, #3C87BE, #6FB3DA, #E8F3FA y #F4F9FC (fondos), #22415A (texto). Solo azules y celestes; rojo únicamente para alertas.
+- Colores base: #1B4D7E (principal), #2E6FA8, #3C87BE, #6FB3DA, #E8F3FA y #F4F8FB (fondos), #22415A (texto), #16324F (barra lateral).
+- Colores de categoría (paleta aprobada el 17/10/2026, `categorias` en `theme.ts`): celeste, verde agua, lavanda, durazno y arena, en tonos suaves sin saturar. Cada uno tiene fondo, acento (íconos) y texto oscuro con contraste AA. Rojo únicamente para alertas.
 - Única excepción: el botón de PacienteX es verde (#1F7A4D, `colors.contacto`), a pedido del Dr.
 - Tipografías: Playfair Display (títulos) y Source Sans 3 (resto).
 - Tono cálido y profesional, nada comercial. Botones grandes y pocos pasos (padres con un bebé en brazos).
 - Contacto: **no hay WhatsApp en ningún lado**. Botón "Contactá al Dr. por PacienteX", que abre `CONFIG.pacienteXUrl` en el navegador del teléfono.
 - La app nunca sugiere dosis ni diagnósticos a las familias.
 
-## Estado (16/10/2026)
+## Estado (17/10/2026)
 
 Pedido de etapas A a F terminado. Detalle punto por punto en `VERIFICACION.md`.
+
+Rediseño visual en curso (etapas G a K, referencia: imagen tipo tablero de Pediatric OS que mandó el Dr.):
+- **G (hecha):** paleta de categorías, tarjetas con sombra suave, versión web con barra lateral y barra superior con buscador. Módulos que todavía no existen (Agenda, Prescripciones, Estudios, Comunicaciones, Reportes, IA Asistente) aparecen en gris como "Próximamente" y no se abren.
+- **Pendientes:** H ficha del paciente como tablero, I "Hoy" y lista de pacientes, J portal de la familia, K verificación.
 
 - **Médico:** Hoy (visitas, seguimientos pendientes, registro de accesos), Pacientes (solapas por ámbito, búsqueda, alta con aviso de duplicado), ficha completa (encabezado con ámbito y DNI, Contacto, Adultos responsables con domicilios, Problemas, Alergias, Plan de cuidado y vacunas aplicadas, Crecimiento con curvas P3–P97 y tabla, Consultas, Registro de fiebre, Certificados y documentos), consulta (antropometría con el motor de percentilos, hitos, nota clínica versionada), fiebre.
 - **Familia:** ingreso con enlace mágico simulado, Inicio con selector de hijo y secciones por hijo, Pedir visita (bloqueado con membresía vencida), registro de fiebre, certificados en PDF. Los datos llegan filtrados por `vistaFamilia`.

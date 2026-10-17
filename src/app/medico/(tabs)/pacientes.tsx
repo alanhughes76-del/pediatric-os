@@ -4,7 +4,7 @@
  */
 import { useMemo, useState } from 'react';
 import { View, ScrollView, Pressable, Text, StyleSheet } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '@/data/store';
 import { fiebreDe, sinRevisar } from '@/data/selectores';
@@ -21,8 +21,16 @@ import { colors, fonts } from '@/theme';
 
 export default function Pacientes() {
   const { db } = useApp();
+  // `q` llega desde el buscador de la barra superior (pantallas anchas).
+  const { q } = useLocalSearchParams<{ q?: string }>();
   const [solapa, setSolapa] = useState<Solapa>('todos');
-  const [busqueda, setBusqueda] = useState('');
+  const [busqueda, setBusqueda] = useState(q ?? '');
+  const [qPrevio, setQPrevio] = useState(q);
+  if (q !== qPrevio) {
+    setQPrevio(q);
+    setBusqueda(q ?? '');
+    setSolapa('todos');
+  }
 
   const conteo = useMemo(() => contarPorSolapa(db.patients), [db.patients]);
   const lista = useMemo(() => filtrarPacientes(db.patients, solapa, busqueda), [db.patients, solapa, busqueda]);
