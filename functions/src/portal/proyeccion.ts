@@ -70,7 +70,7 @@ export function proyectarClinico(sub: string, d: Datos | undefined, ctx: Context
       return tomar(d, ['type', 'date', 'status', 'body', 'requestedBy', 'destination', 'place', 'signature', 'documentId', 'voidedAt']);
     case 'fever':
       return {
-        ...tomar(d, ['kind', 'at', 'temperatureC', 'site', 'state', 'improvement', 'note', 'drug', 'drugForm', 'drugName', 'dose', 'origin', 'createdBy', 'createdAt']),
+        ...tomar(d, ['kind', 'at', 'temperatureC', 'site', 'state', 'improvement', 'note', 'drug', 'drugForm', 'drugName', 'dose', 'origin', 'enteredByDoctor', 'createdBy', 'createdAt']),
         reviewed: !!d.reviewedAt,
       };
     default:

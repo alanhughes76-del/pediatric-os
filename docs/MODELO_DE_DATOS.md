@@ -82,7 +82,13 @@ Etapa 5a: `vaccineDoses` (una por dosis del calendario, id `vd-{paciente}-{clave
 | `…/magicLinks/{huella}` (enlace mágico: huella SHA-256 del código, vence a los 15 min, un solo uso) | — | Solo S (`pedirEnlace`, `entrarConEnlace`) |
 | `…/portalAccess/{authUid}` (`enabled`, `patientIds`, `guardianId`) | M; el propio adulto | Solo S (trigger `accesoPorAdulto` / `accesoPorVinculo`) |
 
-Las copias nunca llevan hallazgos, conducta, borradores, notas internas, alergias referidas ni problemas ocultos. Las reglas no pueden ocultar campos sueltos, así que el filtro está en la forma de guardar los datos.
+Las copias nunca llevan hallazgos, conducta, borradores, notas internas, alergias referidas ni problemas ocultos. Las reglas no pueden ocultar campos sueltos, así que el filtro está en la forma de guardar los datos. Las copias **no llevan `organizationId`**: el médico lee lo clínico por grupo de colecciones filtrando por ese campo, y las copias tienen los mismos nombres (`fever`, `allergies`…).
+
+Lo que la familia hace desde el portal (Etapa 6b):
+
+- Pedir visita: `pedirVisita` (S) crea un turno `solicitado` con origen `portal`, solo para sus chicos, con tope de 3 pedidos abiertos por adulto.
+- Mis datos: el adulto actualiza su teléfono, email y preferencia de contacto en `guardians/{id}` y sus direcciones (firma con `updatedBy`). Los triggers `avisoDatosFamilia` y `avisoDireccionFamilia` dejan una `notification` para el médico y emiten `familia.datos_actualizados` (solo ids y nombres de campos).
+- Descargas: `enlaceDescarga` (S) entrega un enlace firmado de 5 minutos si el documento o material está en su copia; registra la descarga en el `auditLog`.
 
 ## Trazabilidad y automatización
 
@@ -92,7 +98,7 @@ Las copias nunca llevan hallazgos, conducta, borradores, notas internas, alergia
 | `…/aiInteractions/{id}` | M | Solo S (Etapa 9) |
 | `…/outbox/{id}` (eventos para Make) | M | Solo S. Estados: `pendiente` → `enviado`, o `reintentar` (1, 2, 4… minutos, tope 6 h) → `fallido` a los 8 intentos. Sin URL configurada: `sin_destino` |
 | `…/inbound/{id}` (lo que llega de Make) | M | Solo S (Etapa 8) |
-| `…/notifications/{id}` (la campana) | el destinatario | S. El destinatario solo marca `readAt` |
+| `…/notifications/{id}` (la campana: `recipientUid`, `kind` `datos_familia`, `guardianId`, `campos`, `readAt`) | el destinatario | S. El destinatario solo marca `readAt` |
 
 ## Storage
 

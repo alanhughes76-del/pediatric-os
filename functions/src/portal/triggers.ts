@@ -12,10 +12,14 @@ type Datos = Record<string, unknown>;
 
 const rutaPortal = (org: string, patientId: string, sub: string, id: string) => `organizations/${org}/portal/${patientId}/${sub}/${id}`;
 
-/** Escribe la copia, o la borra si ya no corresponde. La copia es del servidor: borrarla no borra nada clínico. */
+/**
+ * Escribe la copia, o la borra si ya no corresponde. La copia es del servidor: borrarla no borra nada clínico.
+ * Sin `organizationId` a propósito: el médico lee lo clínico por grupo de colecciones filtrando por ese
+ * campo, y las copias (mismos nombres: fever, allergies…) no deben mezclarse con los originales.
+ */
 async function guardarCopia(org: string, patientId: string, sub: string, id: string, copia: Datos | null) {
   const ref = db().doc(rutaPortal(org, patientId, sub, id));
-  if (copia) await ref.set({ ...copia, organizationId: org, patientId, updatedAt: isoArgentina() });
+  if (copia) await ref.set({ ...copia, patientId, updatedAt: isoArgentina() });
   else await ref.delete();
 }
 

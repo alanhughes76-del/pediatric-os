@@ -105,6 +105,12 @@ describe('lo que ve la familia (prueba 12)', () => {
   const db = () => getCliente(familia);
   const todo = async (sub: string) => JSON.stringify((await getDocs(collection(db(), portal(sub)))).docs.map((d) => d.data()));
 
+  test('las copias no llevan organizationId (no se mezclan con lo clínico que el médico lee por grupo)', async () => {
+    const copias = await fs.collectionGroup('allergies').where('organizationId', '==', ORG).get();
+    expect(copias.docs.every((d) => d.ref.path.includes('/clinical/'))).toBe(true);
+    expect((await fs.doc(`${portal('allergies')}/a-conf`).get()).data()?.organizationId).toBeUndefined();
+  });
+
   test('las copias no tienen nada oculto', async () => {
     const resumenes = await todo('summaries');
     expect(resumenes).toContain('Está muy bien.');
