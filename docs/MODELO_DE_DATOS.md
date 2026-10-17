@@ -78,7 +78,8 @@ Etapa 5a: `vaccineDoses` (una por dosis del calendario, id `vd-{paciente}-{clave
 
 | Ruta | Lee | Escribe |
 | --- | --- | --- |
-| `…/portal/{patientId}/{sub}/{id}` (`summaries`, `allergies`, `problems`, `plan`, `growth`, `vaccines`, `documents`, `materials`, `fever`) | M; F con acceso vigente a ese chico | Solo S (Etapa 6) |
+| `…/portal/{patientId}/{sub}/{id}` (`datos` [paciente, familia], `summaries`, `allergies`, `problems`, `plan`, `growth`, `vaccines`, `documents`, `certificates`, `materials`, `fever`, `turnos`) | M; F con acceso vigente a ese chico | Solo S: triggers `portal*` con `functions/src/portal/proyeccion.ts` (qué va y qué no) |
+| `…/magicLinks/{huella}` (enlace mágico: huella SHA-256 del código, vence a los 15 min, un solo uso) | — | Solo S (`pedirEnlace`, `entrarConEnlace`) |
 | `…/portalAccess/{authUid}` (`enabled`, `patientIds`, `guardianId`) | M; el propio adulto | Solo S (trigger `accesoPorAdulto` / `accesoPorVinculo`) |
 
 Las copias nunca llevan hallazgos, conducta, borradores, notas internas, alergias referidas ni problemas ocultos. Las reglas no pueden ocultar campos sueltos, así que el filtro está en la forma de guardar los datos.
