@@ -142,3 +142,45 @@ npx expo start --tunnel --clear
 ```
 
 Lo que conviene mirar especialmente: el menú para guardar o compartir el PDF de un certificado, y cómo se ven las curvas de crecimiento en la pantalla del teléfono.
+
+---
+
+# Verificación del rediseño visual · etapas G a K
+
+Recorrido hecho el 17/10/2026 con los datos de ejemplo, en el navegador en dos tamaños: computadora (1280 px) y teléfono (375 px). Referencia: la imagen tipo tablero de Pediatric OS que mandó el Dr.
+
+**Verificaciones automáticas:** chequeo de tipos ✅ · linter ✅ · 232 tests ✅ · expo-doctor (21/21) ✅.
+**No verificado por mí:** la app en un iPhone o una tablet reales.
+
+| Punto | Estado | Cómo se verificó |
+| --- | --- | --- |
+| Plan por etapas aprobado; paleta aprobada antes de programar | ✅ | Plan G–K y paleta mostrados y aprobados; commits `0051d3e` (G), `95e4ee0` (H), `c59bb90` (I), `29eb32e` (J) |
+| Paleta más colorida, sin saturar, con contraste ideal | ✅ | `categorias` en `theme.ts`; todo texto sobre fondo de color mide 5,6:1 o más (norma AA pide 4,5:1) |
+| Rojo solo para alertas; verde intenso solo para PacienteX | ✅ | Revisado en cada pantalla; el verde agua solo se usa como fondo suave |
+| Versión web para médico y familias | ✅ | Barra lateral y barra superior desde 1024 px; en el teléfono, pestañas de siempre |
+| Módulos inexistentes como "Próximamente", sin abrirse | ✅ | Agenda, Prescripciones, Estudios, Comunicaciones, Reportes e IA Asistente en gris en la barra lateral del médico |
+| Nombre actual de la app en la barra lateral | ✅ | "Dr. Alan Hughes · Pediatría a domicilio" |
+| Ficha del paciente como tablero | ✅ | Tomás, Olivia y Emma: encabezado, solapas, Resumen, plan por plazo; las solapas usan los bloques de antes |
+| "Hoy" y lista de pacientes con el estilo nuevo | ✅ | Cifras del día, visitas y seguimientos en dos columnas; lista en dos columnas |
+| Portal de la familia con el mismo estilo | ✅ | Lucía (dos hijos) y Carolina (membresía vencida) |
+| Sin datos inventados (grupo sanguíneo, foto, medicación) | ✅ | La ficha muestra solo datos que existen; iniciales en lugar de foto |
+| Sin WhatsApp como contacto | ✅ | El contacto sigue siendo PacienteX. "WhatsApp" aparece solo como nombre del campo de teléfono del adulto (lo pediste en el bloque Contacto) |
+| No romper consulta, nota clínica, seguimientos y fiebre | ✅ | Ningún archivo de esos módulos ni de la capa de datos (`store`, `vistaFamilia`, `types`) cambió en G–K. Recorrido: Carolina anotó 38,6 °C → al médico le aparece en "Fiebre" y en la cifra de "Hoy"; seguimiento de Mateo; consulta del día con su nota |
+| Lo que ve la familia no cambió | ✅ | `vistaFamilia` sin cambios; sus tests siguen pasando para los 36 adultos |
+| Membresía vencida bloquea "Pedir visita" | ✅ | Carolina: muestra "Tu membresía venció. Para pedir una visita, contactame por PacienteX." |
+| No borrar archivos ni reescribir módulos sin preguntar | ⚠️ | No se borró ningún archivo. Se rehicieron tres pantallas que el plan aprobado preveía rediseñar: "Hoy", la ficha del portal (`FichaHijo`) y el armado de la ficha del médico (`FichaPaciente`); la lógica de cada bloque no cambió |
+
+## Decisiones que tomé sin preguntarte (G a K)
+
+- La barra lateral aparece desde 1024 px de ancho: computadora o tablet apaisada. Una tablet vertical usa las pestañas del teléfono.
+- No puse la campana de avisos de la imagen, porque la app todavía no tiene avisos.
+- En la ficha agregué la solapa "Datos y familia" (DNI, ámbito, contacto y adultos), que la imagen no tiene pero la ficha sí necesita. Vacunas va junto con el plan, en "Plan y vacunas".
+- Colores por categoría del plan: control celeste, vacuna verde agua, prevención durazno, otro lavanda. Plazos: Hoy celeste, Próximos 30 días arena, Próximos meses lavanda, Prevención durazno.
+- Colores por ámbito en las iniciales: Membresía celeste, Cardales verde agua, Hepta lavanda, Esporádico durazno, Sin asignar arena.
+- "Próximas acciones" muestra seguimientos, fiebre sin revisar y el plan de hoy y de los próximos 30 días.
+- La ficha abre siempre en "Resumen".
+- Al girar la tablet o cambiar el ancho de la ventana, la pantalla abierta no se pierde.
+
+## Pendiente de tu decisión
+
+- El botón "Contactá al Dr. por PacienteX" ocupa dos renglones en el teléfono. Se puede acortar, por ejemplo a "Escribile al Dr. por PacienteX".
