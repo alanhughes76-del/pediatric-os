@@ -24,6 +24,8 @@ export default function MedicoLayout() {
         <Stack.Screen name="fiebre/[id]" options={{ title: 'Fiebre' }} />
         <Stack.Screen name="fiebre/nuevo" options={{ title: 'Registro a mano', presentation: 'modal' }} />
         <Stack.Screen name="modulo/[clave]" options={{ title: '' }} />
+        <Stack.Screen name="familias/index" options={{ title: 'Familias' }} />
+        <Stack.Screen name="familias/nueva" options={{ title: 'Nueva familia' }} />
       </Stack>
     </Marco>
   );

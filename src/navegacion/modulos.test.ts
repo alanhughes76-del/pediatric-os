@@ -13,6 +13,8 @@ test.each([
   ['/medico/hijo/p-tomas', 'pacientes'],
   ['/medico/consulta/c1', 'pacientes'],
   ['/medico/membresias', 'familias'],
+  ['/medico/familia/f-ferreyra', 'familias'],
+  ['/medico/familias', 'familias'],
   ['/medico/modulo/vacunas', 'vacunas'],
   ['/medico/modulo/configuracion', 'configuracion'],
   ['/medico/agenda', 'agenda'],

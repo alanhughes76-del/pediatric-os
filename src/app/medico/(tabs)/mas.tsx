@@ -37,7 +37,6 @@ export default function Mas() {
       <Seccion titulo="Lo que ya funciona">
         <View style={s.lista}>
           <Fila titulo="Registro de fiebre" icono="thermometer-outline" href="/medico/fiebre" />
-          <Fila titulo="Membresías" icono="wallet-outline" href="/medico/membresias" />
           <Fila titulo="Registro de accesos al portal" icono="log-in-outline" href="/medico/accesos" />
         </View>
       </Seccion>

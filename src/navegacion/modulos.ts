@@ -39,15 +39,11 @@ export const MODULOS: Modulo[] = [
   { clave: 'agenda', titulo: 'Agenda', icono: 'calendar-outline', href: '/medico/agenda', rutas: ['/medico/agenda'] },
   {
     clave: 'pacientes', titulo: 'Pacientes', icono: 'people-outline', href: '/medico/pacientes',
-    rutas: ['/medico/pacientes', '/medico/hijo', '/medico/paciente', '/medico/adulto', '/medico/consulta', '/medico/certificado'],
+    rutas: ['/medico/pacientes', '/medico/hijo', '/medico/paciente', '/medico/consulta', '/medico/certificado'],
   },
   {
-    ...mod('familias', 'Familias', 'home-outline', 'Etapa 2', 'Ficha de cada familia: hijos, adultos responsables, próximos turnos, historial de visitas, membresía y pagos, y quién puede entrar al portal.', [
-      { titulo: 'Membresías', href: '/medico/membresias', icono: 'wallet-outline' },
-      { titulo: 'Registro de accesos al portal', href: '/medico/accesos', icono: 'log-in-outline' },
-    ]),
-    icono: 'people-circle-outline',
-    rutas: ['/medico/modulo/familias', '/medico/membresias', '/medico/familia'],
+    clave: 'familias', titulo: 'Familias', icono: 'people-circle-outline', href: '/medico/familias',
+    rutas: ['/medico/familias', '/medico/familia', '/medico/membresias', '/medico/adulto'],
   },
   mod('historia', 'Historia clínica', 'document-text-outline', 'Etapa 4', 'Antecedentes, problemas de salud y alergias de todos los pacientes. Hoy están en la ficha de cada paciente.', [aPacientes]),
   mod('consultas', 'Consultas', 'medkit-outline', 'Etapa 4', 'Listado de consultas con su nota clínica. Hoy se abren desde Inicio o desde la ficha de cada paciente.', [aPacientes]),
