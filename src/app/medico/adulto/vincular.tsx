@@ -114,7 +114,7 @@ export default function VincularAdulto() {
           <Campo value={busqueda} onChangeText={(v) => { setBusqueda(v); setElegido(undefined); }} placeholder="Nombre, apellido o email" autoCapitalize="none" autoCorrect={false} />
           {busqueda.trim() && resultados.length === 0 ? <Texto color={colors.textMuted}>No hay adultos con ese nombre. Podés crearlo nuevo.</Texto> : null}
           {resultados.map((g) => (
-            <Tarjeta key={g.id} onPress={() => setElegido(g)} style={elegido?.id === g.id ? { borderColor: colors.primary, borderWidth: 2 } : undefined}>
+            <Tarjeta key={g.id} onPress={() => setElegido(g)} style={elegido?.id === g.id ? { borderColor: colors.accion, borderWidth: 2 } : undefined}>
               <TextoFuerte>{g.firstName} {g.lastName}</TextoFuerte>
               <TextoChico>{g.email}{g.phone ? ` · ${g.phone}` : ''}</TextoChico>
             </Tarjeta>

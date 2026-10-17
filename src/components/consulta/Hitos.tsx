@@ -74,7 +74,7 @@ export function Hitos({ consulta, paciente }: { consulta: Consultation; paciente
 const s = StyleSheet.create({
   controles: { gap: 8, paddingVertical: 2 },
   control: { minHeight: 48, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1.5, borderColor: colors.primary3, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
-  controlActivo: { backgroundColor: colors.primary, borderColor: colors.primary },
+  controlActivo: { backgroundColor: colors.accion, borderColor: colors.accion },
   controlTexto: { fontFamily: fonts.bodySemi, fontSize: 16, color: colors.primary },
   sugerido: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted },
 });

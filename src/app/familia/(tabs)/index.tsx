@@ -57,8 +57,8 @@ export default function InicioFamilia() {
               </View>
             ) : (
               <View style={s.banner}>
-                <Ionicons name="checkmark-circle" size={24} color={categorias.verdeAgua.acento} />
-                <Texto style={{ flex: 1 }} color={categorias.verdeAgua.texto}>Membresía activa · se renueva el {fechaCorta(membership.renewalDate)}</Texto>
+                <Ionicons name="checkmark-circle" size={24} color={categorias.verde.acento} />
+                <Texto style={{ flex: 1 }} color={categorias.verde.texto}>Membresía activa · se renueva el {fechaCorta(membership.renewalDate)}</Texto>
               </View>
             )
           ) : null}
@@ -93,12 +93,12 @@ const s = StyleSheet.create({
   costado: { flexGrow: 1, flexBasis: 280, gap: 12, justifyContent: 'center' },
   banner: {
     flexDirection: 'row', gap: 10, alignItems: 'center',
-    backgroundColor: categorias.verdeAgua.fondo, borderRadius: size.radius, padding: 14,
+    backgroundColor: categorias.verde.fondo, borderRadius: size.radius, padding: 14,
   },
   bannerVencida: { backgroundColor: colors.alertBg, borderWidth: 1, borderColor: colors.alertBorder, alignItems: 'flex-start' },
-  proxima: { flexGrow: 2, flexBasis: 340, backgroundColor: colors.primary, borderColor: colors.primary, gap: 6, padding: 22 },
+  proxima: { flexGrow: 2, flexBasis: 340, backgroundColor: colors.accion, borderColor: colors.accion, gap: 6, padding: 22 },
   selector: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   hijo: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 8, paddingRight: 22, borderRadius: 999, borderWidth: 1.5, borderColor: colors.primary3, backgroundColor: colors.white, justifyContent: 'center' },
-  hijoActivo: { backgroundColor: colors.primary, borderColor: colors.primary },
+  hijoActivo: { backgroundColor: colors.accion, borderColor: colors.accion },
   hijoTexto: { fontFamily: fonts.titleSemi, fontSize: 20, color: colors.primary },
 });

@@ -124,7 +124,7 @@ const s = StyleSheet.create({
     borderWidth: 1.5, borderColor: colors.primary3, backgroundColor: colors.white, justifyContent: 'center',
   },
   opcionColumna: { minHeight: 56 },
-  opcionActiva: { backgroundColor: colors.primary, borderColor: colors.primary },
+  opcionActiva: { backgroundColor: colors.accion, borderColor: colors.accion },
   opcionTexto: { fontFamily: fonts.bodySemi, fontSize: 17, color: colors.primary },
   opcionDetalle: { fontFamily: fonts.body, fontSize: 14, color: colors.textMuted },
   campo: {

@@ -114,7 +114,7 @@ const s = StyleSheet.create({
     minHeight: 48, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1.5, borderColor: colors.primary3,
     backgroundColor: colors.white, flexDirection: 'row', alignItems: 'center', gap: 6,
   },
-  solapaActiva: { backgroundColor: colors.primary, borderColor: colors.primary },
+  solapaActiva: { backgroundColor: colors.accion, borderColor: colors.accion },
   solapaTexto: { fontFamily: fonts.bodySemi, fontSize: 16, color: colors.primary },
   solapaNumero: { fontFamily: fonts.body, fontSize: 15, color: colors.textMuted },
   arriba: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 12 },

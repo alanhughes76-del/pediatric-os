@@ -28,7 +28,7 @@ export function VistaCertificado({ titulo, cuerpo, lugarFecha, firma, anulado }:
 
 const s = StyleSheet.create({
   hoja: { backgroundColor: colors.white, borderRadius: 8, borderWidth: 1, borderColor: colors.border, padding: 20, gap: 14 },
-  linea: { height: 2, backgroundColor: colors.primary },
+  linea: { height: 2, backgroundColor: colors.accion },
   titulo: { fontFamily: fonts.titleSemi, fontSize: 20, color: colors.primary, textAlign: 'center' },
   cuerpo: { lineHeight: 27 },
   fecha: { textAlign: 'right' },

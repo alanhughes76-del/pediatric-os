@@ -331,7 +331,7 @@ const s = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: { minHeight: 44, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1.5, borderColor: colors.primary3, backgroundColor: colors.white, justifyContent: 'center' },
   chipChico: { minHeight: 36, paddingHorizontal: 10 },
-  chipActivo: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipActivo: { backgroundColor: colors.accion, borderColor: colors.accion },
   chipTexto: { fontFamily: fonts.bodySemi, fontSize: 16, color: colors.primary },
   vacio: { height: 120, alignItems: 'center', justifyContent: 'center' },
   toque: { position: 'absolute', width: 32, height: 32, borderRadius: 16 },
