@@ -7,7 +7,8 @@
  * - No registra datos personales en los logs.
  */
 import { onRequest } from 'firebase-functions/v2/https';
-import { defineSecret, defineString } from 'firebase-functions/params';
+import { defineSecret } from 'firebase-functions/params';
+import { ORGANIZACION_ID } from '../params';
 import { logger } from 'firebase-functions';
 import { db } from '../config';
 import { isoArgentina } from '../../../shared/fechaHora';
@@ -17,8 +18,6 @@ import { completar, type Turno } from './datos';
 import { guardarTurno } from './operacion';
 
 const CALCOM_WEBHOOK_SECRET = defineSecret('CALCOM_WEBHOOK_SECRET');
-/** Organización a la que entran las reservas (hay una sola: la del Dr.). */
-const ORGANIZACION_ID = defineString('ORGANIZACION_ID', { default: '' });
 const SISTEMA = 'calcom';
 
 async function registrarEntrada(org: string, tipo: string, resultado: string, appointmentId?: string) {
