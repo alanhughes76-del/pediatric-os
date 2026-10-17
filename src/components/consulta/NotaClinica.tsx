@@ -10,7 +10,8 @@ import { useEffect, useRef, useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '@/data/store';
-import { versionesDeNota, notaVigente } from '@/data/selectores';
+import { versionesDeNota, notaVigente, adultosDe } from '@/data/selectores';
+import { mailDelResumen } from '@shared/resumen';
 import type { ClinicalNote, Consultation, Patient } from '@/data/types';
 import { borradorDeEjemplo, type CamposNota } from '@/lib/notaIA';
 import { ahoraISO, fechaCorta, hora } from '@/lib/fechas';
@@ -65,7 +66,7 @@ export function NotaClinica({ consulta, paciente }: { consulta: Consultation; pa
       ) : vigente.status === 'borrador' ? (
         <Borrador key={vigente.id} nota={vigente} consulta={consulta} paciente={paciente} texto={texto} />
       ) : (
-        <Aprobada nota={vigente} />
+        <Aprobada nota={vigente} consulta={consulta} paciente={paciente} />
       )}
 
       {versiones.length > 0 ? <Historial versiones={versiones} /> : null}
@@ -75,8 +76,11 @@ export function NotaClinica({ consulta, paciente }: { consulta: Consultation; pa
 
 // ---------- Sin nota todavía ----------
 
+/** Explicación cuando la IA está apagada (prompt maestro 7.18: arranca apagada). */
+const IA_APAGADA = 'La IA está apagada. Se enciende en Configuración cuando se conecte (Etapa 9), después de revisar el consentimiento.';
+
 function SinNota({ consulta, paciente, texto }: { consulta: Consultation; paciente: Patient; texto: string }) {
-  const { agregar } = useApp();
+  const { agregar, db } = useApp();
   const [sinTexto, setSinTexto] = useState(false);
   const crear = (campos: CamposNota, origin: ClinicalNote['origin']) =>
     agregar('notes', { consultationId: consulta.id, patientId: paciente.id, version: 1, status: 'borrador', origin, updatedAt: ahoraISO(), ...campos }, 'nota.crear');
@@ -86,13 +90,16 @@ function SinNota({ consulta, paciente, texto }: { consulta: Consultation; pacien
       <Boton
         titulo="Generar borrador con IA"
         icono="sparkles-outline"
+        variante={db.ia.enabled ? 'principal' : 'contorno'}
+        deshabilitado={!db.ia.enabled}
+        detalle={db.ia.enabled ? undefined : IA_APAGADA}
         onPress={() => {
           const b = borradorDeEjemplo(texto, consulta.visitType, paciente.firstName);
           if (!b) return setSinTexto(true);
           crear(b, 'ia');
         }}
       />
-      <Boton titulo="Escribir manualmente" icono="create-outline" variante="contorno" onPress={() => crear(VACIA, 'humano')} />
+      <Boton titulo="Escribir manualmente" icono="create-outline" variante={db.ia.enabled ? 'contorno' : 'principal'} onPress={() => crear(VACIA, 'humano')} />
       {sinTexto ? <Aviso tono="alerta" texto="Primero escribí, pegá o dictá el texto de la consulta." /> : null}
     </View>
   );
@@ -101,7 +108,7 @@ function SinNota({ consulta, paciente, texto }: { consulta: Consultation; pacien
 // ---------- Borrador (editable) ----------
 
 function Borrador({ nota, consulta, paciente, texto }: { nota: ClinicalNote; consulta: Consultation; paciente: Patient; texto: string }) {
-  const { actualizar, operaciones } = useApp();
+  const { actualizar, operaciones, db } = useApp();
   const inicial: CamposNota = { findings: nota.findings, plan: nota.plan, familySummary: nota.familySummary, allergiesMedication: nota.allergiesMedication, clinicalFlag: nota.clinicalFlag };
   const [campos, setCampos] = useState<CamposNota>(inicial);
   const [origen, setOrigen] = useState(nota.origin);
@@ -163,12 +170,14 @@ function Borrador({ nota, consulta, paciente, texto }: { nota: ClinicalNote; con
       ))}
       <Casilla marcada={campos.clinicalFlag} onCambio={(v) => setCampos((x) => ({ ...x, clinicalFlag: v }))} texto="Marcar bandera clínica" detalle="Al aprobar, entra en Seguimientos pendientes." />
 
-      <Boton
-        titulo={confirmarRegenerar ? 'Tocá de nuevo para reemplazar los 4 campos' : 'Volver a generar con IA'}
-        icono="refresh-outline"
-        variante={confirmarRegenerar ? 'alerta' : 'contorno'}
-        onPress={regenerar}
-      />
+      {db.ia.enabled ? (
+        <Boton
+          titulo={confirmarRegenerar ? 'Tocá de nuevo para reemplazar los 4 campos' : 'Volver a generar con IA'}
+          icono="refresh-outline"
+          variante={confirmarRegenerar ? 'alerta' : 'contorno'}
+          onPress={regenerar}
+        />
+      ) : null}
       {aviso ? <Aviso texto={aviso} /> : null}
       <Boton titulo="Guardar cambios" icono="save-outline" variante="secundario" onPress={guardar} />
       <Boton titulo="Aprobar y guardar en historia clínica" icono="checkmark-done-outline" onPress={aprobar} />
@@ -179,7 +188,7 @@ function Borrador({ nota, consulta, paciente, texto }: { nota: ClinicalNote; con
 
 // ---------- Aprobada (solo lectura) ----------
 
-function Aprobada({ nota }: { nota: ClinicalNote }) {
+function Aprobada({ nota, consulta, paciente }: { nota: ClinicalNote; consulta: Consultation; paciente: Patient }) {
   const { operaciones } = useApp();
   const [error, setError] = useState<string | null>(null);
   // Corregir lo hace el servidor: la aprobada queda "reemplazada" y nace la versión siguiente.
@@ -194,6 +203,71 @@ function Aprobada({ nota }: { nota: ClinicalNote }) {
       <VistaCampos nota={nota} />
       {error ? <Aviso tono="alerta" texto={error} /> : null}
       <Boton titulo="Corregir esta nota" icono="create-outline" variante="contorno" onPress={corregir} />
+      <ResumenParaFamilia nota={nota} consulta={consulta} paciente={paciente} />
+    </View>
+  );
+}
+
+// ---------- Resumen para la familia por mail ----------
+
+/**
+ * "Preparar el mail" → lo revisás y lo podés cambiar → "Revisé y lo mando".
+ * Lleva solo el resumen para la familia. El envío lo hace Make (evento `resumen.envio_aprobado`).
+ */
+function ResumenParaFamilia({ nota, consulta, paciente }: { nota: ClinicalNote; consulta: Consultation; paciente: Patient }) {
+  const { db, operaciones } = useApp();
+  const [abierto, setAbierto] = useState(false);
+  const [asunto, setAsunto] = useState('');
+  const [cuerpo, setCuerpo] = useState('');
+  const [mandando, setMandando] = useState(false);
+  const [mensaje, setMensaje] = useState<{ tono: 'info' | 'alerta'; texto: string } | null>(null);
+  const destinatarios = adultosDe(db, paciente.id).map((a) => a.guardian).filter((g) => g.email.trim());
+  const enviados = db.communications.filter((c) => c.noteId === nota.id && c.kind === 'resumen_familia').sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+
+  if (!nota.familySummary.trim()) {
+    return <TextoChico>Esta versión no tiene resumen para la familia: no hay mail para preparar.</TextoChico>;
+  }
+
+  const preparar = () => {
+    const m = mailDelResumen({
+      nombresAdultos: destinatarios.map((g) => g.firstName),
+      nombreChico: paciente.firstName,
+      fecha: fechaCorta(consulta.occurredAt),
+      resumen: nota.familySummary,
+    });
+    setAsunto(m.asunto);
+    setCuerpo(m.texto);
+    setMensaje(null);
+    setAbierto(true);
+  };
+
+  const mandar = async () => {
+    setMandando(true);
+    const error = await operaciones.enviarResumen({ nota, asunto, texto: cuerpo });
+    setMandando(false);
+    if (error) return setMensaje({ tono: 'alerta', texto: error });
+    setAbierto(false);
+    setMensaje({ tono: 'info', texto: 'Listo: quedó registrado y lo manda Make. Hasta que Make esté conectado (Etapa 8), no sale ningún mail.' });
+  };
+
+  return (
+    <View style={s.mail}>
+      <TextoFuerte>Resumen para la familia por mail</TextoFuerte>
+      {enviados.map((c) => <TextoChico key={c.id}>Enviado a Make el {fechaHora(c.createdAt)} ({c.recipientIds.length} {c.recipientIds.length === 1 ? 'destinatario' : 'destinatarios'}).</TextoChico>)}
+      {!abierto ? (
+        <Boton titulo={enviados.length > 0 ? 'Preparar otro mail' : 'Preparar el mail'} icono="mail-outline" variante="secundario" onPress={preparar} />
+      ) : (
+        <>
+          <TextoChico>
+            Para: {destinatarios.length > 0 ? destinatarios.map((g) => `${g.firstName} ${g.lastName} (${g.email})`).join(', ') : 'ningún adulto tiene email cargado'}
+          </TextoChico>
+          <Campo etiqueta="Asunto" value={asunto} onChangeText={setAsunto} maxLength={200} />
+          <Campo etiqueta="Texto" value={cuerpo} onChangeText={setCuerpo} multiline maxLength={5000} style={{ minHeight: 220 }} ayuda="Lleva solo el resumen para la familia. Revisalo y cambiá lo que quieras antes de mandarlo." />
+          <Boton titulo={mandando ? 'Mandando…' : 'Revisé y lo mando'} icono="send-outline" deshabilitado={mandando || !asunto.trim() || !cuerpo.trim() || destinatarios.length === 0} onPress={mandar} />
+          <Boton titulo="No mandar" variante="contorno" onPress={() => setAbierto(false)} />
+        </>
+      )}
+      {mensaje ? <Aviso tono={mensaje.tono} texto={mensaje.texto} /> : null}
     </View>
   );
 }
@@ -249,6 +323,7 @@ function Historial({ versiones }: { versiones: ClinicalNote[] }) {
 const s = StyleSheet.create({
   tarjeta: { gap: 14, backgroundColor: colors.white, borderRadius: size.radius, borderWidth: 1, borderColor: colors.border, padding: 16 },
   encabezado: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  mail: { gap: 10, paddingTop: 14, borderTopWidth: 1, borderTopColor: colors.border },
   historialBoton: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44 },
   version: { gap: 10, padding: 12, borderRadius: 12, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border },
 });

@@ -20,6 +20,7 @@ import { BloqueAlergias, BloquePlan, BloqueProblemas, BloqueVacunas } from './Cl
 import { EstadoVacio } from '../Estados';
 import { BloqueConsultas, BloqueCrecimiento, BloqueDocumentos, BloqueFiebre, useNuevaConsulta } from './Historia';
 import { Resumen } from './Resumen';
+import { BloqueAntecedentes } from './Antecedentes';
 import { colors, fonts } from '@/theme';
 
 export type SolapaFicha =
@@ -41,9 +42,9 @@ const SOLAPAS: { clave: SolapaFicha; texto: string }[] = [
   { clave: 'fiebre', texto: 'Fiebre' },
 ];
 
-export function FichaPaciente({ patientId }: { patientId: string }) {
+export function FichaPaciente({ patientId, solapaInicial }: { patientId: string; solapaInicial?: SolapaFicha }) {
   const { db } = useApp();
-  const [solapa, setSolapa] = useState<SolapaFicha>('resumen');
+  const [solapa, setSolapa] = useState<SolapaFicha>(solapaInicial && SOLAPAS.some((x) => x.clave === solapaInicial) ? solapaInicial : 'resumen');
   const [rapidas, setRapidas] = useState(false);
   const nuevaConsulta = useNuevaConsulta(patientId);
   const p = buscarPaciente(db, patientId);
@@ -98,6 +99,7 @@ export function FichaPaciente({ patientId }: { patientId: string }) {
       ) : null}
       {solapa === 'historia' ? (
         <>
+          <BloqueAntecedentes key={p.id} paciente={p} />
           <BloqueProblemas patientId={p.id} />
           <BloqueAlergias patientId={p.id} />
         </>

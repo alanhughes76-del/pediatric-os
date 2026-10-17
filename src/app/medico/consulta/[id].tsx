@@ -20,6 +20,7 @@ import { Campo, Opciones, Aviso, EstadoGuardado } from '@/components/Formulario'
 import { Antropometria } from '@/components/consulta/Antropometria';
 import { Hitos } from '@/components/consulta/Hitos';
 import { NotaClinica } from '@/components/consulta/NotaClinica';
+import { ProblemasAbordados, TurnoDeOrigen } from '@/components/consulta/ProblemasAbordados';
 import { colors } from '@/theme';
 
 export default function ConsultaMedico() {
@@ -50,7 +51,14 @@ export default function ConsultaMedico() {
       <AlergiasDestacadas alergias={alergiasDe(db, p.id, 'medico')} />
 
       <Seccion titulo="Datos de la consulta">
-        <Tarjeta><DatosConsulta key={consulta.id} consulta={consulta} /></Tarjeta>
+        <Tarjeta style={{ gap: 8 }}>
+          <DatosConsulta key={consulta.id} consulta={consulta} />
+          <TurnoDeOrigen consulta={consulta} />
+        </Tarjeta>
+      </Seccion>
+
+      <Seccion titulo="Problemas que se abordaron">
+        <Tarjeta><ProblemasAbordados consulta={consulta} /></Tarjeta>
       </Seccion>
 
       <Seccion titulo="Antropometría" bajada="Percentilo y Z mientras escribís">
