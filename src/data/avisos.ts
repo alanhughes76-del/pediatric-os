@@ -1,14 +1,15 @@
 /**
  * Avisos del médico (la campana y la pestaña "Avisos"). Salen solo de datos reales del sistema;
- * no hay indicadores inventados (prompt maestro 7.1). Los avisos de estudios, vacunas atrasadas
- * y pagos vencidos se suman cuando existan esos módulos (Etapas 5 y 7).
+ * no hay indicadores inventados (prompt maestro 7.1). Los pagos vencidos se suman en la Etapa 7.
  */
 import type { Href } from 'expo-router';
 import type { Database } from './types';
 import { fiebreDe, membresiaDeFamilia, nombreCompleto, seguimientosPendientes, sinRevisar } from './selectores';
-import { fechaCorta } from '@/lib/fechas';
+import { fechaCorta, hoyISO } from '@/lib/fechas';
+import { estadoDosis } from '@shared/vacunas';
+import { resultadosSinRevisar } from './seguimientoClinico';
 
-export type TipoAviso = 'seguimiento' | 'fiebre' | 'membresia';
+export type TipoAviso = 'seguimiento' | 'fiebre' | 'estudio' | 'vacuna' | 'membresia';
 
 export interface Aviso {
   id: string;
@@ -42,6 +43,28 @@ export function avisosDelMedico(db: Database, ahora = new Date().toISOString()):
       titulo: `Fiebre sin revisar · ${nombreCompleto(p)}`,
       detalle: `${n} ${n === 1 ? 'registro' : 'registros'}`,
       href: `/medico/fiebre/${p.id}`,
+    });
+  }
+
+  const hoy = hoyISO();
+  for (const { estudio: e, paciente: p, vencido } of resultadosSinRevisar(db, hoy)) {
+    avisos.push({
+      id: `est-${e.id}`, tipo: 'estudio', alerta: vencido,
+      titulo: `Resultado para revisar · ${nombreCompleto(p)}`,
+      detalle: `${e.study}${e.reviewDate ? ` · ${vencido ? 'había que revisarlo el' : 'revisar el'} ${fechaCorta(e.reviewDate)}` : ''}`,
+      href: { pathname: '/medico/hijo/[id]', params: { id: p.id, solapa: 'estudios' } },
+    });
+  }
+
+  // Vacunas atrasadas según el calendario (si no está verificado, se aclara).
+  for (const p of db.patients.filter((x) => !x.archivedAt)) {
+    const atrasadas = db.vaccineDoses.filter((d) => d.patientId === p.id && !d.archivedAt && estadoDosis(d, hoy) === 'atrasada');
+    if (atrasadas.length === 0) continue;
+    avisos.push({
+      id: `vac-${p.id}`, tipo: 'vacuna', alerta: false,
+      titulo: `Vacunas atrasadas · ${nombreCompleto(p)}`,
+      detalle: `${atrasadas.length} ${atrasadas.length === 1 ? 'dosis' : 'dosis'}${db.vacunas.calendarioVerificado ? '' : ' (calendario sin verificar)'}`,
+      href: { pathname: '/medico/hijo/[id]', params: { id: p.id, solapa: 'vacunas' } },
     });
   }
 

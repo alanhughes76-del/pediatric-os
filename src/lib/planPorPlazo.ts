@@ -29,7 +29,7 @@ export function plazoDe(i: Pick<CarePlanItem, 'category' | 'targetDate'>, hoy: s
 export function planPorPlazo(items: CarePlanItem[], hoy: string): Record<Plazo, CarePlanItem[]> {
   const grupos: Record<Plazo, CarePlanItem[]> = { hoy: [], treinta: [], meses: [], prevencion: [] };
   items
-    .filter((i) => !i.done && !i.archivedAt)
+    .filter((i) => !i.done && !i.cancelledAt && !i.archivedAt)
     .sort((a, b) => (a.targetDate ?? '9').localeCompare(b.targetDate ?? '9'))
     .forEach((i) => grupos[plazoDe(i, hoy)].push(i));
   return grupos;

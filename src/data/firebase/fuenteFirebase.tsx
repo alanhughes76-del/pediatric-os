@@ -28,8 +28,8 @@ const VACIA: Database = {
   doctor: { id: '', name: 'Dr. Alan Hughes', email: '', signature: FIRMA },
   families: [], guardians: [], relationships: [], addresses: [], patients: [], memberships: [], payments: [],
   backgrounds: [], problems: [], allergies: [], consultations: [], measurements: [], milestoneChecks: [], notes: [], followUps: [],
-  carePlan: [], fever: [], certificates: [], documents: [], appointments: [], appointmentHistory: [], blocks: [], communications: [],
-  agenda: CONFIG_AGENDA_INICIAL, ia: { enabled: false }, auditLog: [],
+  carePlan: [], vaccineDoses: [], medications: [], prescriptions: [], studies: [], fever: [], certificates: [], documents: [], appointments: [], appointmentHistory: [], blocks: [], communications: [],
+  agenda: CONFIG_AGENDA_INICIAL, ia: { enabled: false }, vacunas: { calendarioVerificado: false }, auditLog: [],
 };
 
 /** Mensajes que se entienden, sin códigos técnicos. */
@@ -99,6 +99,9 @@ export function useFuenteFirebase(): AppState {
     }, fallo));
     subs.push(onSnapshot(collection(fs, `organizations/${org}/communications`), (snap) => {
       setDatos((d) => ({ ...d, communications: snap.docs.map((x) => ({ id: x.id, ...x.data() }) as Communication) }));
+    }, fallo));
+    subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/vacunas`), (snap) => {
+      setDatos((d) => ({ ...d, vacunas: { calendarioVerificado: snap.data()?.calendarioVerificado === true } }));
     }, fallo));
     subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/ia`), (snap) => {
       setDatos((d) => ({ ...d, ia: { enabled: snap.data()?.enabled === true } }));
@@ -181,9 +184,25 @@ export function useFuenteFirebase(): AppState {
       anularCertificado: (c, motivo) => llamar('anularCertificado', { patientId: c.patientId, certificateId: c.id, reason: motivo }),
       crearTurno: (datos) => turno('crearTurno', datos),
       accionTurno: ({ turno: t, ...resto }) => turno('accionTurno', { id: t.id, ...resto }),
+      verificarCalendario: async (verificado) => {
+        // settings/vacunas lo puede escribir solo el médico, con su firma (reglas).
+        const ref = doc(fs, `organizations/${org}/settings/vacunas`);
+        const ahora = ahoraISO();
+        const datosCalendario = { calendarioVerificado: verificado, verifiedAt: verificado ? ahora : deleteField(), verifiedBy: verificado ? uid : deleteField(), updatedBy: uid, updatedAt: ahora };
+        try {
+          await updateDoc(ref, datosCalendario);
+          return null;
+        } catch (e) {
+          if (!(e instanceof FirebaseError && e.code === 'not-found')) return mensajeDeError(e);
+          try {
+            await setDoc(ref, { calendarioVerificado: verificado, ...(verificado ? { verifiedAt: ahora, verifiedBy: uid } : {}), organizationId: org, createdBy: uid, createdAt: ahora, updatedBy: uid, updatedAt: ahora });
+            return null;
+          } catch (e2) { return mensajeDeError(e2); }
+        }
+      },
       enviarResumen: ({ nota, asunto, texto }) => llamar('enviarResumenFamilia', { patientId: nota.patientId, noteId: nota.id, asunto, texto }),
     };
-  }, [functions]);
+  }, [functions, fs, org, uid]);
 
   return useMemo<AppState>(() => ({
     fuente: 'firebase',

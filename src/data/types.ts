@@ -249,7 +249,7 @@ export interface FollowUp extends Base {
   resolvedAt?: ISODateTime;
 }
 
-export type CarePlanCategory = 'control' | 'prevencion' | 'vacuna' | 'otro';
+export type CarePlanCategory = 'control' | 'prevencion' | 'vacuna' | 'estudio' | 'otro';
 
 export interface CarePlanItem extends Base {
   patientId: ID;
@@ -258,6 +258,71 @@ export interface CarePlanItem extends Base {
   targetDate?: ISODate;
   done: boolean;
   doneAt?: ISODateTime;
+  /** Cancelado: deja de estar pendiente y no se borra. */
+  cancelledAt?: ISODateTime;
+}
+
+// ---------- Vacunas, medicación y estudios (Etapa 5) ----------
+
+/** Una dosis del esquema del paciente (del calendario) o una vacuna cargada a mano. */
+export interface VaccineDose extends Base {
+  patientId: ID;
+  vaccine: string;
+  dose: string;
+  /** Del calendario: edad como se muestra y en meses; fecha estimada. */
+  ageText?: string;
+  ageMonths?: number;
+  dueDate?: ISODate;
+  /** "Atrasada" no se guarda: es una pendiente con la fecha estimada ya pasada. */
+  status: 'pendiente' | 'aplicada';
+  appliedDate?: ISODate;
+  place?: string;
+  lot?: string;
+  source: 'calendario' | 'manual';
+  updatedAt?: ISODateTime;
+}
+
+/** Medicación actual. La dosis la escribe el médico: la plataforma nunca sugiere ni calcula dosis. */
+export interface Medication extends Base {
+  patientId: ID;
+  drug: string;
+  presentation?: string;
+  dose: string;
+  frequency?: string;
+  startDate: ISODate;
+  endDate?: ISODate;
+  indication?: string;
+  consultationId?: ID;
+  updatedAt?: ISODateTime;
+}
+
+/** Registro de lo indicado. La receta legal se emite en la plataforma registrada (ReNaPDiS). */
+export interface PrescriptionRecord extends Base {
+  patientId: ID;
+  date: ISODate;
+  /** Lo indicado, tal como lo escribe el médico. */
+  detail: string;
+  consultationId?: ID;
+  /** Se marca cuando la receta ya se emitió en la plataforma. */
+  issuedAt?: ISODateTime;
+}
+
+export type StudyStatus = 'solicitado' | 'realizado' | 'resultado' | 'revisado';
+
+export interface StudyOrder extends Base {
+  patientId: ID;
+  study: string;
+  reason?: string;
+  orderedDate: ISODate;
+  /** "Revisar resultado el": fecha que estima el médico. */
+  reviewDate?: ISODate;
+  status: StudyStatus;
+  /** Lo que dice el resultado, en palabras del médico (el archivo se adjunta en la Etapa 5b). */
+  resultNote?: string;
+  resultAt?: ISODateTime;
+  reviewedAt?: ISODateTime;
+  consultationId?: ID;
+  updatedAt?: ISODateTime;
 }
 
 // ---------- Registro de fiebre ----------
@@ -430,6 +495,10 @@ export interface Database {
   notes: ClinicalNote[];
   followUps: FollowUp[];
   carePlan: CarePlanItem[];
+  vaccineDoses: VaccineDose[];
+  medications: Medication[];
+  prescriptions: PrescriptionRecord[];
+  studies: StudyOrder[];
   fever: FeverEntry[];
   certificates: Certificate[];
   documents: Document[];
@@ -441,5 +510,7 @@ export interface Database {
   agenda: ConfigAgenda;
   /** IA encendida o apagada (settings/ia). Arranca apagada; se enciende en la Etapa 9. */
   ia: { enabled: boolean };
+  /** settings/vacunas: el calendario es un borrador hasta que el Dr. lo verifique. */
+  vacunas: { calendarioVerificado: boolean };
   auditLog: AuditLog[];
 }

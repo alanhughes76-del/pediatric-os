@@ -64,6 +64,10 @@ service cloud.firestore {
     function esMedicoDeLaFila() { return esMedico(resource.data.organizationId); }
     match /{ruta=**}/background/{id} { allow read: if esMedicoDeLaFila(); }
     match /{ruta=**}/problems/{id} { allow read: if esMedicoDeLaFila(); }
+    match /{ruta=**}/vaccineDoses/{id} { allow read: if esMedicoDeLaFila(); }
+    match /{ruta=**}/medications/{id} { allow read: if esMedicoDeLaFila(); }
+    match /{ruta=**}/prescriptions/{id} { allow read: if esMedicoDeLaFila(); }
+    match /{ruta=**}/studyOrders/{id} { allow read: if esMedicoDeLaFila(); }
     match /{ruta=**}/allergies/{id} { allow read: if esMedicoDeLaFila(); }
     match /{ruta=**}/consultations/{id} { allow read: if esMedicoDeLaFila(); }
     match /{ruta=**}/growth/{id} { allow read: if esMedicoDeLaFila(); }

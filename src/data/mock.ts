@@ -3,12 +3,13 @@
  * Lo que pasa "hoy" (turnos, fiebre, seguimientos) se calcula a partir de la fecha
  * actual para que la demo siempre tenga algo que mostrar.
  */
-import type { Appointment, AppointmentChange, Database, Base } from './types';
+import type { Appointment, AppointmentChange, Database, Base, VaccineDose } from './types';
 import { enDias, hoyISO, sumarDias, sumarHoras } from '@/lib/fechas';
 import { pacientesExtra } from './mockPacientes';
 import { FIRMA, textoCertificado, tipoCertificado } from '@/lib/certificados';
 import { normalizarTelefono } from '@shared/telefono';
 import { CONFIG_AGENDA_INICIAL, diaDe, type EstadoTurno } from '@shared/agenda';
+import { esquemaPara, type DosisDelEsquema } from '@shared/vacunas';
 
 export const DOCTOR_ID = 'dr';
 const hoy = hoyISO();
@@ -55,6 +56,45 @@ const historial: AppointmentChange[] = turnos.flatMap((t, i) => {
     before: alta.after, after: { status: t.status, start: t.start, durationMin: t.durationMin }, ...(t.cancelReason ? { reason: t.cancelReason } : {}),
   }];
 });
+
+/**
+ * Esquema de vacunas de ejemplo según el calendario (borrador). `aplicada` devuelve la fecha de
+ * aplicación de cada dosis, o null si quedó pendiente. Todo es ficticio.
+ */
+function esquema(patientId: string, nacimiento: string, aplicada: (d: DosisDelEsquema) => string | null): VaccineDose[] {
+  return esquemaPara(nacimiento).map((d) => {
+    const fecha = aplicada(d);
+    return {
+      ...b(`vd-${patientId}-${d.clave}`, `${nacimiento}T12:00:00-03:00`), patientId, vaccine: d.vaccine, dose: d.dose,
+      ageText: d.ageText, ageMonths: d.ageMonths, dueDate: d.dueDate, source: 'calendario',
+      ...(fecha ? { status: 'aplicada' as const, appliedDate: fecha, place: 'Vacunatorio de ejemplo' } : { status: 'pendiente' as const }),
+    };
+  });
+}
+
+const vacunasDeEjemplo: VaccineDose[] = [
+  // Tomás: todo aplicado salvo la triple bacteriana de los 15-18 meses (queda atrasada).
+  ...esquema('p-tomas', '2023-05-12', (d) => {
+    if (d.ageMonths > 18 || d.vaccine.startsWith('Triple bacteriana celular')) return null;
+    if (d.vaccine === 'Triple Viral (SRP)' && d.dose === '1ª') return '2024-05-13';
+    if (d.vaccine === 'Hepatitis A') return '2024-05-13';
+    if (d.vaccine === 'Varicela') return '2024-08-20';
+    return d.dueDate;
+  }),
+  { ...b('vd-p-tomas-antigripal-2026', '2026-04-22T12:00:00-03:00'), patientId: 'p-tomas', vaccine: 'Antigripal', dose: '2026', status: 'aplicada', appliedDate: '2026-04-22', place: 'Vacunatorio de ejemplo', source: 'manual' },
+  // Emma: recién nacido, quíntuple, IPV y la 1.ª de neumococo aplicadas; meningococo y 2.ª de neumococo atrasadas.
+  ...esquema('p-emma', '2026-01-20', (d) => {
+    if (d.ageMonths === 0) return '2026-01-20';
+    if (d.vaccine.startsWith('Quíntuple') || d.vaccine.startsWith('IPV')) {
+      return d.dose === '1ª' ? '2026-03-20' : d.dose === '2ª' ? '2026-05-20' : d.dose === '3ª' ? '2026-07-21' : null;
+    }
+    if (d.vaccine === 'Neumococo conjugada' && d.dose === '1ª') return '2026-03-20';
+    if (d.vaccine === 'Rotavirus') return d.dose === '1ª' ? '2026-03-20' : d.dose === '2ª' ? '2026-05-20' : null;
+    return null;
+  }),
+  // Benjamín: BCG y hepatitis B del recién nacido.
+  ...esquema('p-benjamin', '2026-09-10', (d) => (d.vaccine === 'BCG' ? '2026-09-11' : d.vaccine === 'Hepatitis B' ? '2026-09-10' : null)),
+];
 
 // Consultas con fecha relativa (las usan notas, seguimientos y fiebre)
 const consBenjaminAyer = enDias(-1, '20:30');
@@ -239,16 +279,6 @@ const base: Database = {
 
   carePlan: [
     // Vacunas ya aplicadas: ítems del plan tildados como hechos.
-    { ...b('va-0', '2024-05-13T12:00:00-03:00'), patientId: 'p-tomas', category: 'vacuna', description: 'Triple viral (1.ª dosis)', targetDate: '2024-05-13', done: true, doneAt: '2024-05-13T12:00:00-03:00' },
-    { ...b('va-1', '2024-05-13T12:00:00-03:00'), patientId: 'p-tomas', category: 'vacuna', description: 'Hepatitis A', targetDate: '2024-05-13', done: true, doneAt: '2024-05-13T12:00:00-03:00' },
-    { ...b('va-2', '2024-08-20T12:00:00-03:00'), patientId: 'p-tomas', category: 'vacuna', description: 'Varicela (1.ª dosis)', targetDate: '2024-08-20', done: true, doneAt: '2024-08-20T12:00:00-03:00' },
-    { ...b('va-3', '2026-04-22T12:00:00-03:00'), patientId: 'p-tomas', category: 'vacuna', description: 'Antigripal 2026', targetDate: '2026-04-22', done: true, doneAt: '2026-04-22T12:00:00-03:00' },
-    { ...b('va-4', '2026-03-20T12:00:00-03:00'), patientId: 'p-emma', category: 'vacuna', description: 'Quíntuple (1.ª dosis)', targetDate: '2026-03-20', done: true, doneAt: '2026-03-20T12:00:00-03:00' },
-    { ...b('va-5', '2026-03-20T12:00:00-03:00'), patientId: 'p-emma', category: 'vacuna', description: 'Neumococo conjugada (1.ª dosis)', targetDate: '2026-03-20', done: true, doneAt: '2026-03-20T12:00:00-03:00' },
-    { ...b('va-6', '2026-05-20T12:00:00-03:00'), patientId: 'p-emma', category: 'vacuna', description: 'Quíntuple (2.ª dosis)', targetDate: '2026-05-20', done: true, doneAt: '2026-05-20T12:00:00-03:00' },
-    { ...b('va-7', '2026-07-21T12:00:00-03:00'), patientId: 'p-emma', category: 'vacuna', description: 'Quíntuple (3.ª dosis)', targetDate: '2026-07-21', done: true, doneAt: '2026-07-21T12:00:00-03:00' },
-    { ...b('va-8', '2026-09-11T12:00:00-03:00'), patientId: 'p-benjamin', category: 'vacuna', description: 'BCG', targetDate: '2026-09-11', done: true, doneAt: '2026-09-11T12:00:00-03:00' },
-    { ...b('va-9', '2026-09-10T12:00:00-03:00'), patientId: 'p-benjamin', category: 'vacuna', description: 'Hepatitis B (recién nacido)', targetDate: '2026-09-10', done: true, doneAt: '2026-09-10T12:00:00-03:00' },
     { ...b('cp-e1', '2026-09-22T12:00:00-03:00'), patientId: 'p-emma', category: 'control', description: 'Control de los 9 meses', targetDate: sumarDias(hoy, 5), done: false },
     { ...b('cp-e2', '2026-09-22T12:00:00-03:00'), patientId: 'p-emma', category: 'vacuna', description: 'Antigripal (2 dosis)', targetDate: sumarDias(hoy, 20), done: false },
     { ...b('cp-t1', '2025-11-18T12:00:00-03:00'), patientId: 'p-tomas', category: 'prevencion', description: 'Control odontológico', targetDate: '2026-11-30', done: false },
@@ -278,6 +308,13 @@ const base: Database = {
     { ...b('doc-1', '2026-03-02T12:00:00-03:00'), patientId: 'p-tomas', title: 'Certificado de aptitud física (jardín)', date: '2026-03-02', file: 'documentos/p-tomas/apto-fisico-2026.pdf' },
   ],
 
+  vaccineDoses: vacunasDeEjemplo,
+  // Medicación, prescripciones y estudios de ejemplo (ficticios). La dosis la escribe el médico.
+  medications: [],
+  prescriptions: [],
+  studies: [
+    { ...b('es-mateo-1', consMateo), patientId: 'p-mateo', study: 'Radiografía de tórax', reason: 'Control de neumonía', orderedDate: consMateo.slice(0, 10), reviewDate: sumarDias(hoy, 2), status: 'resultado', resultNote: 'Llegó el informe; falta revisarlo.', consultationId: 'c-m1' },
+  ],
   appointments: turnos,
   appointmentHistory: historial,
   blocks: [
@@ -286,6 +323,7 @@ const base: Database = {
   communications: [],
   agenda: CONFIG_AGENDA_INICIAL,
   ia: { enabled: false },
+  vacunas: { calendarioVerificado: false },
 
   auditLog: [
     { id: 'au-1', at: enDias(-2, '20:40'), actorId: 'g-lucia', action: 'login' },

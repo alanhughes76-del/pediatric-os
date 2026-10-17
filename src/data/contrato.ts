@@ -15,7 +15,7 @@ export type Sesion =
  * Tablas que la app escribe fila por fila (todas menos `doctor`, la configuración de la agenda,
  * la auditoría y los turnos con su historial, que pasan por `operaciones`).
  */
-export type Tabla = Exclude<keyof Database, 'doctor' | 'agenda' | 'ia' | 'auditLog' | 'communications' | 'appointments' | 'appointmentHistory'>;
+export type Tabla = Exclude<keyof Database, 'doctor' | 'agenda' | 'ia' | 'vacunas' | 'auditLog' | 'communications' | 'appointments' | 'appointmentHistory'>;
 export type Fila<T extends Tabla> = Database[T][number];
 
 export interface CamposNota {
@@ -72,6 +72,8 @@ export interface Operaciones {
   accionTurno: (pedido: PedidoAccionTurno) => Promise<ResultadoTurno>;
   /** "Revisé y lo mando": el resumen de una nota aprobada sale hacia Make. */
   enviarResumen: (p: { nota: ClinicalNote; asunto: string; texto: string }) => Promise<string | null>;
+  /** El Dr. marca el calendario de vacunas como verificado (o lo vuelve a borrador). */
+  verificarCalendario: (verificado: boolean) => Promise<string | null>;
 }
 
 export interface AppState {

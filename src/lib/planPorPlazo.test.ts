@@ -25,9 +25,10 @@ describe('plazoDe', () => {
 });
 
 describe('planPorPlazo', () => {
-  it('deja afuera hechos y archivados, y ordena por fecha', () => {
+  it('deja afuera hechos, cancelados y archivados, y ordena por fecha', () => {
     const g = planPorPlazo([
       item('hecho', { done: true, targetDate: HOY }),
+      item('cancelado', { cancelledAt: '2026-10-01T00:00:00-03:00', targetDate: HOY }),
       item('archivado', { archivedAt: '2026-10-01T00:00:00-03:00', targetDate: HOY }),
       item('tarde', { targetDate: '2026-11-10' }),
       item('pronto', { targetDate: '2026-10-20' }),

@@ -56,6 +56,26 @@ describe('antecedentes: solo el médico', () => {
   });
 });
 
+describe('vacunas, medicación y estudios: solo el médico', () => {
+  test.each(['vaccineDoses', 'medications', 'prescriptions', 'studyOrders'])('%s: el médico lee por grupo de colecciones; el asistente y la familia no', async (sub) => {
+    const q = (quien: Quien) => getDocs(query(collectionGroup(db(quien), sub), where('organizationId', '==', ORG)));
+    await assertSucceeds(q('medico'));
+    await assertFails(q('asistente'));
+    await assertFails(q('lucia'));
+  });
+  test('solo el médico marca el calendario de vacunas como verificado', async () => {
+    const cal = r('settings', 'vacunas');
+    await assertFails(updateDoc(doc(db('asistente'), cal), { calendarioVerificado: true, updatedBy: uid('asistente'), updatedAt: AHORA }));
+    await assertSucceeds(updateDoc(doc(db('medico'), cal), { calendarioVerificado: true, verifiedAt: AHORA, verifiedBy: uid('medico'), updatedBy: uid('medico'), updatedAt: AHORA }));
+  });
+  test('el médico marca una dosis aplicada; la familia no puede tocarla', async () => {
+    const dosis = r('clinical', 'p-tomas', 'vaccineDoses', 'vd-1');
+    await assertSucceeds(updateDoc(doc(db('medico'), dosis), { status: 'aplicada', appliedDate: '2026-10-17', updatedBy: uid('medico'), updatedAt: AHORA }));
+    await assertFails(updateDoc(doc(db('lucia'), dosis), { status: 'aplicada', updatedBy: uid('lucia'), updatedAt: AHORA }));
+    await assertFails(leer('lucia', r('clinical', 'p-tomas', 'medications', 'me-1')));
+  });
+});
+
 describe('nota clínica: inmutable una vez aprobada', () => {
   const borrador = r('clinical', 'p-tomas', 'notes', 'n-borrador');
   const aprobada = r('clinical', 'p-tomas', 'notes', 'n-aprobada');

@@ -14,6 +14,7 @@ import { pedirEnlace, usarEnlace, type Enlace } from '@/lib/enlaceMagico';
 import { FIRMA } from '@/lib/certificados';
 import { ahoraISO, sumarHoras } from '@/lib/fechas';
 import { accionTurnoDemo, crearTurnoDemo, type Contexto } from './turnosDemo';
+import { dosisDelEsquema } from './vacunasApp';
 
 let contador = 0;
 export const nuevoId = (prefijo: string) => `${prefijo}-${Date.now().toString(36)}-${(contador++).toString(36)}`;
@@ -63,7 +64,16 @@ export function useFuenteDemo(): AppState {
       const { mismoDni, posibles } = buscarDuplicados(db.patients, datos);
       if (mismoDni.length > 0) return { estado: 'error', mensaje: 'Ya hay un paciente con ese DNI.' };
       if (posibles.length > 0 && !confirmar) return { estado: 'posible-duplicado' };
-      return { estado: 'creado', id: agregar('patients', datos, 'paciente.crear') };
+      const id = nuevoId('pat');
+      enLote((d, { ahora, usuarioId: uid, log }) => {
+        log({ action: 'paciente.crear', entity: 'patients', entityId: id });
+        return {
+          ...d,
+          patients: [...d.patients, { ...datos, id, createdAt: ahora, createdBy: uid }],
+          vaccineDoses: [...d.vaccineDoses, ...dosisDelEsquema(id, datos.birthDate, ahora, uid)],
+        };
+      });
+      return { estado: 'creado', id };
     },
 
     aprobarNota: async ({ nota, consulta, campos, origen }) => {
@@ -135,6 +145,14 @@ export function useFuenteDemo(): AppState {
       return salida.resultado;
     },
 
+    verificarCalendario: async (verificado) => {
+      enLote((d, { log }) => {
+        log({ action: verificado ? 'vacunas.calendario-verificado' : 'vacunas.calendario-borrador', entity: 'settings', entityId: 'vacunas' });
+        return { ...d, vacunas: { calendarioVerificado: verificado } };
+      });
+      return null;
+    },
+
     enviarResumen: async ({ nota }) => {
       if (nota.status !== 'aprobada') return 'Solo se manda el resumen de una nota aprobada.';
       const hoy = ahoraISO().slice(0, 10);
@@ -161,7 +179,7 @@ export function useFuenteDemo(): AppState {
       return salida.resultado;
     },
   };
-  }, [db, agregar, actualizar, enLote, usuarioId]);
+  }, [db, actualizar, enLote, usuarioId]);
 
   // Con sesión de familia, las pantallas solo reciben la vista filtrada.
   const guardianId = sesion?.rol === 'familia' ? sesion.guardian.id : null;

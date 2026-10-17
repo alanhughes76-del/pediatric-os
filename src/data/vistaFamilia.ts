@@ -56,7 +56,12 @@ export function vistaFamilia(db: Database, guardianId: ID): Database {
       .filter((n) => n.status === 'aprobada')
       .map((n) => ({ ...n, findings: '', plan: '', allergiesMedication: '', clinicalFlag: false })),
     followUps: [],
-    carePlan: delPaciente(db.carePlan),
+    carePlan: delPaciente(db.carePlan).filter((i) => !i.cancelledAt),
+    // Vacunas sí (prompt maestro, regla 10); medicación, prescripciones y estudios no.
+    vaccineDoses: delPaciente(db.vaccineDoses),
+    medications: [],
+    prescriptions: [],
+    studies: [],
     fever: delPaciente(db.fever),
     certificates: delPaciente(db.certificates).map((c) => ({ ...c, voidReason: undefined })),
     documents: delPaciente(db.documents),
@@ -69,6 +74,7 @@ export function vistaFamilia(db: Database, guardianId: ID): Database {
     communications: [],
     agenda: db.agenda,
     ia: { enabled: false },
+    vacunas: db.vacunas,
     auditLog: [],
   };
 }

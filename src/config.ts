@@ -15,4 +15,11 @@ export const CONFIG = {
 
   /** Link de Cal.com para pedir una consulta por urgencia. */
   calUrgenciaUrl: '',
+
+  /**
+   * Plataforma de recetas y órdenes registrada en ReNaPDiS (prompt maestro, regla 11).
+   * Pediatric OS no emite recetas: el botón abre esta plataforma. Se pasa a Configuración en la Etapa 7.
+   */
+  recetasNombre: '',
+  recetasUrl: '',
 };

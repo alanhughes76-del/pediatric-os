@@ -24,6 +24,14 @@ describe('avisos del médico', () => {
   });
 
   test('sin datos, no hay avisos', () => {
-    expect(avisosDelMedico({ ...datosDeEjemplo, followUps: [], fever: [], memberships: [] }, ahora)).toEqual([]);
+    expect(avisosDelMedico({ ...datosDeEjemplo, followUps: [], fever: [], memberships: [], studies: [], vaccineDoses: [] }, ahora)).toEqual([]);
+  });
+
+  test('resultado de estudio sin revisar y vacunas atrasadas', () => {
+    const avisos = avisosDelMedico(datosDeEjemplo, ahora);
+    expect(avisos.filter((a) => a.tipo === 'estudio').map((a) => a.titulo)).toEqual(['Resultado para revisar · Mateo Sosa']);
+    const vac = avisos.filter((a) => a.tipo === 'vacuna');
+    expect(vac.map((a) => a.titulo).sort()).toEqual(['Vacunas atrasadas · Emma Ruiz Ferreyra', 'Vacunas atrasadas · Tomás Ruiz Ferreyra']);
+    expect(vac.every((a) => a.detalle.includes('calendario sin verificar'))).toBe(true);
   });
 });

@@ -126,6 +126,10 @@ async function main() {
   clinico('notes', d.notes);
   clinico('followUps', d.followUps);
   clinico('carePlan', d.carePlan);
+  clinico('vaccineDoses', d.vaccineDoses);
+  clinico('medications', d.medications);
+  clinico('prescriptions', d.prescriptions);
+  clinico('studyOrders', d.studies);
   clinico('fever', d.fever, (f) => ({ origin: f.createdBy === DOCTOR_ID ? 'medico' : 'familia' }));
   clinico('certificates', d.certificates);
   clinico('documents', d.documents);

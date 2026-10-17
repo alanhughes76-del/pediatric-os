@@ -57,6 +57,7 @@ export async function sembrar(env: RulesTestEnvironment) {
     await set(`organizations/${ORG}`, { name: 'Consultorio de demostración', demo: true });
     await set(r('settings', 'agenda'), { ...base, bufferMin: 20 });
     await set(r('settings', 'ia'), { ...base, enabled: false });
+    await set(r('settings', 'vacunas'), { ...base, calendarioVerificado: false });
     await set(r('patients', 'p-tomas'), { ...base, firstName: 'Tomás', lastName: 'Ruiz Ferreyra', demo: true });
     await set(r('patients', 'p-olivia'), { ...base, firstName: 'Olivia', lastName: 'Benítez', demo: true });
     await set(r('guardians', 'g-lucia'), { ...base, authUid: 'g-lucia', firstName: 'Lucía', email: 'lucia@ejemplo.com', phone: '+5491155550101', portalEnabled: true });
@@ -75,6 +76,8 @@ export async function sembrar(env: RulesTestEnvironment) {
     await set(r('clinical', 'p-tomas', 'fever', 'f1'), { ...base, patientId: 'p-tomas', origin: 'medico', kind: 'toma', temperatureC: 38.5 });
     await set(r('portal', 'p-tomas', 'summaries', 's1'), { text: 'Resumen aprobado para la familia' });
     await set(r('portal', 'p-olivia', 'summaries', 's1'), { text: 'Resumen de Olivia' });
+    await set(r('clinical', 'p-tomas', 'vaccineDoses', 'vd-1'), { ...base, patientId: 'p-tomas', vaccine: 'BCG', dose: 'Única', status: 'pendiente', source: 'calendario' });
+    await set(r('clinical', 'p-tomas', 'medications', 'me-1'), { ...base, patientId: 'p-tomas', drug: 'x', dose: 'x', startDate: '2026-10-01' });
     await set(r('clinical', 'p-tomas', 'background', 'ant-p-tomas'), { ...base, patientId: 'p-tomas', habits: 'x' });
     await set(r('appointments', 't1'), { ...base, status: 'confirmado', date: '2026-10-17' });
     await set(r('appointments', 't1', 'history', 'h1'), { organizationId: ORG, appointmentId: 't1', action: 'crear' });
