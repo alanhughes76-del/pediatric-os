@@ -12,6 +12,7 @@
  * - Consultas: fecha, tipo y modalidad; nunca el texto original.
  * - Problemas: solo los que el médico hizo visibles. Alergias: solo las confirmadas.
  * - Otros adultos vinculados a los mismos chicos: solo el nombre (sin email ni teléfono).
+ * - Turnos: los de sus hijos o su familia, sin notas operativas ni historial.
  * - Nada interno: hitos marcados, seguimientos ni registro de auditoría.
  */
 import type { Database, ID } from './types';
@@ -57,6 +58,13 @@ export function vistaFamilia(db: Database, guardianId: ID): Database {
     fever: delPaciente(db.fever),
     certificates: delPaciente(db.certificates).map((c) => ({ ...c, voidReason: undefined })),
     documents: delPaciente(db.documents),
+    // Turnos de sus hijos o de su familia, sin notas operativas ni contactos de terceros; sin historial ni bloqueos.
+    appointments: db.appointments
+      .filter((a) => !a.archivedAt && (a.patientIds.some((id) => pacienteIds.has(id)) || (a.familyId !== null && familyIds.has(a.familyId))))
+      .map(({ opsNotes: _ops, porIdentificar: _contacto, ...a }) => ({ ...a, opsNotes: '' })),
+    appointmentHistory: [],
+    blocks: [],
+    agenda: db.agenda,
     auditLog: [],
   };
 }

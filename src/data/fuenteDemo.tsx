@@ -13,6 +13,7 @@ import { horasDeSeguimiento, mensajeDeSeguimiento } from './selectores';
 import { pedirEnlace, usarEnlace, type Enlace } from '@/lib/enlaceMagico';
 import { FIRMA } from '@/lib/certificados';
 import { ahoraISO, sumarHoras } from '@/lib/fechas';
+import { accionTurnoDemo, crearTurnoDemo, type Contexto } from './turnosDemo';
 
 let contador = 0;
 export const nuevoId = (prefijo: string) => `${prefijo}-${Date.now().toString(36)}-${(contador++).toString(36)}`;
@@ -55,7 +56,9 @@ export function useFuenteDemo(): AppState {
     });
   }, [usuarioId, filaLog]);
 
-  const operaciones = useMemo<AppState['operaciones']>(() => ({
+  const operaciones = useMemo<AppState['operaciones']>(() => {
+    const contexto = (): Contexto => ({ ahora: ahoraISO(), ahoraMs: Date.now(), usuarioId, nuevoId });
+    return {
     crearPaciente: async (datos, confirmar) => {
       const { mismoDni, posibles } = buscarDuplicados(db.patients, datos);
       if (mismoDni.length > 0) return { estado: 'error', mensaje: 'Ya hay un paciente con ese DNI.' };
@@ -125,7 +128,20 @@ export function useFuenteDemo(): AppState {
       actualizar('certificates', c.id, { status: 'anulado', voidReason: motivo, voidedAt: ahoraISO() }, 'certificado.anular');
       return null;
     },
-  }), [db.patients, agregar, actualizar, enLote]);
+
+    crearTurno: async (datos) => {
+      const salida = crearTurnoDemo(db, contexto(), datos);
+      if (salida.db !== db) setDb(salida.db);
+      return salida.resultado;
+    },
+
+    accionTurno: async (pedido) => {
+      const salida = accionTurnoDemo(db, contexto(), pedido);
+      if (salida.db !== db) setDb(salida.db);
+      return salida.resultado;
+    },
+  };
+  }, [db, agregar, actualizar, enLote, usuarioId]);
 
   // Con sesión de familia, las pantallas solo reciben la vista filtrada.
   const guardianId = sesion?.rol === 'familia' ? sesion.guardian.id : null;

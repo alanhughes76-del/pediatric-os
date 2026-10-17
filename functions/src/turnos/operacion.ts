@@ -32,7 +32,7 @@ export async function leerConfig(org: string, tx?: Transaction): Promise<ConfigA
   const snap = tx ? await tx.get(ref) : await ref.get();
   const d = snap.data() ?? {};
   return {
-    horarios: Array.isArray(d.horarios) && d.horarios.length === 7 ? d.horarios : CONFIG_AGENDA_INICIAL.horarios,
+    horarios: d.horarios && typeof d.horarios === 'object' && !Array.isArray(d.horarios) ? d.horarios : CONFIG_AGENDA_INICIAL.horarios,
     duracionMin: { ...CONFIG_AGENDA_INICIAL.duracionMin, ...(d.duracionMin ?? {}) },
     bufferMin: typeof d.bufferMin === 'number' ? d.bufferMin : CONFIG_AGENDA_INICIAL.bufferMin,
     zonas: Array.isArray(d.zonas) && d.zonas.length > 0 ? d.zonas : CONFIG_AGENDA_INICIAL.zonas,

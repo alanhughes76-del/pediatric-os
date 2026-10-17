@@ -8,8 +8,9 @@
  * - Plan de cuidado: los ítems pendientes ("Plan vigente").
  * - Si la membresía vence, conserva acceso de lectura a todo lo anterior.
  */
-import type { Database, Patient, Consultation, ClinicalNote, FeverEntry, VisitType, Modality, ID, Address, PatientRelationship, CoverageKind } from './types';
-import { hoyISO, diasEntre, horasEntre } from '@/lib/fechas';
+import type { Database, Patient, Consultation, ClinicalNote, FeverEntry, VisitType, Modality, ID, Address, PatientRelationship, CoverageKind, Appointment, AppointmentChange } from './types';
+import { hoyISO, diasEntre, horasEntre, ahoraISO } from '@/lib/fechas';
+import { estaVigente } from '@shared/agenda';
 import { horasDeSeguimiento as horasDeSeguimientoComun, mensajeSeguimiento } from '@shared/seguimiento';
 
 export type Vista = 'medico' | 'familia';
@@ -176,20 +177,68 @@ export function medicionDeConsulta(db: Database, consultationId: ID) {
   return db.measurements.find((m) => m.consultationId === consultationId && activo(m));
 }
 
-/** Próxima visita programada de alguno de estos pacientes. */
-export function proximaVisita(db: Database, patientIds: ID[]) {
-  const ids = new Set(patientIds);
-  const hoy = hoyISO();
-  return db.consultations
-    .filter((c) => ids.has(c.patientId) && c.status === 'programada' && c.occurredAt.slice(0, 10) >= hoy && activo(c))
-    .sort((a, b) => a.occurredAt.localeCompare(b.occurredAt))[0];
+// ---------- Turnos (Etapa 3) ----------
+
+const porInicio = (a: Appointment, b: Appointment) => a.start.localeCompare(b.start);
+
+/** Turnos de un día en orden. Sin cancelados ni ausentes, salvo con `todos`. */
+export function turnosDelDia(db: Database, fecha = hoyISO(), todos = false): Appointment[] {
+  return db.appointments
+    .filter((a) => a.day === fecha && !a.archivedAt && (todos || estaVigente(a.status)))
+    .sort(porInicio);
 }
 
-/** Visitas de un día: las programadas y las que ya se atendieron. */
-export function visitasDelDia(db: Database, fecha = hoyISO()) {
-  return db.consultations
-    .filter((c) => c.occurredAt.slice(0, 10) === fecha && activo(c))
-    .sort((a, b) => a.occurredAt.localeCompare(b.occurredAt));
+/** Turnos entre dos días (incluidos), vigentes. */
+export function turnosEntre(db: Database, desde: string, hasta: string): Appointment[] {
+  return db.appointments
+    .filter((a) => a.day >= desde && a.day <= hasta && !a.archivedAt && estaVigente(a.status))
+    .sort(porInicio);
+}
+
+/** Próximo turno (pendiente o confirmado) de alguno de estos pacientes. */
+export function proximoTurno(db: Database, patientIds: ID[], ahora = ahoraISO()): Appointment | undefined {
+  const ids = new Set(patientIds);
+  return db.appointments
+    .filter((a) => !a.archivedAt && (a.status === 'confirmado' || a.status === 'pendiente') && a.start >= ahora && a.patientIds.some((p) => ids.has(p)))
+    .sort(porInicio)[0];
+}
+
+/** Solicitudes nuevas y turnos pendientes de confirmar, desde hoy. */
+export function porConfirmar(db: Database, fecha = hoyISO()): Appointment[] {
+  return db.appointments
+    .filter((a) => !a.archivedAt && (a.status === 'solicitado' || a.status === 'pendiente') && a.day >= fecha)
+    .sort(porInicio);
+}
+
+export function historialDeTurno(db: Database, id: ID): AppointmentChange[] {
+  return db.appointmentHistory.filter((h) => h.appointmentId === id).sort((a, b) => a.atMs - b.atMs);
+}
+
+export function pacientesDeTurno(db: Database, t: Appointment): Patient[] {
+  return t.patientIds.map((id) => db.patients.find((p) => p.id === id)).filter((p): p is Patient => !!p);
+}
+
+/** Quién va en el turno: los chicos ("Tomás y Emma Ruiz Ferreyra"), la familia o el contacto por identificar. */
+export function nombreDeTurno(db: Database, t: Appointment): string {
+  const chicos = pacientesDeTurno(db, t);
+  if (chicos.length === 1) return nombreCompleto(chicos[0]);
+  if (chicos.length > 1) {
+    const apellidos = new Set(chicos.map((c) => c.lastName));
+    const nombres = chicos.map((c) => c.firstName);
+    const lista = `${nombres.slice(0, -1).join(', ')} y ${nombres.at(-1)}`;
+    return apellidos.size === 1 ? `${lista} ${chicos[0].lastName}` : chicos.map(nombreCompleto).join(', ');
+  }
+  if (t.porIdentificar) return `${t.porIdentificar.name || 'Sin nombre'} (por identificar)`;
+  const familia = db.families.find((f) => f.id === t.familyId);
+  return familia ? `${familia.name} (prenatal)` : 'Familia por identificar';
+}
+
+export const textoDireccionTurno = (t: Appointment) =>
+  t.address ? [t.address.text, t.address.locality].filter(Boolean).join(', ') : 'Sin dirección cargada';
+
+/** Consulta abierta desde este turno para ese paciente. */
+export function consultaDeTurno(db: Database, turnoId: ID, patientId: ID): Consultation | undefined {
+  return db.consultations.find((c) => c.appointmentId === turnoId && c.patientId === patientId && !c.archivedAt);
 }
 
 // ---------- Seguimientos ----------

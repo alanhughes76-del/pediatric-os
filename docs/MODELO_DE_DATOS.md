@@ -20,7 +20,7 @@ Estado al 17/10/2026, Etapa 1a. Las reglas están en `firestore.rules` y `storag
 | --- | --- | --- | --- |
 | `users/{uid}` | el propio usuario | S | Rol y organización los fija `asignarRol` o el acceso al portal |
 | `organizations/{orgId}` | M, A | S | — |
-| `…/settings/{doc}` (`links`, `ia`, `vacunas`, `membresia`; más adelante `agenda`, `zonas`…) | M; A todo menos `ia` | M | Firma. Los secretos no van acá: van en Secret Manager |
+| `…/settings/{doc}` (`links`, `ia`, `vacunas`, `membresia`, `agenda`: horarios por día, duración por tipo, buffer y zonas) | M; A todo menos `ia` | M | Firma. Los secretos no van acá: van en Secret Manager |
 | `…/professionals/{id}` | M, A | M | Firma |
 | `…/consents/{id}` (portal, foto, grabación, IA) | M; F los suyos | M, o F los suyos | No se edita ni se borra: solo se revoca una vez (`revokedAt`) |
 
@@ -42,9 +42,17 @@ Estado al 17/10/2026, Etapa 1a. Las reglas están en `firestore.rules` y `storag
 
 | Ruta | Lee | Escribe |
 | --- | --- | --- |
-| `…/appointments/{id}` y `…/appointments/{id}/history/{h}` | M, A | **Solo S**, con una transacción que impide superponer turnos confirmados |
-| `…/agendaDays/{AAAA-MM-DD}` (bloques ocupados con buffer) | M, A | Solo S |
-| `…/availabilityRules`, `…/blocks`, `…/zones` | M, A | M, A |
+| `…/appointments/{id}` | M, A | **Solo S** (`crearTurno`, `accionTurno`, `reservaCalcom`), con una transacción que impide superponer turnos confirmados |
+| `…/appointments/{id}/history/{h}` (cada cambio, con antes y después) | M, A (también por grupo de colecciones) | Solo S |
+| `…/agendaDays/{AAAA-MM-DD}` (bloques de los turnos confirmados que empiezan ese día) | M, A | Solo S |
+| `…/blocks/{id}` (períodos bloqueados) | M, A | M, A |
+| `…/inbound/{id}` (registro de lo que entra por el endpoint de Cal.com, sin datos personales) | M | Solo S |
+
+Turno (`appointments`): `start` (hora de Argentina con `-03:00`), `day`, `durationMin`, `type` (control, urgencia-dia, urgencia-noche, seguimiento, rn, prenatal), `modality`, `familyId` (null mientras está "por identificar"), `patientIds` (hermanos en la misma visita; vacío en un prenatal), `address` (copia de la dirección: cambiarla no toca la guardada), `zone`, `reason`, `opsNotes` (no las ve la familia), `status` (solicitado, pendiente, confirmado, realizado, cancelado, ausente), `origin` (medico, portal, calcom, formulario), `cancelReason`, `onTheWayAt`, `calBookingUid`, `porIdentificar` (contacto de quien reservó por Cal.com sin DNI conocido).
+
+Superposición: entre dos turnos confirmados tiene que quedar al menos el buffer de traslado. La transacción lee el `agendaDays` del día y de sus vecinos; si dos confirmaciones llegan a la vez, Firestore reintenta una y esa ve el lugar ocupado. Cancelado y ausente liberan el horario. La lógica común está en `shared/agenda.ts`.
+
+Horarios, duraciones, buffer y zonas viven en `settings/agenda` (en lugar de las colecciones `availabilityRules` y `zones` de la propuesta: son pocos datos y se editan juntos). Los horarios son un mapa por día de la semana porque Firestore no acepta listas dentro de listas.
 
 ## Clínico (solo el médico; el asistente nunca)
 
@@ -91,7 +99,7 @@ La familia descarga con un enlace firmado de pocos minutos, que genera el servid
 
 ## Índices (`firestore.indexes.json`)
 
-- `appointments`: `date` + `status`.
+- Grupo `history` (turnos): `organizationId` + `atMs`.
 - Grupo `followUps`: `status` + `dueAt`.
 - Grupo `fever`: `reviewedAt` + `takenAt`.
 - Grupo `outbox`: `status` + `nextAttemptAt`.

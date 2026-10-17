@@ -11,13 +11,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import {
-  collection, collectionGroup, deleteField, doc, onSnapshot, query, setDoc, updateDoc, where, writeBatch,
+  collection, collectionGroup, deleteField, doc, onSnapshot, orderBy, query, setDoc, updateDoc, where, writeBatch,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { FirebaseError } from 'firebase/app';
-import type { Database } from '../types';
-import type { AppState, Sesion, Tabla } from '../contrato';
+import type { AppState, ResultadoTurno, Sesion, Tabla } from '../contrato';
+import type { Appointment, AppointmentChange, Database } from '../types';
+import { CONFIG_AGENDA_INICIAL } from '@shared/agenda';
 import { firebase } from './config';
 import { ADMINISTRATIVAS, CLINICAS, aFirestore, coleccion, desdeFirestore, diferencias, ruta } from './mapeo';
 import { ahoraISO } from '@/lib/fechas';
@@ -27,7 +28,8 @@ const VACIA: Database = {
   doctor: { id: '', name: 'Dr. Alan Hughes', email: '', signature: FIRMA },
   families: [], guardians: [], relationships: [], addresses: [], patients: [], memberships: [], payments: [],
   problems: [], allergies: [], consultations: [], measurements: [], milestoneChecks: [], notes: [], followUps: [],
-  carePlan: [], fever: [], certificates: [], documents: [], auditLog: [],
+  carePlan: [], fever: [], certificates: [], documents: [], appointments: [], appointmentHistory: [], blocks: [],
+  agenda: CONFIG_AGENDA_INICIAL, auditLog: [],
 };
 
 /** Mensajes que se entienden, sin códigos técnicos. */
@@ -37,7 +39,8 @@ export function mensajeDeError(e: unknown): string {
   if (code.endsWith('unavailable') || code.endsWith('network-request-failed')) return 'No hay conexión con el servidor. Revisá la conexión (en desarrollo: ¿están corriendo los emuladores?).';
   if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found' || code === 'auth/invalid-email') return 'El email o la contraseña no son correctos.';
   if (code === 'auth/too-many-requests') return 'Demasiados intentos. Esperá unos minutos y probá de nuevo.';
-  if (e instanceof FirebaseError && code.startsWith('functions/') && e.message) return e.message;
+  // El SDK le agrega el código HTTP al final (" [400]"): no sirve para el Dr.
+  if (e instanceof FirebaseError && code.startsWith('functions/') && e.message) return e.message.replace(/\s*\[\d{3}\]$/, '');
   return 'No se pudo guardar. Probá de nuevo.';
 }
 
@@ -83,6 +86,17 @@ export function useFuenteFirebase(): AppState {
     for (const tabla of ['addresses', ...Object.keys(CLINICAS)] as Tabla[]) {
       subs.push(onSnapshot(query(collectionGroup(fs, coleccion(tabla)), where('organizationId', '==', org)), poner(tabla), fallo));
     }
+    // Agenda: los turnos y su historial los escribe solo el servidor; acá se leen.
+    subs.push(onSnapshot(collection(fs, `organizations/${org}/appointments`), (snap) => {
+      setDatos((d) => ({ ...d, appointments: snap.docs.map((x) => ({ id: x.id, ...x.data() }) as Appointment) }));
+    }, fallo));
+    subs.push(onSnapshot(query(collectionGroup(fs, 'history'), where('organizationId', '==', org), orderBy('atMs')), (snap) => {
+      setDatos((d) => ({ ...d, appointmentHistory: snap.docs.map((x) => ({ id: x.id, ...x.data() }) as AppointmentChange) }));
+    }, fallo));
+    subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/agenda`), (snap) => {
+      const a = snap.data() ?? {};
+      setDatos((d) => ({ ...d, agenda: { ...CONFIG_AGENDA_INICIAL, ...a, duracionMin: { ...CONFIG_AGENDA_INICIAL.duracionMin, ...(a.duracionMin ?? {}) } } }));
+    }, fallo));
     subs.push(onSnapshot(collection(fs, `organizations/${org}/professionals`), (snap) => {
       const p = snap.docs[0];
       if (p) setDatos((d) => ({ ...d, doctor: { id: uid, name: String(p.data().name ?? d.doctor.name), email: '', signature: String(p.data().signature ?? FIRMA) } }));
@@ -138,6 +152,14 @@ export function useFuenteFirebase(): AppState {
     const llamar = async (nombre: string, datosLlamada: unknown) => {
       try { await httpsCallable(functions, nombre)(datosLlamada); return null; } catch (e) { return mensajeDeError(e); }
     };
+    const turno = async (nombre: string, datosLlamada: unknown): Promise<ResultadoTurno> => {
+      try {
+        const r = await httpsCallable<unknown, ResultadoTurno>(functions, nombre)(datosLlamada);
+        return r.data;
+      } catch (e) {
+        return { estado: 'error', mensaje: mensajeDeError(e) };
+      }
+    };
     return {
       crearPaciente: async (p, confirmar) => {
         try {
@@ -151,6 +173,8 @@ export function useFuenteFirebase(): AppState {
       corregirNota: (nota) => llamar('corregirNota', { patientId: nota.patientId, noteId: nota.id }),
       emitirCertificado: ({ titulo: _titulo, ...d }) => llamar('emitirCertificado', d),
       anularCertificado: (c, motivo) => llamar('anularCertificado', { patientId: c.patientId, certificateId: c.id, reason: motivo }),
+      crearTurno: (datos) => turno('crearTurno', datos),
+      accionTurno: ({ turno: t, ...resto }) => turno('accionTurno', { id: t.id, ...resto }),
     };
   }, [functions]);
 

@@ -4,7 +4,7 @@
  *   1. npm run emuladores          (en una terminal; queda abierta)
  *   2. npm run sembrar             (en otra)
  *
- * Toma los datos ficticios de la app (src/data/mock.ts: 40 pacientes, 36 adultos) y los guarda
+ * Toma los datos ficticios de la app (src/data/mock.ts: 40 pacientes, 36 adultos, turnos) y los guarda
  * con la estructura de Firestore (docs/MODELO_DE_DATOS.md). Todo queda marcado `demo: true`.
  *
  * Usuarios de prueba (solo existen en el emulador):
@@ -21,6 +21,7 @@ import { normalizarTelefono } from '../shared/telefono';
 import { normalizar, soloDigitos } from '../shared/duplicados';
 import { calcularAcceso } from '../functions/src/acceso/calcular';
 import { CONFIG } from '../src/config';
+import { bloqueDe, ocupaLugar, type BloqueOcupado } from '../shared/agenda';
 
 const PROYECTO = 'demo-pediatric-os';
 const ORG = 'org-demo';
@@ -127,6 +128,20 @@ async function main() {
   clinico('fever', d.fever, (f) => ({ origin: f.createdBy === DOCTOR_ID ? 'medico' : 'familia' }));
   clinico('certificates', d.certificates);
   clinico('documents', d.documents);
+
+  // Agenda: configuración, bloqueos, turnos con su historial y los días ocupados (lo que arma el servidor).
+  agregar(o('settings', 'agenda'), { ...firma(DOCTOR_ID), ...d.agenda });
+  d.blocks.forEach((b) => agregar(o('blocks', b.id), { ...limpio(b), ...firma(b.createdBy, b.createdAt) }));
+  const uidDe = (x: string) => (x === DOCTOR_ID ? MEDICO_UID : x);
+  d.appointments.forEach((t) => agregar(o('appointments', t.id), {
+    ...limpio(t), ...firma(t.createdBy, t.createdAt), updatedBy: uidDe(t.updatedBy ?? t.createdBy),
+  }));
+  d.appointmentHistory.forEach((h) => agregar(o('appointments', h.appointmentId, 'history', h.id), { ...limpio(h), organizationId: ORG, actorId: uidDe(h.actorId), demo: true }));
+  const dias = new Map<string, Record<string, BloqueOcupado>>();
+  d.appointments.filter((t) => ocupaLugar(t.status)).forEach((t) => {
+    dias.set(t.day, { ...(dias.get(t.day) ?? {}), [t.id]: bloqueDe(t.start, t.durationMin) });
+  });
+  dias.forEach((bloques, dia) => agregar(o('agendaDays', dia), { organizationId: ORG, bloques, updatedAt: ahora, demo: true }));
 
   // Acceso al portal (lo mismo que calcula el servidor)
   const habilitados = d.guardians.filter((g) => g.accessEnabled);

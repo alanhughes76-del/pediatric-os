@@ -2,7 +2,8 @@
  * Lo que la app pide a la capa de datos, sea la demostración en memoria o Firebase.
  * Las pantallas solo usan `useApp()` (store.tsx): no saben de dónde vienen los datos.
  */
-import type { AuditLog, Certificate, ClinicalNote, Consultation, Database, Guardian, Patient } from './types';
+import type { Appointment, AuditLog, Certificate, ClinicalNote, Consultation, Database, Guardian, Patient } from './types';
+import type { AccionTurno, Aviso } from '@shared/agenda';
 import type { ResultadoEnlace } from '@/lib/enlaceMagico';
 import type { Fuente } from './fuente';
 
@@ -10,8 +11,11 @@ export type Sesion =
   | { rol: 'medico'; usuarioId: string }
   | { rol: 'familia'; usuarioId: string; guardian: Guardian };
 
-/** Tablas que guardan filas con `id` (todas menos `doctor` y la auditoría). */
-export type Tabla = Exclude<keyof Database, 'doctor' | 'auditLog'>;
+/**
+ * Tablas que la app escribe fila por fila (todas menos `doctor`, la configuración de la agenda,
+ * la auditoría y los turnos con su historial, que pasan por `operaciones`).
+ */
+export type Tabla = Exclude<keyof Database, 'doctor' | 'agenda' | 'auditLog' | 'appointments' | 'appointmentHistory'>;
 export type Fila<T extends Tabla> = Database[T][number];
 
 export interface CamposNota {
@@ -30,6 +34,30 @@ export type ResultadoAlta =
 export type DatosPacienteNuevo = Omit<Patient, 'id' | 'createdAt' | 'createdBy'>;
 export type DatosCertificado = Pick<Certificate, 'patientId' | 'type' | 'body' | 'requestedBy' | 'destination' | 'place' | 'date'> & { titulo: string };
 
+/** Datos de un turno nuevo o editado (lo que manda la pantalla). */
+export type DatosTurno = Pick<Appointment, 'type' | 'modality' | 'familyId' | 'patientIds' | 'address' | 'reason' | 'opsNotes'>
+  & { start: string; durationMin: number };
+
+/**
+ * Resultado de crear o cambiar un turno:
+ * - 'avisos': hay avisos que no bloquean (fuera de horario, zona…) y no se guardó; se reenvía con `aceptarAvisos`.
+ * - 'error': no se pudo (por ejemplo, se superpone con un turno confirmado).
+ */
+export type ResultadoTurno =
+  | { estado: 'guardado'; id: string }
+  | { estado: 'avisos'; avisos: Aviso[] }
+  | { estado: 'error'; mensaje: string };
+
+export interface PedidoAccionTurno {
+  turno: Appointment;
+  accion: AccionTurno;
+  start?: string;
+  durationMin?: number;
+  motivo?: string;
+  cambios?: Partial<DatosTurno>;
+  aceptarAvisos?: boolean;
+}
+
 /**
  * Acciones que en Firebase hace solo el servidor (validaciones críticas, prompt maestro 3.2).
  * Devuelven un mensaje de error comprensible, o null si salió bien.
@@ -40,6 +68,8 @@ export interface Operaciones {
   corregirNota: (nota: ClinicalNote) => Promise<string | null>;
   emitirCertificado: (datos: DatosCertificado) => Promise<string | null>;
   anularCertificado: (c: Certificate, motivo: string) => Promise<string | null>;
+  crearTurno: (datos: DatosTurno & { confirmar: boolean; aceptarAvisos?: boolean }) => Promise<ResultadoTurno>;
+  accionTurno: (pedido: PedidoAccionTurno) => Promise<ResultadoTurno>;
 }
 
 export interface AppState {

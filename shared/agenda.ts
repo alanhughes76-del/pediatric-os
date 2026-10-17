@@ -59,8 +59,11 @@ export interface Franja { desde: string; hasta: string }
 export interface Zona { nombre: string; localidades: string[] }
 
 export interface ConfigAgenda {
-  /** Franjas de atención por día de la semana: índice 0 = domingo … 6 = sábado. */
-  horarios: Franja[][];
+  /**
+   * Franjas de atención por día de la semana: 0 = domingo … 6 = sábado. Es un mapa y no una
+   * lista de listas porque Firestore no acepta listas dentro de listas.
+   */
+  horarios: Record<number, Franja[]>;
   duracionMin: Record<TipoTurno, number>;
   /** Minutos de traslado que tienen que quedar libres entre dos turnos. */
   bufferMin: number;
@@ -94,15 +97,15 @@ const ZONA_NORTE = [
  * No son datos clínicos: solo organizan el día.
  */
 export const CONFIG_AGENDA_INICIAL: ConfigAgenda = {
-  horarios: [
-    [],
-    [{ desde: '09:00', hasta: '20:00' }],
-    [{ desde: '09:00', hasta: '20:00' }],
-    [{ desde: '09:00', hasta: '20:00' }],
-    [{ desde: '09:00', hasta: '20:00' }],
-    [{ desde: '09:00', hasta: '20:00' }],
-    [{ desde: '09:00', hasta: '13:00' }],
-  ],
+  horarios: {
+    0: [],
+    1: [{ desde: '09:00', hasta: '20:00' }],
+    2: [{ desde: '09:00', hasta: '20:00' }],
+    3: [{ desde: '09:00', hasta: '20:00' }],
+    4: [{ desde: '09:00', hasta: '20:00' }],
+    5: [{ desde: '09:00', hasta: '20:00' }],
+    6: [{ desde: '09:00', hasta: '13:00' }],
+  },
   duracionMin: { control: 45, 'urgencia-dia': 40, 'urgencia-noche': 40, seguimiento: 30, rn: 60, prenatal: 45 },
   bufferMin: 30,
   zonas: [

@@ -3,8 +3,9 @@
  * Lógica pura, con tests.
  */
 import type { Database } from '../types';
+import type { Tabla } from '../contrato';
 
-export type Tabla = Exclude<keyof Database, 'doctor' | 'auditLog'>;
+export type { Tabla };
 type Fila = { id: string } & Record<string, unknown>;
 
 /** Tablas clínicas: subcolección de clinical/{patientId}. */
@@ -23,7 +24,7 @@ export const CLINICAS: Partial<Record<Tabla, string>> = {
 };
 
 /** Tablas administrativas: colección directa de la organización. */
-export const ADMINISTRATIVAS: Tabla[] = ['families', 'guardians', 'relationships', 'patients', 'memberships', 'payments'];
+export const ADMINISTRATIVAS: Tabla[] = ['families', 'guardians', 'relationships', 'patients', 'memberships', 'payments', 'blocks'];
 
 export const TABLAS: Tabla[] = [...ADMINISTRATIVAS, 'addresses', ...(Object.keys(CLINICAS) as Tabla[])];
 

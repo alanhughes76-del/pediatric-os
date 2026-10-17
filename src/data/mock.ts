@@ -3,17 +3,58 @@
  * Lo que pasa "hoy" (turnos, fiebre, seguimientos) se calcula a partir de la fecha
  * actual para que la demo siempre tenga algo que mostrar.
  */
-import type { Database, Base } from './types';
+import type { Appointment, AppointmentChange, Database, Base } from './types';
 import { enDias, hoyISO, sumarDias, sumarHoras } from '@/lib/fechas';
 import { pacientesExtra } from './mockPacientes';
 import { FIRMA, textoCertificado, tipoCertificado } from '@/lib/certificados';
 import { normalizarTelefono } from '@shared/telefono';
+import { CONFIG_AGENDA_INICIAL, diaDe, type EstadoTurno } from '@shared/agenda';
 
 export const DOCTOR_ID = 'dr';
 const hoy = hoyISO();
 
 /** Campos base: id + alta (por defecto, cargado por el médico). */
 const b = (id: string, createdAt: string, createdBy = DOCTOR_ID): Base => ({ id, createdAt, createdBy });
+
+/** Turno de ejemplo; la dirección es una copia de la del adulto. */
+function turno(id: string, dias: number, hhmm: string, t: Partial<Appointment> & Pick<Appointment, 'type' | 'patientIds' | 'familyId'>, status: EstadoTurno = 'confirmado'): Appointment {
+  const start = enDias(dias, hhmm);
+  const creado = enDias(Math.min(dias, 0) - 2, '10:00');
+  return {
+    ...b(id, creado), start, day: diaDe(start), durationMin: CONFIG_AGENDA_INICIAL.duracionMin[t.type], modality: 'domicilio',
+    address: null, zone: null, reason: '', opsNotes: '', status, origin: 'medico', updatedAt: creado, updatedBy: DOCTOR_ID, ...t,
+  };
+}
+
+const turnos: Appointment[] = [
+  turno('t-hoy-1', 0, '09:30', { type: 'control', familyId: 'f-benitez', patientIds: ['p-olivia'], address: { text: 'Los Aromos 120, Barrio Los Cardales', locality: 'Exaltación de la Cruz', addressId: 'ad-paula' }, zone: 'GBA Zona Norte' }),
+  turno('t-hoy-2', 0, '12:00', { type: 'urgencia-dia', familyId: 'f-rios', patientIds: ['p-valentina'], address: { text: 'Av. del Libertador 15800', locality: 'San Isidro', addressId: 'ad-julieta' }, zone: 'GBA Zona Norte', origin: 'calcom', reason: 'Fiebre desde ayer', calBookingUid: 'demo-1' }),
+  turno('t-hoy-3', 0, '17:30', { type: 'control', familyId: 'f-ferreyra', patientIds: ['p-tomas'], address: { text: 'Libertador 2210', locality: 'Olivos', addressId: 'ad-martin' }, zone: 'GBA Zona Norte', opsNotes: 'Esta semana está en lo del papá.' }),
+  turno('t-prox-emma', 5, '10:00', { type: 'control', familyId: 'f-ferreyra', patientIds: ['p-emma', 'p-tomas'], address: { text: 'Av. Maipú 1450, 3.º B', locality: 'Vicente López', addressId: 'ad-lucia' }, zone: 'GBA Zona Norte', reason: 'Control de los dos hermanos' }),
+  turno('t-sol-1', 1, '10:00', {
+    type: 'control', familyId: null, patientIds: [], address: { text: 'Av. Santa Fe 3200', locality: 'Palermo, CABA' }, zone: 'CABA', origin: 'calcom', reason: 'Control de salud', calBookingUid: 'demo-2',
+    porIdentificar: { name: 'Sofía Prueba', email: 'sofia@ejemplo.com', phone: '+5491155550707', dni: '54111222' },
+  }, 'solicitado'),
+  turno('t-pend-1', 1, '15:00', { type: 'seguimiento', familyId: 'f-sosa', patientIds: ['p-mateo'], address: { text: 'Arenales 2950, 7.º A', locality: 'Recoleta, CABA', addressId: 'ad-diego' }, zone: 'CABA' }, 'pendiente'),
+  turno('t-mateo', -3, '10:00', { type: 'seguimiento', familyId: 'f-sosa', patientIds: ['p-mateo'], address: { text: 'Arenales 2950, 7.º A', locality: 'Recoleta, CABA', addressId: 'ad-diego' }, zone: 'CABA' }, 'realizado'),
+  turno('t-cancel-1', -1, '11:00', { type: 'control', familyId: 'f-godoy', patientIds: ['p-benjamin'], address: { text: 'Gorriti 4820', locality: 'Palermo, CABA', addressId: 'ad-carolina' }, zone: 'CABA', cancelReason: 'La familia pidió pasarlo' }, 'cancelado'),
+];
+
+/** Historial mínimo: el alta (o la solicitud) y, si corresponde, el último cambio. */
+const historial: AppointmentChange[] = turnos.flatMap((t, i) => {
+  const ms = Date.parse(t.createdAt) + i;
+  const inicial = t.status === 'solicitado' ? 'solicitado' : t.status === 'pendiente' ? 'pendiente' : 'confirmado';
+  const alta: AppointmentChange = {
+    id: `th-${t.id}-1`, appointmentId: t.id, at: t.createdAt, atMs: ms, actorId: t.origin === 'calcom' ? 'calcom' : DOCTOR_ID,
+    action: t.origin === 'calcom' ? 'solicitud' : 'crear', before: null, after: { status: t.origin === 'calcom' ? 'solicitado' : inicial, start: t.start, durationMin: t.durationMin },
+  };
+  const ultimo: AppointmentChange['action'] | null = t.status === 'cancelado' ? 'cancelar' : t.status === 'realizado' ? 'realizado' : t.origin === 'calcom' && t.status === 'confirmado' ? 'confirmar' : null;
+  if (!ultimo) return [alta];
+  return [alta, {
+    id: `th-${t.id}-2`, appointmentId: t.id, at: t.createdAt, atMs: ms + 1000, actorId: DOCTOR_ID, action: ultimo,
+    before: alta.after, after: { status: t.status, start: t.start, durationMin: t.durationMin }, ...(t.cancelReason ? { reason: t.cancelReason } : {}),
+  }];
+});
 
 // Consultas con fecha relativa (las usan notas, seguimientos y fiebre)
 const consBenjaminAyer = enDias(-1, '20:30');
@@ -119,16 +160,10 @@ const base: Database = {
     { ...b('c-b2', consBenjaminAyer), patientId: 'p-benjamin', occurredAt: consBenjaminAyer, modality: 'telemedicina', visitType: 'urgencia-dia', status: 'realizada',
       rawText: 'La mamá refiere 38,1 rectal hace 2 horas. Toma bien el pecho, está activo. Menor de 3 meses con fiebre: indico consulta en guardia para evaluación.' },
     // Mateo
-    { ...b('c-m1', consMateo), patientId: 'p-mateo', occurredAt: consMateo, modality: 'domicilio', visitType: 'seguimiento', status: 'realizada', addressId: 'ad-diego',
+    { ...b('c-m1', consMateo), patientId: 'p-mateo', occurredAt: consMateo, modality: 'domicilio', visitType: 'seguimiento', status: 'realizada', addressId: 'ad-diego', appointmentId: 't-mateo',
       rawText: 'Seguimiento de neumonía. Afebril hace 24 h, tos en mejoría. Auscultación con rales escasos en base derecha. Completar antibiótico. Volver a ver si reaparece la fiebre.' },
     // Olivia
     { ...b('c-o1', '2026-05-14T12:00:00-03:00'), patientId: 'p-olivia', occurredAt: '2026-05-14T17:00:00-03:00', modality: 'domicilio', visitType: 'control', status: 'realizada', addressId: 'ad-paula', rawText: 'Control de 4 años y 10 meses. Todo en orden.' },
-
-    // Turnos programados (aparecen en "Hoy" y como próxima visita)
-    { ...b('c-hoy-1', enDias(-3, '10:00')), patientId: 'p-olivia', occurredAt: enDias(0, '09:30'), modality: 'domicilio', visitType: 'control', status: 'programada', addressId: 'ad-paula', rawText: '' },
-    { ...b('c-hoy-2', enDias(0, '08:10')), patientId: 'p-valentina', occurredAt: enDias(0, '12:00'), modality: 'domicilio', visitType: 'urgencia-dia', status: 'programada', addressId: 'ad-julieta', rawText: '' },
-    { ...b('c-hoy-3', enDias(-6, '10:00')), patientId: 'p-tomas', occurredAt: enDias(0, '17:30'), modality: 'domicilio', visitType: 'control', status: 'programada', addressId: 'ad-martin', rawText: '' },
-    { ...b('c-prox-emma', enDias(-2, '10:00')), patientId: 'p-emma', occurredAt: enDias(5, '10:00'), modality: 'domicilio', visitType: 'control', status: 'programada', addressId: 'ad-lucia', rawText: '' },
   ],
 
   measurements: [
@@ -237,6 +272,13 @@ const base: Database = {
     { ...b('doc-cert-o1', '2026-05-14T18:10:00-03:00'), patientId: 'p-olivia', title: 'Constancia de control de salud', date: '2026-05-14', file: 'certificados/p-olivia/cert-o1.pdf', certificateId: 'cert-o1' },
     { ...b('doc-1', '2026-03-02T12:00:00-03:00'), patientId: 'p-tomas', title: 'Certificado de aptitud física (jardín)', date: '2026-03-02', file: 'documentos/p-tomas/apto-fisico-2026.pdf' },
   ],
+
+  appointments: turnos,
+  appointmentHistory: historial,
+  blocks: [
+    { ...b('bl-1', enDias(-5, '10:00')), desde: enDias(3, '13:00'), hasta: enDias(3, '20:00'), motivo: 'Curso de actualización' },
+  ],
+  agenda: CONFIG_AGENDA_INICIAL,
 
   auditLog: [
     { id: 'au-1', at: enDias(-2, '20:40'), actorId: 'g-lucia', action: 'login' },

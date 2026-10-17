@@ -14,6 +14,8 @@
  *   replicarse como reglas de acceso del servidor.
  */
 
+import type { AccionTurno, Bloqueo, ConfigAgenda, EstadoTurno, OrigenTurno, TipoTurno } from '@shared/agenda';
+
 export type ID = string;
 export type ISODate = string; // '2026-10-16'
 export type ISODateTime = string; // '2026-10-16T14:30:00-03:00'
@@ -168,12 +170,12 @@ export interface Consultation extends Base {
   occurredAt: ISODateTime;
   modality: Modality;
   visitType: VisitType;
-  /** 'programada' = turno cargado (aparece en "Hoy"); 'realizada' = ya se atendió. */
-  status: 'programada' | 'realizada';
+  /** Desde la Etapa 3 los turnos están en `appointments`: una consulta es siempre una visita hecha. */
+  status: 'realizada';
+  /** Turno de origen (opcional). */
+  appointmentId?: ID;
   /** Domicilio al que va la visita (de alguno de los adultos). */
   addressId?: ID;
-  /** Referencia opcional a la reserva de Cal.com. */
-  calBookingId?: string;
   /** Texto original de la consulta (escrito, pegado o dictado). Se guarda solo. */
   rawText: string;
 }
@@ -312,6 +314,57 @@ export interface Document extends Base {
   certificateId?: ID;
 }
 
+// ---------- Agenda (Etapa 3) ----------
+
+/**
+ * Turno. Se separa de la consulta: el turno organiza la visita, la consulta es lo clínico.
+ * En Firebase lo escribe solo el servidor (superposición en transacción).
+ */
+export interface Appointment extends Base {
+  start: ISODateTime;
+  /** Día de inicio en Argentina (AAAA-MM-DD). */
+  day: ISODate;
+  durationMin: number;
+  type: TipoTurno;
+  modality: Modality;
+  /** Familia (null mientras está "por identificar"). Un turno prenatal va solo con la familia. */
+  familyId: ID | null;
+  /** Hermanos en la misma visita. */
+  patientIds: ID[];
+  /** Copia de la dirección de la visita: cambiarla no toca la dirección guardada. */
+  address: { text: string; locality: string; addressId?: ID } | null;
+  zone: string | null;
+  /** Motivo general, solo lo necesario para organizar la visita. */
+  reason: string;
+  /** Notas operativas: solo el médico y el asistente. */
+  opsNotes: string;
+  status: EstadoTurno;
+  origin: OrigenTurno;
+  cancelReason?: string;
+  onTheWayAt?: ISODateTime;
+  calBookingUid?: string;
+  /** Contacto de quien pidió el turno, mientras no se sabe qué familia es. */
+  porIdentificar?: { name: string; email: string; phone: string; dni: string };
+  updatedBy?: ID;
+  updatedAt?: ISODateTime;
+}
+
+/** Historial de un turno: cada cambio de estado o de horario, con antes y después. */
+export interface AppointmentChange {
+  id: ID;
+  appointmentId: ID;
+  at: ISODateTime;
+  atMs: number;
+  actorId: ID;
+  action: AccionTurno | 'crear' | 'solicitud';
+  before: { status: EstadoTurno; start: ISODateTime; durationMin: number } | null;
+  after: { status: EstadoTurno; start: ISODateTime; durationMin: number } | null;
+  reason?: string;
+}
+
+/** Período bloqueado en la agenda. */
+export interface AgendaBlock extends Base, Bloqueo {}
+
 // ---------- Auditoría ----------
 
 /** Solo suma filas. Incluye los ingresos al portal (Registro de accesos). */
@@ -346,5 +399,10 @@ export interface Database {
   fever: FeverEntry[];
   certificates: Certificate[];
   documents: Document[];
+  appointments: Appointment[];
+  appointmentHistory: AppointmentChange[];
+  blocks: AgendaBlock[];
+  /** Horarios, duraciones, buffer y zonas (en Firebase: settings/agenda). */
+  agenda: ConfigAgenda;
   auditLog: AuditLog[];
 }
