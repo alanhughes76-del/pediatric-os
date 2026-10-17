@@ -43,6 +43,19 @@ describe('datos clínicos: solo el médico', () => {
   });
 });
 
+describe('antecedentes: solo el médico', () => {
+  const ant = r('clinical', 'p-tomas', 'background', 'ant-p-tomas');
+  test('el médico los lee (también por grupo de colecciones) y los edita con su firma', async () => {
+    await assertSucceeds(leer('medico', ant));
+    await assertSucceeds(getDocs(query(collectionGroup(db('medico'), 'background'), where('organizationId', '==', ORG))));
+    await assertSucceeds(updateDoc(doc(db('medico'), ant), { habits: 'Duerme bien', updatedBy: uid('medico'), updatedAt: AHORA }));
+  });
+  test.each<Quien>(['asistente', 'lucia'])('%s no los lee', async (quien) => {
+    await assertFails(leer(quien, ant));
+    await assertFails(getDocs(query(collectionGroup(db(quien), 'background'), where('organizationId', '==', ORG))));
+  });
+});
+
 describe('nota clínica: inmutable una vez aprobada', () => {
   const borrador = r('clinical', 'p-tomas', 'notes', 'n-borrador');
   const aprobada = r('clinical', 'p-tomas', 'notes', 'n-aprobada');

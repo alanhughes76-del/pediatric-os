@@ -142,6 +142,22 @@ export interface Payment extends Base {
 
 // ---------- Historia clínica ----------
 
+/** Resumen clínico (antecedentes): uno por paciente. Solo lo ve el médico. */
+export interface ClinicalBackground extends Base {
+  patientId: ID;
+  /** Perinatales (la edad gestacional está en el paciente). */
+  birthWeightG?: number;
+  deliveryType?: 'vaginal' | 'cesarea' | 'no-sabe';
+  perinatalNotes?: string;
+  /** Patológicos e internaciones. */
+  pathological?: string;
+  /** Familiares relevantes. */
+  family?: string;
+  habits?: string;
+  currentMedication?: string;
+  updatedAt?: ISODateTime;
+}
+
 export interface ClinicalProblem extends Base {
   patientId: ID;
   description: string;
@@ -174,6 +190,8 @@ export interface Consultation extends Base {
   status: 'realizada';
   /** Turno de origen (opcional). */
   appointmentId?: ID;
+  /** Problemas de salud que se abordaron en la consulta. */
+  problemIds?: ID[];
   /** Domicilio al que va la visita (de alguno de los adultos). */
   addressId?: ID;
   /** Texto original de la consulta (escrito, pegado o dictado). Se guarda solo. */
@@ -365,6 +383,21 @@ export interface AppointmentChange {
 /** Período bloqueado en la agenda. */
 export interface AgendaBlock extends Base, Bloqueo {}
 
+// ---------- Comunicaciones ----------
+
+/**
+ * Registro de algo que salió hacia la familia (por ahora, el resumen aprobado que manda Make).
+ * No guarda el texto: lo lee también el asistente.
+ */
+export interface Communication extends Base {
+  patientId?: ID;
+  noteId?: ID;
+  kind: 'resumen_familia';
+  channel: 'email';
+  status: 'enviado_a_make';
+  recipientIds: ID[];
+}
+
 // ---------- Auditoría ----------
 
 /** Solo suma filas. Incluye los ingresos al portal (Registro de accesos). */
@@ -388,6 +421,7 @@ export interface Database {
   patients: Patient[];
   memberships: Membership[];
   payments: Payment[];
+  backgrounds: ClinicalBackground[];
   problems: ClinicalProblem[];
   allergies: Allergy[];
   consultations: Consultation[];
@@ -402,7 +436,10 @@ export interface Database {
   appointments: Appointment[];
   appointmentHistory: AppointmentChange[];
   blocks: AgendaBlock[];
+  communications: Communication[];
   /** Horarios, duraciones, buffer y zonas (en Firebase: settings/agenda). */
   agenda: ConfigAgenda;
+  /** IA encendida o apagada (settings/ia). Arranca apagada; se enciende en la Etapa 9. */
+  ia: { enabled: boolean };
   auditLog: AuditLog[];
 }

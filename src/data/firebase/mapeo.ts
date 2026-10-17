@@ -10,6 +10,7 @@ type Fila = { id: string } & Record<string, unknown>;
 
 /** Tablas clínicas: subcolección de clinical/{patientId}. */
 export const CLINICAS: Partial<Record<Tabla, string>> = {
+  backgrounds: 'background',
   problems: 'problems',
   allergies: 'allergies',
   consultations: 'consultations',

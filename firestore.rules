@@ -62,6 +62,7 @@ service cloud.firestore {
     // La app del médico lee lo clínico de todos sus pacientes con una consulta por colección
     // (collectionGroup), filtrando por organizationId. Solo lectura y solo de su organización.
     function esMedicoDeLaFila() { return esMedico(resource.data.organizationId); }
+    match /{ruta=**}/background/{id} { allow read: if esMedicoDeLaFila(); }
     match /{ruta=**}/problems/{id} { allow read: if esMedicoDeLaFila(); }
     match /{ruta=**}/allergies/{id} { allow read: if esMedicoDeLaFila(); }
     match /{ruta=**}/consultations/{id} { allow read: if esMedicoDeLaFila(); }

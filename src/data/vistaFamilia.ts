@@ -45,6 +45,8 @@ export function vistaFamilia(db: Database, guardianId: ID): Database {
     patients,
     memberships,
     payments: db.payments.filter((p) => membershipIds.has(p.membershipId)),
+    // Los antecedentes no se muestran en el portal.
+    backgrounds: [],
     problems: delPaciente(db.problems).filter((p) => p.visibleToFamily),
     allergies: delPaciente(db.allergies).filter((a) => a.status === 'confirmada'),
     consultations: delPaciente(db.consultations).map((c) => ({ ...c, rawText: '' })),
@@ -64,7 +66,9 @@ export function vistaFamilia(db: Database, guardianId: ID): Database {
       .map(({ opsNotes: _ops, porIdentificar: _contacto, ...a }) => ({ ...a, opsNotes: '' })),
     appointmentHistory: [],
     blocks: [],
+    communications: [],
     agenda: db.agenda,
+    ia: { enabled: false },
     auditLog: [],
   };
 }

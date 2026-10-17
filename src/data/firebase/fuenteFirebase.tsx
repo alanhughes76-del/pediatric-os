@@ -17,7 +17,7 @@ import {
 import { httpsCallable } from 'firebase/functions';
 import { FirebaseError } from 'firebase/app';
 import type { AppState, ResultadoTurno, Sesion, Tabla } from '../contrato';
-import type { Appointment, AppointmentChange, Database } from '../types';
+import type { Appointment, AppointmentChange, Communication, Database } from '../types';
 import { CONFIG_AGENDA_INICIAL } from '@shared/agenda';
 import { firebase } from './config';
 import { ADMINISTRATIVAS, CLINICAS, aFirestore, coleccion, desdeFirestore, diferencias, ruta } from './mapeo';
@@ -27,9 +27,9 @@ import { FIRMA } from '@/lib/certificados';
 const VACIA: Database = {
   doctor: { id: '', name: 'Dr. Alan Hughes', email: '', signature: FIRMA },
   families: [], guardians: [], relationships: [], addresses: [], patients: [], memberships: [], payments: [],
-  problems: [], allergies: [], consultations: [], measurements: [], milestoneChecks: [], notes: [], followUps: [],
-  carePlan: [], fever: [], certificates: [], documents: [], appointments: [], appointmentHistory: [], blocks: [],
-  agenda: CONFIG_AGENDA_INICIAL, auditLog: [],
+  backgrounds: [], problems: [], allergies: [], consultations: [], measurements: [], milestoneChecks: [], notes: [], followUps: [],
+  carePlan: [], fever: [], certificates: [], documents: [], appointments: [], appointmentHistory: [], blocks: [], communications: [],
+  agenda: CONFIG_AGENDA_INICIAL, ia: { enabled: false }, auditLog: [],
 };
 
 /** Mensajes que se entienden, sin códigos técnicos. */
@@ -96,6 +96,12 @@ export function useFuenteFirebase(): AppState {
     subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/agenda`), (snap) => {
       const a = snap.data() ?? {};
       setDatos((d) => ({ ...d, agenda: { ...CONFIG_AGENDA_INICIAL, ...a, duracionMin: { ...CONFIG_AGENDA_INICIAL.duracionMin, ...(a.duracionMin ?? {}) } } }));
+    }, fallo));
+    subs.push(onSnapshot(collection(fs, `organizations/${org}/communications`), (snap) => {
+      setDatos((d) => ({ ...d, communications: snap.docs.map((x) => ({ id: x.id, ...x.data() }) as Communication) }));
+    }, fallo));
+    subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/ia`), (snap) => {
+      setDatos((d) => ({ ...d, ia: { enabled: snap.data()?.enabled === true } }));
     }, fallo));
     subs.push(onSnapshot(collection(fs, `organizations/${org}/professionals`), (snap) => {
       const p = snap.docs[0];
@@ -175,6 +181,7 @@ export function useFuenteFirebase(): AppState {
       anularCertificado: (c, motivo) => llamar('anularCertificado', { patientId: c.patientId, certificateId: c.id, reason: motivo }),
       crearTurno: (datos) => turno('crearTurno', datos),
       accionTurno: ({ turno: t, ...resto }) => turno('accionTurno', { id: t.id, ...resto }),
+      enviarResumen: ({ nota, asunto, texto }) => llamar('enviarResumenFamilia', { patientId: nota.patientId, noteId: nota.id, asunto, texto }),
     };
   }, [functions]);
 

@@ -5,7 +5,7 @@
  */
 import { useCallback, useMemo, useState } from 'react';
 import { datosDeEjemplo, DOCTOR_ID } from './mock';
-import type { AuditLog, Certificate, ClinicalNote, Database, Document, FollowUp } from './types';
+import type { AuditLog, Certificate, ClinicalNote, Communication, Database, Document, FollowUp } from './types';
 import type { AppState, Sesion } from './contrato';
 import { vistaFamilia } from './vistaFamilia';
 import { buscarDuplicados } from '@shared/duplicados';
@@ -133,6 +133,26 @@ export function useFuenteDemo(): AppState {
       const salida = crearTurnoDemo(db, contexto(), datos);
       if (salida.db !== db) setDb(salida.db);
       return salida.resultado;
+    },
+
+    enviarResumen: async ({ nota }) => {
+      if (nota.status !== 'aprobada') return 'Solo se manda el resumen de una nota aprobada.';
+      const hoy = ahoraISO().slice(0, 10);
+      const adultos = db.relationships
+        .filter((r) => r.patientId === nota.patientId && !r.archivedAt && (!r.validTo || r.validTo > hoy))
+        .map((r) => db.guardians.find((g) => g.id === r.guardianId))
+        .filter((g): g is NonNullable<typeof g> => !!g && !!g.email.trim());
+      if (adultos.length === 0) return 'Ningún adulto de este paciente tiene email cargado.';
+      // En la demostración no sale nada: queda registrado como en el servidor, sin el texto.
+      enLote((d, { ahora, usuarioId: uid, log }) => {
+        const c: Communication = {
+          id: nuevoId('com'), createdAt: ahora, createdBy: uid, patientId: nota.patientId, noteId: nota.id,
+          kind: 'resumen_familia', channel: 'email', status: 'enviado_a_make', recipientIds: adultos.map((g) => g.id),
+        };
+        log({ action: 'resumen.enviar', entity: 'communications', entityId: c.id });
+        return { ...d, communications: [...d.communications, c] };
+      });
+      return null;
     },
 
     accionTurno: async (pedido) => {

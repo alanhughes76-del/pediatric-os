@@ -129,6 +129,11 @@ const base: Database = {
     { ...b('pg-2', '2026-04-05T12:00:00-03:00'), membershipId: 'm-godoy', date: '2026-04-05', amount: 450000, currency: 'ARS', method: 'mercadopago' },
   ],
 
+  // Antecedentes (ficticios). El peso al nacer de Emma coincide con su primera medición.
+  backgrounds: [
+    { ...b('ant-p-emma', '2026-02-20T10:00:00-03:00'), patientId: 'p-emma', birthWeightG: 2150 },
+  ],
+
   problems: [
     { ...b('pr-t1', '2026-02-20T10:00:00-03:00'), patientId: 'p-tomas', description: 'Dermatitis atópica leve', status: 'activo', since: '2024-01-10', visibleToFamily: true },
     { ...b('pr-t2', '2025-11-18T12:00:00-03:00'), patientId: 'p-tomas', description: 'Soplo cardíaco en estudio (probablemente funcional)', status: 'activo', since: '2025-11-18', visibleToFamily: false },
@@ -278,7 +283,9 @@ const base: Database = {
   blocks: [
     { ...b('bl-1', enDias(-5, '10:00')), desde: enDias(3, '13:00'), hasta: enDias(3, '20:00'), motivo: 'Curso de actualización' },
   ],
+  communications: [],
   agenda: CONFIG_AGENDA_INICIAL,
+  ia: { enabled: false },
 
   auditLog: [
     { id: 'au-1', at: enDias(-2, '20:40'), actorId: 'g-lucia', action: 'login' },

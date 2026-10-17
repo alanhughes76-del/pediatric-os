@@ -117,6 +117,7 @@ async function main() {
   // Clínico, por paciente
   const clinico = <T extends { id: string; patientId: string; createdBy: string; createdAt: string }>(sub: string, xs: T[], extra?: (x: T) => Record<string, unknown>) =>
     xs.forEach((x) => agregar(o('clinical', x.patientId, sub, x.id), { ...limpio(x), ...firma(x.createdBy, x.createdAt), ...(extra?.(x) ?? {}) }));
+  clinico('background', d.backgrounds);
   clinico('problems', d.problems);
   clinico('allergies', d.allergies);
   clinico('consultations', d.consultations);

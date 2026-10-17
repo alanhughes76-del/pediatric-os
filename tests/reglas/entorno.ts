@@ -75,6 +75,7 @@ export async function sembrar(env: RulesTestEnvironment) {
     await set(r('clinical', 'p-tomas', 'fever', 'f1'), { ...base, patientId: 'p-tomas', origin: 'medico', kind: 'toma', temperatureC: 38.5 });
     await set(r('portal', 'p-tomas', 'summaries', 's1'), { text: 'Resumen aprobado para la familia' });
     await set(r('portal', 'p-olivia', 'summaries', 's1'), { text: 'Resumen de Olivia' });
+    await set(r('clinical', 'p-tomas', 'background', 'ant-p-tomas'), { ...base, patientId: 'p-tomas', habits: 'x' });
     await set(r('appointments', 't1'), { ...base, status: 'confirmado', date: '2026-10-17' });
     await set(r('appointments', 't1', 'history', 'h1'), { organizationId: ORG, appointmentId: 't1', action: 'crear' });
     await set(r('agendaDays', '2026-10-17'), { organizationId: ORG, bloques: {} });
