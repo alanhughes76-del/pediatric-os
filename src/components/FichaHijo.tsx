@@ -13,7 +13,7 @@ import { useApp } from '@/data/store';
 import { paciente, nombreCompleto, alergiasDe, problemasDe, informesFamilia, TEXTO_VISITA } from '@/data/selectores';
 import type { CarePlanCategory } from '@/data/types';
 import { edades } from '@/lib/edad';
-import { fechaLarga, fechaCorta } from '@/lib/fechas';
+import { fechaLarga, fechaCorta, hoyISO } from '@/lib/fechas';
 import { categorias, colors, fonts, size } from '@/theme';
 import { Titulo, Texto, TextoFuerte, TextoChico } from './Texto';
 import { Caja, Grilla } from './Caja';
@@ -23,7 +23,7 @@ import { AlergiasDestacadas } from './Alergias';
 import { TarjetaCrecimiento } from './crecimiento/TarjetaCrecimiento';
 import { ListaCertificados } from './certificados/ListaCertificados';
 
-const CATEGORIA: Record<CarePlanCategory, string> = { control: 'Control', prevencion: 'Prevención', vacuna: 'Vacuna', otro: 'Otro' };
+const CATEGORIA: Record<CarePlanCategory, string> = { control: 'Control', prevencion: 'Prevención', vacuna: 'Vacuna', estudio: 'Estudio', otro: 'Otro' };
 
 export function FichaHijo({ hijoId, conEncabezado = true }: { hijoId: string; conEncabezado?: boolean }) {
   const { db } = useApp();
@@ -90,11 +90,16 @@ function Informes({ patientId }: { patientId: string }) {
 function PlanVigente({ patientId }: { patientId: string }) {
   const { db } = useApp();
   const pendientes = db.carePlan
-    .filter((i) => i.patientId === patientId && !i.done)
+    .filter((i) => i.patientId === patientId && !i.done && !i.cancelledAt)
     .sort((a, b) => (a.targetDate ?? '9').localeCompare(b.targetDate ?? '9'));
-  const vacunas = db.carePlan
-    .filter((i) => i.patientId === patientId && i.category === 'vacuna' && i.done)
-    .sort((a, b) => (b.doneAt ?? '').localeCompare(a.doneAt ?? ''));
+  const vacunas = db.vaccineDoses
+    .filter((d) => d.patientId === patientId && d.status === 'aplicada' && d.appliedDate)
+    .sort((a, b) => b.appliedDate!.localeCompare(a.appliedDate!));
+  // Las próximas dosis salen del calendario: se muestran solo cuando el Dr. lo verificó.
+  const proximas = db.vacunas.calendarioVerificado
+    ? db.vaccineDoses.filter((d) => d.patientId === patientId && d.status === 'pendiente' && d.dueDate && d.dueDate >= hoyISO())
+      .sort((a, b) => a.dueDate!.localeCompare(b.dueDate!)).slice(0, 3)
+    : [];
   return (
     <>
       <Caja titulo="Plan vigente" icono="list-outline" color="rosado">
@@ -112,14 +117,21 @@ function PlanVigente({ patientId }: { patientId: string }) {
           </View>
         )}
       </Caja>
-      {vacunas.length > 0 ? (
-        <Caja titulo="Vacunas aplicadas" icono="shield-checkmark-outline" color="rosado">
+      {vacunas.length + proximas.length > 0 ? (
+        <Caja titulo="Vacunas" icono="shield-checkmark-outline" color="rosado">
           <View style={{ gap: 12 }}>
             {vacunas.map((v, n) => (
               <View key={v.id} style={[s.fila, n > 0 && s.separador]}>
                 <Ionicons name="shield-checkmark" size={22} color={categorias.rosado.acento} />
-                <TextoFuerte style={{ flex: 1 }}>{v.description}</TextoFuerte>
-                {v.doneAt ? <TextoChico>{fechaCorta(v.doneAt)}</TextoChico> : null}
+                <TextoFuerte style={{ flex: 1 }}>{v.vaccine}{v.dose ? ` · ${v.dose}` : ''}</TextoFuerte>
+                <TextoChico>{fechaCorta(v.appliedDate!)}</TextoChico>
+              </View>
+            ))}
+            {proximas.map((v) => (
+              <View key={v.id} style={[s.fila, s.separador]}>
+                <Ionicons name="calendar-outline" size={22} color={categorias.rosado.acento} />
+                <Texto style={{ flex: 1 }}>Próxima: {v.vaccine}{v.dose ? ` · ${v.dose}` : ''}</Texto>
+                <TextoChico>{fechaCorta(v.dueDate!)}</TextoChico>
               </View>
             ))}
           </View>

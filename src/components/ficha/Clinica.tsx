@@ -14,7 +14,7 @@ import { Etiqueta } from '../Etiqueta';
 import { Campo, Opciones, Interruptor } from '../Formulario';
 import { Texto, TextoFuerte, TextoChico } from '../Texto';
 import { Agregar, BotonTexto } from './piezas';
-import { categorias, colors, fonts } from '@/theme';
+import { colors, fonts } from '@/theme';
 
 const fechaOpcional = (t: string) => (t.trim() ? deFecha(t) : undefined);
 
@@ -149,6 +149,7 @@ const CATEGORIAS: { valor: CarePlanCategory; texto: string }[] = [
   { valor: 'control', texto: 'Control' },
   { valor: 'prevencion', texto: 'Prevención' },
   { valor: 'vacuna', texto: 'Vacuna' },
+  { valor: 'estudio', texto: 'Estudio' },
   { valor: 'otro', texto: 'Otro' },
 ];
 const TEXTO_CATEGORIA = Object.fromEntries(CATEGORIAS.map((c) => [c.valor, c.texto])) as Record<CarePlanCategory, string>;
@@ -158,7 +159,7 @@ export function BloquePlan({ patientId }: { patientId: string }) {
   const hoy = hoyISO();
   const plan = db.carePlan
     .filter((i) => i.patientId === patientId && !i.archivedAt)
-    .sort((a, b) => Number(a.done) - Number(b.done) || (a.targetDate ?? '9').localeCompare(b.targetDate ?? '9'));
+    .sort((a, b) => Number(a.done || !!a.cancelledAt) - Number(b.done || !!b.cancelledAt) || (a.targetDate ?? '9').localeCompare(b.targetDate ?? '9'));
   const [categoria, setCategoria] = useState<CarePlanCategory>();
   const [descripcion, setDescripcion] = useState('');
   const [fecha, setFecha] = useState('');
@@ -169,13 +170,16 @@ export function BloquePlan({ patientId }: { patientId: string }) {
       <Seccion titulo="Plan de cuidado" bajada="La familia ve los pendientes como «Plan vigente»">
         {plan.length === 0 ? <Texto color={colors.textMuted}>Sin ítems en el plan.</Texto> : null}
         {plan.map((i) => {
-          const vencido = !i.done && !!i.targetDate && diasEntre(i.targetDate, hoy) > 0;
+          const cancelado = !!i.cancelledAt;
+          const cerrado = i.done || cancelado;
+          const vencido = !cerrado && !!i.targetDate && diasEntre(i.targetDate, hoy) > 0;
           return (
             <Tarjeta key={i.id} style={[{ gap: 6 }, vencido && { borderColor: colors.alertBorder }]}>
               <View style={s.fila}>
-                <Ionicons name={i.done ? 'checkmark-circle' : 'ellipse-outline'} size={22} color={i.done ? colors.primary3 : colors.primary2} />
-                <TextoFuerte style={[{ flex: 1 }, i.done && { color: colors.textMuted }]}>{i.description}</TextoFuerte>
+                <Ionicons name={cancelado ? 'close-circle-outline' : i.done ? 'checkmark-circle' : 'ellipse-outline'} size={22} color={cerrado ? colors.primary3 : colors.primary2} />
+                <TextoFuerte style={[{ flex: 1 }, cerrado && { color: colors.textMuted }]}>{i.description}</TextoFuerte>
                 {vencido ? <Etiqueta texto="Vencido" tono="alerta" /> : null}
+                {cancelado ? <Etiqueta texto="Cancelado" tono="neutro" /> : null}
               </View>
               <TextoChico>
                 {TEXTO_CATEGORIA[i.category]}
@@ -183,10 +187,13 @@ export function BloquePlan({ patientId }: { patientId: string }) {
                 {i.done && i.doneAt ? ` · ${i.category === 'vacuna' ? 'Aplicada' : 'Hecho'} el ${fechaCorta(i.doneAt)}` : ''}
               </TextoChico>
               <View style={s.acciones}>
-                {i.done ? (
-                  <BotonTexto texto="Reabrir" onPress={() => actualizar('carePlan', i.id, { done: false, doneAt: undefined }, 'plan.reabrir')} />
+                {cerrado ? (
+                  <BotonTexto texto="Reabrir" onPress={() => actualizar('carePlan', i.id, { done: false, doneAt: undefined, cancelledAt: undefined }, 'plan.reabrir')} />
                 ) : (
-                  <BotonTexto texto="Marcar hecho" onPress={() => actualizar('carePlan', i.id, { done: true, doneAt: ahoraISO() }, 'plan.hecho')} />
+                  <>
+                    <BotonTexto texto="Marcar hecho" onPress={() => actualizar('carePlan', i.id, { done: true, doneAt: ahoraISO() }, 'plan.hecho')} />
+                    <BotonTexto texto="Cancelar" onPress={() => actualizar('carePlan', i.id, { cancelledAt: ahoraISO() }, 'plan.cancelar')} />
+                  </>
                 )}
               </View>
             </Tarjeta>
@@ -211,29 +218,6 @@ export function BloquePlan({ patientId }: { patientId: string }) {
         </Agregar>
       </Seccion>
     </>
-  );
-}
-
-/** Vacunas aplicadas (ítems "vacuna" hechos del plan). El esquema según el calendario llega en la Etapa 5. */
-export function BloqueVacunas({ patientId }: { patientId: string }) {
-  const { db } = useApp();
-  const vacunas = db.carePlan
-    .filter((i) => i.patientId === patientId && !i.archivedAt && i.category === 'vacuna' && i.done)
-    .sort((a, b) => (b.doneAt ?? '').localeCompare(a.doneAt ?? ''));
-  return (
-    <Seccion titulo="Vacunas aplicadas" bajada="Se cargan como ítems «Vacuna» del plan de cuidado. El esquema según el calendario llega en la Etapa 5.">
-      {vacunas.length === 0 ? <Texto color={colors.textMuted}>Todavía no hay vacunas registradas.</Texto> : (
-        <Tarjeta style={{ gap: 12 }}>
-          {vacunas.map((v, n) => (
-            <View key={v.id} style={[s.fila, n > 0 && s.separador]}>
-              <Ionicons name="shield-checkmark" size={22} color={categorias.rosado.acento} />
-              <TextoFuerte style={{ flex: 1 }}>{v.description}</TextoFuerte>
-              {v.doneAt ? <TextoChico>{fechaCorta(v.doneAt)}</TextoChico> : null}
-            </View>
-          ))}
-        </Tarjeta>
-      )}
-    </Seccion>
   );
 }
 

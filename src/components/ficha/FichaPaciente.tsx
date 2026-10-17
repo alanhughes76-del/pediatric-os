@@ -16,7 +16,10 @@ import { Boton } from '../Boton';
 import { BotonTexto } from './piezas';
 import { Encabezado, BloqueDatos } from './Encabezado';
 import { BloqueAdultos, BloqueContacto } from './Adultos';
-import { BloqueAlergias, BloquePlan, BloqueProblemas, BloqueVacunas } from './Clinica';
+import { BloqueAlergias, BloquePlan, BloqueProblemas } from './Clinica';
+import { BloqueVacunas } from './Vacunas';
+import { BloqueMedicacion, BloquePrescripciones } from './Medicacion';
+import { BloqueEstudios } from './Estudios';
 import { EstadoVacio } from '../Estados';
 import { BloqueConsultas, BloqueCrecimiento, BloqueDocumentos, BloqueFiebre, useNuevaConsulta } from './Historia';
 import { Resumen } from './Resumen';
@@ -107,9 +110,14 @@ export function FichaPaciente({ patientId, solapaInicial }: { patientId: string;
       {solapa === 'consultas' ? <BloqueConsultas patientId={p.id} /> : null}
       {solapa === 'crecimiento' ? <BloqueCrecimiento paciente={p} /> : null}
       {solapa === 'plan' ? <BloquePlan patientId={p.id} /> : null}
-      {solapa === 'vacunas' ? <BloqueVacunas patientId={p.id} /> : null}
-      {solapa === 'medicaciones' ? <EstadoVacio icono="reader-outline" titulo="Medicaciones llega en la Etapa 5" texto="Medicación actual y registro de lo indicado en cada consulta. La plataforma nunca sugiere ni calcula dosis." /> : null}
-      {solapa === 'estudios' ? <EstadoVacio icono="flask-outline" titulo="Estudios llega en la Etapa 5" texto="Pedidos, resultados y la fecha en que querés revisarlos." /> : null}
+      {solapa === 'vacunas' ? <BloqueVacunas paciente={p} /> : null}
+      {solapa === 'medicaciones' ? (
+        <>
+          <BloqueMedicacion paciente={p} />
+          <BloquePrescripciones paciente={p} />
+        </>
+      ) : null}
+      {solapa === 'estudios' ? <BloqueEstudios paciente={p} /> : null}
       {solapa === 'comunicaciones' ? <EstadoVacio icono="chatbubbles-outline" titulo="Comunicaciones llega en la Etapa 7" texto="Registro de recordatorios, resúmenes y avisos. Las conversaciones siguen por PacienteX." /> : null}
       {solapa === 'fiebre' ? <BloqueFiebre patientId={p.id} /> : null}
       {solapa === 'documentos' ? <BloqueDocumentos patientId={p.id} /> : null}

@@ -17,6 +17,8 @@ import { textoEG } from '@/lib/edad';
 import { ahoraISO, fechaCorta, fechaLarga, hoyISO } from '@/lib/fechas';
 import { tipoCertificado } from '@/lib/certificados';
 import { PLAZOS, planPorPlazo, type Plazo } from '@/lib/planPorPlazo';
+import { resumenVacunas } from '@shared/vacunas';
+import { estudiosDe, medicacionDe, prescripcionesDe, TEXTO_ESTUDIO } from '@/data/seguimientoClinico';
 import { Tarjeta } from '../Tarjeta';
 import { Caja, Grilla } from '../Caja';
 import { Etiqueta } from '../Etiqueta';
@@ -26,7 +28,7 @@ import type { SolapaFicha } from './FichaPaciente';
 
 type NombreIcono = keyof typeof Ionicons.glyphMap;
 
-const COLOR_CATEGORIA: Record<CarePlanCategory, Categoria> = { control: 'celeste', vacuna: 'rosado', prevencion: 'naranja', otro: 'celeste' };
+const COLOR_CATEGORIA: Record<CarePlanCategory, Categoria> = { control: 'celeste', vacuna: 'rosado', prevencion: 'naranja', estudio: 'violeta', otro: 'celeste' };
 const COLOR_PLAZO: Record<Plazo, Categoria> = { hoy: 'celeste', treinta: 'verde', meses: 'violeta', prevencion: 'naranja' };
 const ICONO_PLAZO: Record<Plazo, NombreIcono> = { hoy: 'today-outline', treinta: 'time-outline', meses: 'calendar-outline', prevencion: 'shield-outline' };
 
@@ -39,8 +41,8 @@ export function Resumen({ paciente: p, irA }: { paciente: Patient; irA: (s: Sola
         <ProximasAcciones paciente={p} irA={irA} />
         <Crecimiento paciente={p} irA={irA} />
         <Vacunas paciente={p} irA={irA} />
-        <Pendiente titulo="Estudios" icono="flask-outline" etapa="Etapa 5" texto="Pedidos y resultados para revisar." onPress={() => irA('estudios')} />
-        <Pendiente titulo="Prescripciones activas" icono="reader-outline" etapa="Etapa 5" texto="Lo indicado en cada consulta." onPress={() => irA('medicaciones')} />
+        <Estudios paciente={p} irA={irA} />
+        <Prescripciones paciente={p} irA={irA} />
         <Documentos paciente={p} irA={irA} />
         <Pendiente titulo="Comunicaciones recientes" icono="chatbubbles-outline" etapa="Etapa 7" texto="Recordatorios, resúmenes y avisos enviados." onPress={() => irA('comunicaciones')} />
         <PlanPorPlazo paciente={p} irA={irA} />
@@ -89,9 +91,11 @@ function ResumenClinico({ paciente: p, irA }: PropsTarjeta) {
           </View>
         ))}
       </View>
-      <View>
+      <View style={{ gap: 2 }}>
         <Rotulo>Medicación actual</Rotulo>
-        <Texto color={colors.textMuted}>Se carga desde la Etapa 5.</Texto>
+        {medicacionDe(db, p.id, hoyISO()).activas.length === 0
+          ? <Texto>Ninguna</Texto>
+          : medicacionDe(db, p.id, hoyISO()).activas.map((m) => <Texto key={m.id}>• {m.drug}</Texto>)}
       </View>
       <View style={{ gap: 2 }}>
         <Rotulo>Problemas activos</Rotulo>
@@ -246,19 +250,55 @@ function MiniCurva({ valores }: { valores: (number | null)[] }) {
 
 function Vacunas({ paciente: p, irA }: PropsTarjeta) {
   const { db } = useApp();
-  const vacunas = db.carePlan.filter((i) => i.patientId === p.id && i.category === 'vacuna' && !i.archivedAt);
-  const aplicadas = vacunas.filter((v) => v.done).sort((a, b) => (b.doneAt ?? '').localeCompare(a.doneAt ?? ''));
-  const pendientes = vacunas.filter((v) => !v.done).sort((a, b) => (a.targetDate ?? '9').localeCompare(b.targetDate ?? '9'));
+  const dosis = db.vaccineDoses.filter((d) => d.patientId === p.id && !d.archivedAt);
+  const r = resumenVacunas(dosis, hoyISO());
   return (
     <Caja titulo="Vacunas" icono="shield-checkmark-outline" color="rosado" ver={{ texto: 'Ver vacunas', onPress: () => irA('vacunas') }}>
-      {vacunas.length === 0 ? <Vacio>Sin vacunas cargadas.</Vacio> : null}
-      {aplicadas[0] ? (
-        <View><Rotulo>Última aplicada</Rotulo><Texto>{aplicadas[0].description}{aplicadas[0].doneAt ? ` · ${fechaCorta(aplicadas[0].doneAt)}` : ''}</Texto></View>
-      ) : null}
-      {pendientes[0] ? (
-        <View><Rotulo>Próxima</Rotulo><Texto>{pendientes[0].description}{pendientes[0].targetDate ? ` · ${fechaCorta(pendientes[0].targetDate)}` : ''}</Texto></View>
-      ) : null}
-      {aplicadas.length > 0 ? <TextoChico>{aplicadas.length} {aplicadas.length === 1 ? 'aplicada' : 'aplicadas'} en la ficha</TextoChico> : null}
+      {dosis.length === 0 ? <Vacio>Sin esquema armado todavía.</Vacio> : (
+        <View style={s.fila}>
+          <Ionicons name={r.alDia ? 'checkmark-circle' : 'warning'} size={18} color={r.alDia ? categorias.verde.acento : colors.alert} />
+          <Texto color={r.alDia ? undefined : colors.alert}>
+            {r.alDia ? 'Calendario al día' : `${r.atrasadas.length} ${r.atrasadas.length === 1 ? 'dosis atrasada' : 'dosis atrasadas'}`}
+          </Texto>
+        </View>
+      )}
+      {r.ultima ? <View><Rotulo>Última aplicada</Rotulo><Texto>{r.ultima.vaccine} {r.ultima.dose} · {fechaCorta(r.ultima.appliedDate!)}</Texto></View> : null}
+      {r.proxima ? <View><Rotulo>Próxima</Rotulo><Texto>{r.proxima.vaccine} {r.proxima.dose} · {fechaCorta(r.proxima.dueDate!)}</Texto></View> : null}
+      {!db.vacunas.calendarioVerificado && dosis.length > 0 ? <TextoChico>Calendario sin verificar: fechas estimadas.</TextoChico> : null}
+    </Caja>
+  );
+}
+
+function Estudios({ paciente: p, irA }: PropsTarjeta) {
+  const { db } = useApp();
+  const abiertos = estudiosDe(db, p.id).filter((e) => e.status !== 'revisado');
+  return (
+    <Caja titulo="Estudios" icono="flask-outline" color="violeta" ver={{ texto: 'Ver estudios', onPress: () => irA('estudios') }}>
+      {abiertos.length === 0 ? <Vacio>Nada pendiente.</Vacio> : null}
+      {abiertos.slice(0, 3).map((e) => (
+        <View key={e.id}>
+          <Texto color={e.status === 'resultado' ? colors.alert : undefined}>{e.study}</Texto>
+          <TextoChico>{TEXTO_ESTUDIO[e.status]}{e.reviewDate ? ` · revisar el ${fechaCorta(e.reviewDate)}` : ''}</TextoChico>
+        </View>
+      ))}
+    </Caja>
+  );
+}
+
+function Prescripciones({ paciente: p, irA }: PropsTarjeta) {
+  const { db } = useApp();
+  const { activas } = medicacionDe(db, p.id, hoyISO());
+  const ultima = prescripcionesDe(db, p.id)[0];
+  return (
+    <Caja titulo="Prescripciones activas" icono="reader-outline" color="celeste" ver={{ texto: 'Ver medicaciones', onPress: () => irA('medicaciones') }}>
+      {activas.length === 0 ? <Vacio>Sin medicación activa.</Vacio> : null}
+      {activas.map((m) => (
+        <View key={m.id}>
+          <Texto>{m.drug}{m.presentation ? ` · ${m.presentation}` : ''}</Texto>
+          <TextoChico>{m.dose}{m.frequency ? ` · ${m.frequency}` : ''}</TextoChico>
+        </View>
+      ))}
+      {ultima ? <TextoChico>Última prescripción: {fechaCorta(ultima.date)}</TextoChico> : null}
     </Caja>
   );
 }

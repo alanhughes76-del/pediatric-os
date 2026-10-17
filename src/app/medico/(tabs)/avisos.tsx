@@ -10,8 +10,8 @@ import { EstadoVacio } from '@/components/Estados';
 import { TextoFuerte, TextoChico } from '@/components/Texto';
 import { categorias, colors, type Categoria } from '@/theme';
 
-const ICONO: Record<TipoAviso, keyof typeof Ionicons.glyphMap> = { seguimiento: 'flag', fiebre: 'thermometer-outline', membresia: 'wallet-outline' };
-const COLOR: Record<TipoAviso, Categoria> = { seguimiento: 'rosado', fiebre: 'naranja', membresia: 'verde' };
+const ICONO: Record<TipoAviso, keyof typeof Ionicons.glyphMap> = { seguimiento: 'flag', fiebre: 'thermometer-outline', estudio: 'flask-outline', vacuna: 'shield-checkmark-outline', membresia: 'wallet-outline' };
+const COLOR: Record<TipoAviso, Categoria> = { seguimiento: 'rosado', fiebre: 'naranja', estudio: 'violeta', vacuna: 'rosado', membresia: 'verde' };
 
 export default function Avisos() {
   const { db } = useApp();

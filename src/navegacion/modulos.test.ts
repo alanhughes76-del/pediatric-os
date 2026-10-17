@@ -15,7 +15,9 @@ test.each([
   ['/medico/membresias', 'familias'],
   ['/medico/familia/f-ferreyra', 'familias'],
   ['/medico/familias', 'familias'],
-  ['/medico/modulo/vacunas', 'vacunas'],
+  ['/medico/vacunas', 'vacunas'],
+  ['/medico/modulo/prevencion', 'prevencion'],
+  ['/medico/turno/t1', 'agenda'],
   ['/medico/modulo/configuracion', 'configuracion'],
   ['/medico/agenda', 'agenda'],
 ])('%s marca %s', (ruta, clave) => {

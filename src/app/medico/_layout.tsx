@@ -34,6 +34,9 @@ export default function MedicoLayout() {
         <Stack.Screen name="historia" options={{ title: 'Historia clínica' }} />
         <Stack.Screen name="consultas" options={{ title: 'Consultas' }} />
         <Stack.Screen name="crecimiento" options={{ title: 'Crecimiento' }} />
+        <Stack.Screen name="vacunas" options={{ title: 'Vacunas' }} />
+        <Stack.Screen name="estudios" options={{ title: 'Estudios' }} />
+        <Stack.Screen name="prescripciones" options={{ title: 'Prescripciones' }} />
       </Stack>
     </Marco>
   );
