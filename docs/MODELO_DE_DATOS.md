@@ -29,7 +29,7 @@ Estado al 17/10/2026, Etapa 1a. Las reglas están en `firestore.rules` y `storag
 | Ruta | Lee | Escribe | Qué valida |
 | --- | --- | --- | --- |
 | `…/families/{id}` | M, A | M, A | Firma |
-| `…/guardians/{id}` | M, A; F su propia ficha (`authUid`) | M, A. F solo `phone`, `email` y `contactPreference` | Teléfono en E.164. Sin email no se habilita el portal. Habilitarlo (`portalEnabled`) es decisión del médico. Un adulto nuevo arranca deshabilitado. `authUid` no se cambia desde la app |
+| `…/guardians/{id}` | M, A; F su propia ficha (`authUid`) | M, A. F solo `phone`, `email` y `contactPreference` (`llamada` o `email`; sin WhatsApp) | Teléfono en E.164. Sin email no se habilita el portal. Habilitarlo (`portalEnabled`) es decisión del médico. Un adulto nuevo arranca deshabilitado. `authUid` no se cambia desde la app |
 | `…/guardians/{id}/addresses/{id}` | M, A; F las suyas | M, A, F las suyas | Firma; no se borran |
 | `…/relationships/{id}` (paciente ↔ adulto, tipo, principal, vigencia) | M, A | M, A | Se cierran con `validTo`, no se borran |
 | `…/patients/{id}` | M, A | Alta: S (control de duplicados, Etapa 2). Cambios: M, A | Firma |
@@ -78,7 +78,7 @@ Etapa 5a: `vaccineDoses` (una por dosis del calendario, id `vd-{paciente}-{clave
 
 | Ruta | Lee | Escribe |
 | --- | --- | --- |
-| `…/portal/{patientId}/{sub}/{id}` (`datos` [paciente, familia], `summaries`, `allergies`, `problems`, `plan`, `growth`, `vaccines`, `documents`, `certificates`, `materials`, `fever`, `turnos`) | M; F con acceso vigente a ese chico | Solo S: triggers `portal*` con `functions/src/portal/proyeccion.ts` (qué va y qué no) |
+| `…/portal/{patientId}/{sub}/{id}` (`datos` [paciente, familia], `summaries`, `allergies`, `problems`, `plan`, `growth`, `vaccines`, `certificates`, `fever`, `turnos`; sin documentos ni materiales) | M; F con acceso vigente a ese chico | Solo S: triggers `portal*` con `functions/src/portal/proyeccion.ts` (qué va y qué no) |
 | `…/magicLinks/{huella}` (enlace mágico: huella SHA-256 del código, vence a los 15 min, un solo uso) | — | Solo S (`pedirEnlace`, `entrarConEnlace`) |
 | `…/portalAccess/{authUid}` (`enabled`, `patientIds`, `guardianId`) | M; el propio adulto | Solo S (trigger `accesoPorAdulto` / `accesoPorVinculo`) |
 
@@ -88,7 +88,7 @@ Lo que la familia hace desde el portal (Etapa 6b):
 
 - Pedir visita: `pedirVisita` (S) crea un turno `solicitado` con origen `portal`, solo para sus chicos, con tope de 3 pedidos abiertos por adulto.
 - Mis datos: el adulto actualiza su teléfono, email y preferencia de contacto en `guardians/{id}` y sus direcciones (firma con `updatedBy`). Los triggers `avisoDatosFamilia` y `avisoDireccionFamilia` dejan una `notification` para el médico y emiten `familia.datos_actualizados` (solo ids y nombres de campos).
-- Descargas: `enlaceDescarga` (S) entrega un enlace firmado de 5 minutos si el documento o material está en su copia; registra la descarga en el `auditLog`.
+- Sin descargas: la familia no baja documentos ni materiales desde el portal (decisión del Dr., 17/10/2026).
 
 ## Trazabilidad y automatización
 

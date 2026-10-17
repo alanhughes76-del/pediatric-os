@@ -20,7 +20,6 @@ const vista = armarVistaFamilia({
       summaries: [{ id: 'n1', datos: { consultationId: 'c1', version: 1, familySummary: 'Está muy bien.', approvedAt: '2026-10-10T11:00:00-03:00', occurredAt: '2026-10-10T10:00:00-03:00', visitType: 'control' } }],
       turnos: [{ id: 't1', datos: { start: '2099-01-01T10:00:00-03:00', day: '2099-01-01', durationMin: 45, type: 'control', status: 'confirmado', patientIds: ['p-tomas', 'p-emma'] } }],
       fever: [{ id: 'fv1', datos: { kind: 'toma', at: '2026-10-17T10:00:00-03:00', temperatureC: 38.2, reviewed: true } }],
-      materials: [{ id: 'e1', datos: { materialId: 'm1', title: 'Sueño', kind: 'enlace', url: 'https://x', sentAt: 's' } }],
     },
     'p-emma': {
       datos: [{ id: 'paciente', datos: { firstName: 'Emma', lastName: 'Ruiz', birthDate: '2026-01-20', sex: 'F', familyId: 'f-1' } }],
@@ -43,12 +42,12 @@ describe('portal en Firebase: las copias con la forma de las pantallas', () => {
     expect(vista.consultations[0]).toMatchObject({ id: 'c1', occurredAt: '2026-10-10T10:00:00-03:00', rawText: '' });
   });
 
-  test('un turno de hermanos aparece una sola vez; la fiebre revisada y el material enviado', () => {
+  test('un turno de hermanos aparece una sola vez; la fiebre revisada; sin documentos ni materiales', () => {
     expect(vista.appointments).toHaveLength(1);
     expect(proximoTurno(vista, ['p-emma'], '2026-10-17')?.id).toBe('t1');
     expect(vista.fever[0].reviewedAt).toBeTruthy();
-    expect(vista.materialDeliveries[0]).toMatchObject({ id: 'e1', patientId: 'p-tomas', materialId: 'm1' });
-    expect(vista.educationalMaterials[0]).toMatchObject({ id: 'm1', title: 'Sueño' });
+    expect(vista.documents).toEqual([]);
+    expect(vista.materialDeliveries).toEqual([]);
   });
 
   test('solo su propio adulto y sus direcciones', () => {

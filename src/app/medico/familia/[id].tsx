@@ -20,7 +20,7 @@ import { Avatar } from '@/components/Avatar';
 import { Caja, Grilla } from '@/components/Caja';
 import { Interruptor } from '@/components/Formulario';
 import { EstadoVacio } from '@/components/Estados';
-import { TEXTO_PREFERENCIA } from '@/components/ficha/piezas';
+import { textoPreferencia } from '@/components/ficha/piezas';
 import { colors } from '@/theme';
 
 export default function FichaFamilia() {
@@ -93,7 +93,7 @@ export default function FichaFamilia() {
               <View style={{ flex: 1, gap: 2 }}>
                 <TextoFuerte>{g.firstName} {g.lastName}</TextoFuerte>
                 <TextoChico>
-                  {[g.email || 'Sin email', g.phone ? telefonoLegible(g.phone) : null, g.contactPreference ? `prefiere ${TEXTO_PREFERENCIA[g.contactPreference]}` : null].filter(Boolean).join(' · ')}
+                  {[g.email || 'Sin email', g.phone ? telefonoLegible(g.phone) : null, textoPreferencia(g.contactPreference) ? `prefiere ${textoPreferencia(g.contactPreference)}` : null].filter(Boolean).join(' · ')}
                 </TextoChico>
               </View>
               <Ionicons name="chevron-forward" size={20} color={colors.primary3} />

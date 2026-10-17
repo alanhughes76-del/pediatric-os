@@ -48,7 +48,6 @@ export default function Documentos() {
           <View style={s.fila}>
             <TextoFuerte style={{ flex: 1 }}>{d.title}</TextoFuerte>
             <Etiqueta texto={TEXTO_TIPO_DOCUMENTO[tipoDeDocumento(d)]} tono="neutro" />
-            {d.visibleToFamily ? <Etiqueta texto="Lo ve la familia" tono="verde" /> : null}
           </View>
           <TextoChico>{nombreCompleto(p!)} · {fechaCorta(d.date)}</TextoChico>
           <View style={s.fila}>

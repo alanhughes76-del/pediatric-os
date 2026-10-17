@@ -1,4 +1,4 @@
-import { proyectarClinico, proyectarFamilia, proyectarMaterial, proyectarPaciente, proyectarTurno } from '../../functions/src/portal/proyeccion';
+import { DESTINO, proyectarClinico, proyectarFamilia, proyectarPaciente, proyectarTurno } from '../../functions/src/portal/proyeccion';
 
 const ctx = { calendarioVerificado: false };
 
@@ -37,10 +37,9 @@ describe('copias del portal: lo que ve la familia', () => {
       .toEqual({ status: 'aplicada', vaccine: 'BCG', dose: 'Única', appliedDate: 'a' });
   });
 
-  test('documentos: solo los habilitados; sin la ruta del archivo', () => {
-    expect(proyectarClinico('documents', { title: 'Eco', visibleToFamily: false, file: 'orgs/x' }, ctx)).toBeNull();
-    expect(proyectarClinico('documents', { title: 'Eco', visibleToFamily: true, file: 'orgs/x', date: 'd' }, ctx)).toEqual({ title: 'Eco', date: 'd' });
-    expect(proyectarClinico('documents', { title: 'Cert', certificateId: 'c', file: 'orgs/y' }, ctx)).toEqual({ title: 'Cert', certificateId: 'c' });
+  test('documentos: no van al portal (la familia no baja archivos)', () => {
+    expect(DESTINO.documents).toBeUndefined();
+    expect(proyectarClinico('documents', { title: 'Eco', visibleToFamily: true, file: 'orgs/x' }, ctx)).toBeNull();
   });
 
   test('certificado sin motivo de anulación; fiebre sin quién la revisó', () => {
@@ -55,14 +54,12 @@ describe('copias del portal: lo que ve la familia', () => {
     }
   });
 
-  test('paciente, turno, material y familia', () => {
+  test('paciente, turno y familia', () => {
     expect(proyectarPaciente({ firstName: 'Ana', lastName: 'P', birthDate: 'b', sex: 'F', dni: '1', dniDigits: '1', scope: 'membresia', coverage: {}, bloodType: 'A+' }))
       .toEqual({ firstName: 'Ana', lastName: 'P', birthDate: 'b', sex: 'F' });
     expect(proyectarTurno({ status: 'cancelado' })).toBeNull();
     expect(proyectarTurno({ status: 'confirmado', start: 's', opsNotes: 'interno', porIdentificar: {}, address: { text: 'Calle 1', locality: 'Olivos', addressId: 'a' } }))
       .toEqual({ status: 'confirmado', start: 's', address: { text: 'Calle 1', locality: 'Olivos' } });
-    expect(proyectarMaterial({ materialId: 'm', sentAt: 's' }, { title: 'Sueño', kind: 'enlace', url: 'https://x', file: 'orgs/z' }))
-      .toEqual({ materialId: 'm', sentAt: 's', title: 'Sueño', kind: 'enlace', url: 'https://x' });
     expect(proyectarFamilia({ name: 'Familia P' }, { status: 'activa', renewalDate: 'r', patientIds: ['x'] }))
       .toEqual({ familyName: 'Familia P', membership: { status: 'activa', renewalDate: 'r' } });
   });

@@ -4,10 +4,9 @@
  * acá no hay nada oculto que esconder.
  *
  * Secciones (tarjetas en grilla; en el teléfono, una debajo de otra): Informes de las visitas,
- * Plan vigente, Vacunas, Alergias y temas de salud, Crecimiento, Registro de fiebre, Certificados,
- * Documentos habilitados y Materiales para leer.
+ * Plan vigente, Vacunas, Alergias y temas de salud, Crecimiento, Registro de fiebre y Certificados.
+ * Documentos y materiales no se bajan desde el portal (decisión del Dr., 17/10/2026).
  */
-import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -64,8 +63,6 @@ export function FichaHijo({ hijoId, conEncabezado = true }: { hijoId: string; co
         </Caja>
 
         <Certificados patientId={p.id} />
-        <Documentos patientId={p.id} />
-        <Materiales patientId={p.id} />
       </Grilla>
     </>
   );
@@ -172,59 +169,6 @@ function Certificados({ patientId }: { patientId: string }) {
   return (
     <Caja titulo="Certificados" icono="document-attach-outline" color="celeste">
       <ListaCertificados patientId={patientId} vista="familia" />
-    </Caja>
-  );
-}
-
-/** Documentos que el Dr. habilitó (los certificados van en su propia tarjeta). Se bajan con un enlace temporal. */
-function Documentos({ patientId }: { patientId: string }) {
-  const { db, archivos } = useApp();
-  const [error, setError] = useState<string | null>(null);
-  const docs = db.documents.filter((d) => d.patientId === patientId && !d.certificateId && !d.archivedAt).sort((a, b) => b.date.localeCompare(a.date));
-  if (docs.length === 0) return null;
-  return (
-    <Caja titulo="Documentos" icono="folder-open-outline" color="celeste">
-      {docs.map((d, n) => (
-        <View key={d.id} style={[s.filaEntre, n > 0 && s.separador]}>
-          <View style={{ flex: 1 }}>
-            <TextoFuerte>{d.title}</TextoFuerte>
-            <TextoChico>{fechaCorta(d.date)}</TextoChico>
-          </View>
-          <Boton compacto titulo="Bajar" icono="download-outline" variante="secundario"
-            onPress={() => { void archivos.descargarDelPortal({ patientId, documentId: d.id }).then(setError); }} />
-        </View>
-      ))}
-      {error ? <TextoChico color={colors.alert}>{error}</TextoChico> : null}
-    </Caja>
-  );
-}
-
-/** Materiales educativos que el Dr. le mandó a la familia. */
-function Materiales({ patientId }: { patientId: string }) {
-  const { db, archivos } = useApp();
-  const [error, setError] = useState<string | null>(null);
-  const envios = db.materialDeliveries.filter((e) => e.patientId === patientId && !e.archivedAt).sort((a, b) => b.sentAt.localeCompare(a.sentAt));
-  if (envios.length === 0) return null;
-  return (
-    <Caja titulo="Materiales para leer" icono="leaf-outline" color="naranja">
-      {envios.map((e, n) => {
-        const m = db.educationalMaterials.find((x) => x.id === e.materialId);
-        if (!m) return null;
-        return (
-          <View key={e.id} style={[s.filaEntre, n > 0 && s.separador]}>
-            <View style={{ flex: 1 }}>
-              <TextoFuerte>{m.title}</TextoFuerte>
-              <TextoChico>Te lo mandó el Dr. el {fechaCorta(e.sentAt)}</TextoChico>
-            </View>
-            <Boton compacto titulo={m.kind === 'enlace' ? 'Abrir' : 'Bajar'} icono={m.kind === 'enlace' ? 'open-outline' : 'download-outline'} variante="secundario"
-              onPress={() => {
-                const pedido = m.kind === 'enlace' && m.url ? archivos.abrirMaterial(m) : archivos.descargarDelPortal({ patientId, deliveryId: e.id });
-                void pedido.then(setError);
-              }} />
-          </View>
-        );
-      })}
-      {error ? <TextoChico color={colors.alert}>{error}</TextoChico> : null}
     </Caja>
   );
 }

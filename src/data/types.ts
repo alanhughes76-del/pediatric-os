@@ -46,7 +46,8 @@ export interface Family extends Base {
   status?: 'activa' | 'inactiva';
 }
 
-export type ContactPreference = 'whatsapp' | 'llamada' | 'email';
+/** Sin WhatsApp: el contacto con el Dr. es por PacienteX (pedido del Dr., 17/10/2026). */
+export type ContactPreference = 'llamada' | 'email';
 
 /** Adulto responsable. También es el usuario que entra al portal (enlace mágico por email). */
 export interface Guardian extends Base {

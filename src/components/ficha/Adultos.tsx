@@ -16,7 +16,7 @@ import { Etiqueta } from '../Etiqueta';
 import { Boton } from '../Boton';
 import { Aviso } from '../Formulario';
 import { Texto, TextoFuerte, TextoChico } from '../Texto';
-import { BotonTexto, CampoEditable, CampoTelefono, TEXTO_PREFERENCIA, validarEmail } from './piezas';
+import { BotonTexto, CampoEditable, CampoTelefono, textoPreferencia, validarEmail } from './piezas';
 import { telefonoLegible } from '@shared/telefono';
 import { colors } from '@/theme';
 
@@ -44,7 +44,7 @@ export function BloqueContacto({ patientId }: { patientId: string }) {
               onGuardar={(v) => actualizar('guardians', principal.guardian.id, { email: v }, 'adulto.email')}
             />
             <CampoTelefono valor={principal.guardian.phone} onGuardar={(v) => actualizar('guardians', principal.guardian.id, { phone: v }, 'adulto.telefono')} />
-            {principal.guardian.contactPreference ? <TextoChico>Prefiere: {TEXTO_PREFERENCIA[principal.guardian.contactPreference]}</TextoChico> : null}
+            {textoPreferencia(principal.guardian.contactPreference) ? <TextoChico>Prefiere: {textoPreferencia(principal.guardian.contactPreference)}</TextoChico> : null}
             {!principal.guardian.email ? <Aviso tono="alerta" texto="Sin email no se puede habilitar el portal para este adulto." /> : null}
           </>
         )}

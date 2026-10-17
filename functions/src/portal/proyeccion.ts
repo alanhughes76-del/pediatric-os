@@ -14,7 +14,10 @@
  */
 type Datos = Record<string, unknown>;
 
-/** Subcolección clínica de origen → subcolección del portal. */
+/**
+ * Subcolección clínica de origen → subcolección del portal. Documentos y materiales no van: la familia no
+ * los baja desde el portal (decisión del Dr., 17/10/2026; las comunicaciones las maneja un agente aparte).
+ */
 export const DESTINO: Record<string, string> = {
   notes: 'summaries',
   allergies: 'allergies',
@@ -22,7 +25,6 @@ export const DESTINO: Record<string, string> = {
   carePlan: 'plan',
   growth: 'growth',
   vaccineDoses: 'vaccines',
-  documents: 'documents',
   certificates: 'certificates',
   fever: 'fever',
 };
@@ -62,10 +64,6 @@ export function proyectarClinico(sub: string, d: Datos | undefined, ctx: Context
     case 'vaccineDoses':
       if (d.status === 'aplicada') return tomar(d, ['vaccine', 'dose', 'status', 'appliedDate']);
       return ctx.calendarioVerificado ? tomar(d, ['vaccine', 'dose', 'status', 'dueDate', 'ageText']) : null;
-    case 'documents': {
-      const visible = d.visibleToFamily === true || (d.visibleToFamily === undefined && !!d.certificateId);
-      return visible ? tomar(d, ['title', 'date', 'kind', 'certificateId', 'mimeType']) : null;
-    }
     case 'certificates':
       return tomar(d, ['type', 'date', 'status', 'body', 'requestedBy', 'destination', 'place', 'signature', 'documentId', 'voidedAt']);
     case 'fever':
@@ -93,12 +91,6 @@ export function proyectarTurno(d: Datos | undefined): Datos | null {
     ...(direccion ? { address: tomar(direccion, ['text', 'locality']) } : {}),
   };
 }
-
-/** Material enviado: lo justo para mostrarlo (el PDF se baja con un enlace temporal). */
-export const proyectarMaterial = (envio: Datos | undefined, material: Datos | undefined): Datos | null =>
-  !envio || envio.archivedAt || !material || material.archivedAt
-    ? null
-    : { materialId: envio.materialId, sentAt: envio.sentAt, ...tomar(material, ['title', 'kind', 'url', 'topics']) };
 
 /** Familia y membresía (para el saludo y el banner). */
 export function proyectarFamilia(familia: Datos | undefined, membresia: Datos | undefined): Datos {

@@ -66,7 +66,8 @@ Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionad
 - Parámetros comunes en `functions/src/params.ts` (`ORGANIZACION_ID`, `URL_APP`).
 - Las copias no llevan `organizationId` (si no, se mezclarían con lo clínico que el médico lee por grupo de colecciones).
 - App (Etapa 6b): `ingresar.tsx` pide el enlace (`pedirEnlaceEmail`) y entra solo con `?token=`; en el emulador muestra "Abrir el enlace" en lugar del mail. En Firebase, `fuenteFirebase` escucha `portalAccess`, el adulto, sus direcciones y cada copia, y `portalFamilia.ts` (`armarVistaFamilia`) las arma con la forma de las pantallas. Si se le quita el acceso, se cierra la sesión.
-- Acciones de la familia: pedir visita (`familia/pedir-visita`, servidor `pedirVisita`: solicitud, nunca confirmación; tope de 3 abiertas), Mis datos (`familia/(tabs)/membresia.tsx`: teléfono, email, preferencia y direcciones; al Dr. le llega el aviso "Datos actualizados"), documentos y materiales con "Bajar" (`enlaceDescarga`: enlace firmado de 5 minutos; en el emulador, el archivo en base64). Todo queda en el `auditLog`.
+- Acciones de la familia: pedir visita (`familia/pedir-visita`, servidor `pedirVisita`: solicitud, nunca confirmación; tope de 3 abiertas) y Mis datos (`familia/(tabs)/membresia.tsx`: teléfono, email, preferencia y direcciones; al Dr. le llega el aviso "Datos actualizados"). Todo queda en el `auditLog`.
+- **La familia no baja documentos ni materiales desde el portal** (decisión del Dr., 17/10/2026): las comunicaciones a las familias (qué información mandar según edad y época del año) las va a manejar un agente que él entrena aparte. Las copias del portal no incluyen documentos ni materiales, y el médico ya no tiene "Lo ve la familia" en los documentos. Los certificados sí siguen en el portal.
 - Para que salgan mails reales faltan las credenciales SMTP del Dr. (`SMTP_USUARIO`, `SMTP_CLAVE`).
 
 ## Firebase (desde la Etapa 1a)
@@ -140,7 +141,7 @@ Doctor, Family, Guardian (acceso habilitado sí/no), PatientRelationship (tipo, 
 - Tipografía Inter. Áreas táctiles de 44 px o más, foco visible (`anilloFoco`), estados vacío, de carga, de error y de confirmación en `components/Estados.tsx`.
 - Navegación: una sola lista de módulos en `src/navegacion/modulos.ts`. Web y tablet: barra lateral con los 16 módulos. Celular: Inicio · Agenda · Pacientes · Avisos · Más. Los módulos sin construir dicen en qué etapa llegan. Los avisos salen de datos reales (`src/data/avisos.ts`).
 - Tono cálido y profesional, nada comercial. Botones grandes y pocos pasos (padres con un bebé en brazos).
-- Contacto: **no hay WhatsApp en ningún lado**. Botón "Escribime por PacienteX" (texto elegido por el Dr. el 17/10/2026), que abre `CONFIG.pacienteXUrl` en el navegador del teléfono.
+- Contacto: **no hay WhatsApp en ningún lado**, tampoco como preferencia de contacto del adulto (solo llamada o email; las reglas lo exigen). Botón "Escribime por PacienteX" (texto elegido por el Dr. el 17/10/2026), que abre `CONFIG.pacienteXUrl` en el navegador del teléfono.
 - La app nunca sugiere dosis ni diagnósticos a las familias.
 
 ## Estado (17/10/2026)

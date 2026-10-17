@@ -1,7 +1,7 @@
 /**
  * Certificados y documentos del paciente (prompt maestro 7.11). Los archivos viven en Cloud
  * Storage y se leen con la sesión del médico: nunca hay enlaces públicos. Cada documento dice
- * su tipo, su fecha, quién lo cargó y si lo ve la familia.
+ * su tipo, su fecha y quién lo cargó. La familia no los ve en el portal (decisión del Dr., 17/10/2026).
  */
 import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
@@ -13,7 +13,7 @@ import { Seccion } from '../Seccion';
 import { Tarjeta } from '../Tarjeta';
 import { Etiqueta } from '../Etiqueta';
 import { Boton } from '../Boton';
-import { Campo, Opciones, Interruptor, Aviso } from '../Formulario';
+import { Campo, Opciones, Aviso } from '../Formulario';
 import { Texto, TextoFuerte, TextoChico } from '../Texto';
 import { BotonTexto } from './piezas';
 import { ListaCertificados } from '../certificados/ListaCertificados';
@@ -32,7 +32,7 @@ const TIPOS: { valor: DocumentKind; texto: string }[] = [
 export const tipoDeDocumento = (d: Document): DocumentKind => d.kind ?? (d.certificateId ? 'certificado' : 'otro');
 
 export function BloqueDocumentos({ patientId }: { patientId: string }) {
-  const { db, actualizar } = useApp();
+  const { db } = useApp();
   const { abrir, error } = useAbrirDocumento();
   const { subir, subiendo, mensaje } = useSubirDocumento();
   const documentos = db.documents.filter((d) => d.patientId === patientId && !d.archivedAt).sort((a, b) => b.date.localeCompare(a.date));
@@ -40,7 +40,6 @@ export function BloqueDocumentos({ patientId }: { patientId: string }) {
   const [titulo, setTitulo] = useState('');
   const [tipo, setTipo] = useState<DocumentKind>('otro');
   const [fecha, setFecha] = useState(aCampos(ahoraISO()).fecha);
-  const [visible, setVisible] = useState(false);
   const [problema, setProblema] = useState<string | null>(null);
 
   const elegirYSubir = async () => {
@@ -48,8 +47,8 @@ export function BloqueDocumentos({ patientId }: { patientId: string }) {
     if (!titulo.trim()) return setProblema('Escribí un título.');
     if (!f) return setProblema('Revisá la fecha (dd/mm/aaaa).');
     setProblema(null);
-    const ok = await subir({ patientId, title: titulo.trim(), kind: tipo, date: f, visibleToFamily: visible });
-    if (ok) { setAbierto(false); setTitulo(''); setVisible(false); }
+    const ok = await subir({ patientId, title: titulo.trim(), kind: tipo, date: f, visibleToFamily: false });
+    if (ok) { setAbierto(false); setTitulo(''); }
   };
 
   return (
@@ -68,11 +67,6 @@ export function BloqueDocumentos({ patientId }: { patientId: string }) {
               <Etiqueta texto={TEXTO_TIPO_DOCUMENTO[tipoDeDocumento(d)]} tono="neutro" />
             </View>
             <TextoChico>{fechaCorta(d.date)}{d.origin ? ` · ${ORIGEN[d.origin]}` : ''}{!d.file ? ' · sin archivo (ejemplo)' : ''}</TextoChico>
-            <Interruptor
-              texto="Lo ve la familia"
-              activo={d.visibleToFamily ?? !!d.certificateId}
-              onCambio={(v) => actualizar('documents', d.id, { visibleToFamily: v }, v ? 'documento.mostrar' : 'documento.ocultar')}
-            />
             <View style={s.acciones}><BotonTexto texto="Ver" onPress={() => void abrir(d)} /></View>
           </Tarjeta>
         ))}
@@ -86,7 +80,6 @@ export function BloqueDocumentos({ patientId }: { patientId: string }) {
             <Campo etiqueta="Título" value={titulo} onChangeText={setTitulo} placeholder="Informe de ecografía, epicrisis…" />
             <Opciones etiqueta="Tipo" opciones={TIPOS} valor={tipo} onCambio={setTipo} />
             <Campo etiqueta="Fecha" value={fecha} onChangeText={setFecha} placeholder="dd/mm/aaaa" keyboardType="numbers-and-punctuation" />
-            <Interruptor texto={visible ? 'Lo va a ver la familia' : 'Solo lo ves vos'} activo={visible} onCambio={setVisible} />
             {problema ? <TextoChico color={colors.alert}>{problema}</TextoChico> : null}
             <Boton titulo={subiendo ? 'Subiendo…' : 'Elegir el archivo y subir'} icono="cloud-upload-outline" deshabilitado={subiendo} onPress={() => void elegirYSubir()} />
             <Boton titulo="Cancelar" variante="contorno" onPress={() => { setAbierto(false); setProblema(null); }} />

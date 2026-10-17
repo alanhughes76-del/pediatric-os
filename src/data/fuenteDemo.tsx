@@ -278,18 +278,6 @@ export function useFuenteDemo(): AppState {
       return null;
     },
     abrirMaterial: async (m) => abrirMaterialDemo(m),
-    descargarDelPortal: async ({ patientId, documentId, deliveryId }) => {
-      if (documentId) {
-        const d = db.documents.find((x) => x.id === documentId && x.patientId === patientId);
-        if (!d) return 'No encontramos ese documento.';
-        const local = archivosDemo.get(d.file);
-        if (local) { await mostrarUri(local.uri, local.mimeType); return null; }
-        return 'Es un documento de ejemplo: no tiene archivo para bajar.';
-      }
-      const envio = db.materialDeliveries.find((e) => e.id === deliveryId && e.patientId === patientId);
-      const m = envio ? db.educationalMaterials.find((x) => x.id === envio.materialId) : undefined;
-      return m ? abrirMaterialDemo(m) : 'No encontramos ese material.';
-    },
   }), [db, agregar]);
 
   // Con sesión de familia, las pantallas solo reciben la vista filtrada.

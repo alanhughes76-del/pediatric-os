@@ -26,7 +26,7 @@ export default function NuevaFamilia() {
   const [apellido, setApellido] = useState('');
   const [email, setEmail] = useState('');
   const [telefono, setTelefono] = useState('');
-  const [preferencia, setPreferencia] = useState<ContactPreference>('whatsapp');
+  const [preferencia, setPreferencia] = useState<ContactPreference>('llamada');
   const [intento, setIntento] = useState(false);
 
   const errores = {

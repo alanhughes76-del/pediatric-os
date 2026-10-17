@@ -91,7 +91,9 @@ export function CampoTelefono({ valor, onGuardar }: { valor?: string; onGuardar:
   );
 }
 
-export const TEXTO_PREFERENCIA: Record<ContactPreference, string> = { whatsapp: 'WhatsApp', llamada: 'Llamada', email: 'Email' };
+export const TEXTO_PREFERENCIA: Record<ContactPreference, string> = { llamada: 'Llamada', email: 'Email' };
+/** Texto de la preferencia; un valor viejo que ya no existe ("whatsapp") no se muestra. */
+export const textoPreferencia = (v?: string) => (v && v in TEXTO_PREFERENCIA ? TEXTO_PREFERENCIA[v as ContactPreference] : undefined);
 
 export const validarEmail = (v: string) => (v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? 'Revisá el email.' : undefined);
 

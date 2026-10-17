@@ -130,9 +130,15 @@ service cloud.firestore {
         }
 
         allow read: if esStaff(orgId) || esElAdulto();
-        allow create: if esStaff(orgId) && firmaOk(orgId) && telefonoOk() && portalOk();
-        allow update: if (esStaff(orgId) && firmaOk(orgId) && telefonoOk() && portalOk() && noCambia(['authUid']))
-          || (esElAdulto() && firmaOk(orgId) && telefonoOk()
+        /** Preferencia de contacto: llamada o email (sin WhatsApp). Un valor viejo puede quedar mientras no se toque. */
+        function preferenciaOk() {
+          return !('contactPreference' in datos()) || datos().contactPreference in ['llamada', 'email']
+            || (resource != null && resource.data.get('contactPreference', null) == datos().contactPreference);
+        }
+
+        allow create: if esStaff(orgId) && firmaOk(orgId) && telefonoOk() && portalOk() && preferenciaOk();
+        allow update: if (esStaff(orgId) && firmaOk(orgId) && telefonoOk() && portalOk() && preferenciaOk() && noCambia(['authUid']))
+          || (esElAdulto() && firmaOk(orgId) && telefonoOk() && preferenciaOk()
               && soloCambia(['phone', 'email', 'contactPreference', 'updatedBy', 'updatedAt']));
         allow delete: if false;
 

@@ -5,7 +5,6 @@
  */
 import { initializeApp as initAdmin, deleteApp as deleteAdmin, type App } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
-import { getStorage } from 'firebase-admin/storage';
 import { initializeApp, deleteApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator, signInWithCustomToken } from 'firebase/auth';
 import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'firebase/functions';
@@ -51,7 +50,6 @@ beforeAll(async () => {
   await fs.doc(`${base}/guardians/${G}`).set({ organizationId: ORG, familyId: 'f-portal', firstName: 'Laura', lastName: 'Portal', email: EMAIL, portalEnabled: true, createdBy: 'medico-x', createdAt: '2026-10-17', updatedBy: 'medico-x', updatedAt: '2026-10-17' });
   await fs.doc(`${base}/professionals/medico-portal`).set({ organizationId: ORG, name: 'Dr. Prueba' });
   await fs.doc(`${base}/guardians/${G}/addresses/ad-portal`).set({ organizationId: ORG, guardianId: G, street: 'Calle Falsa 123', locality: 'Olivos' });
-  await getStorage(admin).bucket('demo-pediatric-os.appspot.com').file('orgs/x/visible.pdf').save(Buffer.from('%PDF-1.4 prueba'), { contentType: 'application/pdf' });
   await fs.doc(`${base}/relationships/r-portal`).set({ organizationId: ORG, patientId: P, guardianId: G, type: 'madre', isPrimary: true });
   const c = `${base}/clinical/${P}`;
   await fs.doc(`${c}/consultations/c1`).set({ ...firma, occurredAt: '2026-10-10T10:00:00-03:00', visitType: 'control', modality: 'domicilio', rawText: 'TEXTO INTERNO' });
@@ -66,7 +64,7 @@ beforeAll(async () => {
   await fs.doc(`${c}/medications/m1`).set({ ...firma, drug: 'MEDICACION', dose: 'x', startDate: '2026-10-01' });
   anonimo = cliente('portal-anonimo');
   familia = cliente('portal-familia');
-  await esperar(async () => (await fs.doc(`${portal('summaries')}/n-ok`).get()).exists && (await fs.doc(`${portal('documents')}/d-visible`).get()).exists && (await fs.doc(`${portal('datos')}/paciente`).get()).exists);
+  await esperar(async () => (await fs.doc(`${portal('summaries')}/n-ok`).get()).exists && (await fs.doc(`${portal('allergies')}/a-conf`).get()).exists && (await fs.doc(`${portal('datos')}/paciente`).get()).exists);
 });
 afterAll(async () => { await deleteApp(anonimo); await deleteApp(familia); await deleteAdmin(admin); });
 
@@ -121,10 +119,8 @@ describe('lo que ve la familia (prueba 12)', () => {
     const problemas = await todo('problems');
     expect(problemas).toContain('Asma');
     expect(problemas).not.toContain('PROBLEMA OCULTO');
-    const documentos = await todo('documents');
-    expect(documentos).toContain('Informe');
-    expect(documentos).not.toContain('DOC OCULTO');
-    expect(documentos).not.toContain('orgs/x');
+    // Los documentos no van al portal, ni siquiera los marcados "Lo ve la familia".
+    expect(await todo('documents')).toBe('[]');
     const paciente = (await getDoc(doc(db(), `${portal('datos')}/paciente`))).data()!;
     expect(paciente).toMatchObject({ firstName: 'Ana', birthDate: '2024-01-01' });
     expect(paciente.dni).toBeUndefined();
@@ -169,14 +165,6 @@ describe('acciones de la familia', () => {
     await llamar(familia, 'pedirVisita', { patientIds: [P], tipo: 'urgencia', motivo: 'Fiebre' });
     await llamar(familia, 'pedirVisita', { patientIds: [P], tipo: 'urgencia' });
     await expect(llamar(familia, 'pedirVisita', { patientIds: [P], tipo: 'urgencia' })).rejects.toMatchObject({ code: 'functions/resource-exhausted' });
-  });
-
-  test('descarga: solo documentos habilitados', async () => {
-    const r = await llamar<{ base64?: string; url?: string; nombre: string }>(familia, 'enlaceDescarga', { patientId: P, documentId: 'd-visible' });
-    expect(Buffer.from(r.data.base64!, 'base64').toString()).toBe('%PDF-1.4 prueba');
-    expect(r.data.nombre).toBe('Informe');
-    await expect(llamar(familia, 'enlaceDescarga', { patientId: P, documentId: 'd-oculto' })).rejects.toMatchObject({ code: 'functions/permission-denied' });
-    await expect(llamar(familia, 'enlaceDescarga', { patientId: OTRO, documentId: 'd-visible' })).rejects.toMatchObject({ code: 'functions/permission-denied' });
   });
 
   test('Mis datos: cambia su teléfono y al Dr. le llega un aviso; no puede habilitarse el portal', async () => {

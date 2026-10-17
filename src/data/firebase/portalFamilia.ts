@@ -4,8 +4,8 @@
  * demostración y Firebase. Lo que no está en las copias no existe para la familia. Lógica pura, con tests.
  */
 import type {
-  Address, Allergy, Appointment, CarePlanItem, Certificate, ClinicalNote, ClinicalProblem, Consultation, Database, Document,
-  EducationalMaterial, Family, FeverEntry, GrowthMeasurement, Guardian, MaterialDelivery, Membership, Patient, PatientRelationship, VaccineDose,
+  Address, Allergy, Appointment, CarePlanItem, Certificate, ClinicalNote, ClinicalProblem, Consultation, Database,
+  Family, FeverEntry, GrowthMeasurement, Guardian, Membership, Patient, PatientRelationship, VaccineDose,
 } from '../types';
 
 type Datos = Record<string, unknown>;
@@ -70,14 +70,6 @@ export function armarVistaFamilia(p: {
   const plano = <T,>(sub: string, extra: (d: Datos) => Partial<T> = () => ({})) =>
     de<T>(sub, (f, pid) => ({ ...base, ...f.datos, ...extra(f.datos), id: f.id, patientId: pid }) as T);
 
-  const materiales = de<{ envio: MaterialDelivery; material: EducationalMaterial }>('materials', (f, pid) => ({
-    envio: { ...base, id: f.id, patientId: pid, materialId: s(f.datos.materialId) ?? '', sentAt: s(f.datos.sentAt) ?? '' },
-    material: {
-      ...base, id: s(f.datos.materialId) ?? f.id, title: s(f.datos.title) ?? '', kind: (f.datos.kind as EducationalMaterial['kind']) ?? 'enlace',
-      url: s(f.datos.url), topics: Array.isArray(f.datos.topics) ? (f.datos.topics as string[]) : [],
-    },
-  }));
-
   const appointments: Appointment[] = [];
   for (const f of de<Fila>('turnos', (x) => x)) {
     if (appointments.some((a) => a.id === f.id)) continue; // un turno de hermanos aparece en las dos copias
@@ -106,11 +98,12 @@ export function armarVistaFamilia(p: {
     carePlan: plano<CarePlanItem>('plan', () => ({ done: false })),
     measurements: plano<GrowthMeasurement>('growth'),
     vaccineDoses: plano<VaccineDose>('vaccines', () => ({ source: 'calendario' })),
-    documents: plano<Document>('documents', () => ({ file: '', visibleToFamily: true })),
+    // Documentos y materiales no llegan al portal (la familia no baja archivos).
+    documents: [],
     certificates: plano<Certificate>('certificates'),
     fever: plano<FeverEntry>('fever', (d) => ({ reviewedAt: d.reviewed ? 'revisado' : undefined })),
-    educationalMaterials: materiales.map((x) => x.material).filter((m, i, xs) => xs.findIndex((y) => y.id === m.id) === i),
-    materialDeliveries: materiales.map((x) => x.envio),
+    educationalMaterials: [],
+    materialDeliveries: [],
     appointments,
     // Las vacunas pendientes solo llegan si el Dr. verificó el calendario: lo que llega, se muestra.
     vacunas: { calendarioVerificado: true },

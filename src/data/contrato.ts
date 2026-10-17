@@ -118,8 +118,6 @@ export interface Archivos {
   /** PDF (con archivo) o enlace (sin archivo). */
   guardarMaterial: (datos: DatosMaterial, archivo?: ArchivoElegido) => Promise<string | null>;
   abrirMaterial: (m: EducationalMaterial) => Promise<string | null>;
-  /** Familia: baja un documento o material habilitado (en Firebase, con un enlace firmado de pocos minutos). */
-  descargarDelPortal: (p: { patientId: string; documentId?: string; deliveryId?: string }) => Promise<string | null>;
 }
 
 export interface AppState {

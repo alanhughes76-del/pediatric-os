@@ -30,7 +30,7 @@ import { ahoraISO } from '@/lib/fechas';
 import { FIRMA } from '@/lib/certificados';
 
 /** Copias del portal que lee la familia, por chico (ver functions/src/portal/proyeccion.ts). */
-const SUBS_PORTAL = ['datos', 'summaries', 'allergies', 'problems', 'plan', 'growth', 'vaccines', 'documents', 'certificates', 'materials', 'fever', 'turnos'];
+const SUBS_PORTAL = ['datos', 'summaries', 'allergies', 'problems', 'plan', 'growth', 'vaccines', 'certificates', 'fever', 'turnos'];
 
 /** Adulto tal como lo usa la app (en Firestore el acceso se llama portalEnabled). */
 const adultoDesde = (id: string, d: Record<string, unknown>) => desdeFirestore('guardians', id, d) as unknown as Guardian;
@@ -350,23 +350,8 @@ export function useFuenteFirebase(): AppState {
           return null;
         } catch (e) { return mensajeDeError(e); }
       },
-      // Familia: el servidor revisa que esté habilitado y da un enlace firmado de pocos minutos.
-      descargarDelPortal: async (pedido) => {
-        try {
-          const r = await httpsCallable<unknown, { url?: string; base64?: string; nombre: string; tipo: string }>(functions, 'enlaceDescarga')(pedido);
-          if (r.data.url) { await WebBrowser.openBrowserAsync(r.data.url); return null; }
-          if (r.data.base64) {
-            // Solo en el emulador: el servidor no puede firmar enlaces y devuelve el archivo.
-            const binario = atob(r.data.base64);
-            const bytes = Uint8Array.from(binario, (c) => c.charCodeAt(0));
-            await mostrarBytes(bytes.buffer, nombreSeguro(r.data.nombre), r.data.tipo);
-            return null;
-          }
-          return 'No se pudo bajar el archivo.';
-        } catch (e) { return mensajeDeError(e); }
-      },
     };
-  }, [fs, org, storage, functions, firmaNueva]);
+  }, [fs, org, storage, firmaNueva]);
 
   // La familia ve SOLO lo que armaron sus copias del portal.
   const vistaDeFamilia = useMemo(() => (sesion?.rol === 'familia'

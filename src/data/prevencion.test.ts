@@ -25,8 +25,8 @@ describe('prevención', () => {
     };
     expect(sugeridosPara(db, 'p-emma', '2026-10-17').map((m) => m.id)).toEqual(['lactancia']);
     expect(enviadosA(db, 'p-emma').map((x) => x.material.id)).toEqual(['general']);
-    // La familia ve solo lo que se le mandó.
-    expect(vistaFamilia(db, 'g-lucia').educationalMaterials.map((m) => m.id)).toEqual(['general']);
+    // La familia no ve materiales en el portal (las comunicaciones van por un agente aparte).
+    expect(vistaFamilia(db, 'g-lucia').educationalMaterials).toEqual([]);
     expect(vistaFamilia(db, 'g-carolina').educationalMaterials).toEqual([]);
   });
 

@@ -6,7 +6,7 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { db } from '../config';
 import { isoArgentina } from '../../../shared/fechaHora';
-import { DESTINO, proyectarClinico, proyectarFamilia, proyectarMaterial, proyectarPaciente, proyectarTurno } from './proyeccion';
+import { DESTINO, proyectarClinico, proyectarFamilia, proyectarPaciente, proyectarTurno } from './proyeccion';
 
 type Datos = Record<string, unknown>;
 
@@ -82,14 +82,6 @@ export const portalTurno = onDocumentWritten('organizations/{orgId}/appointments
   const ahora = (despues?.patientIds ?? []) as string[];
   const copia = proyectarTurno(despues);
   for (const p of new Set([...antes, ...ahora])) await guardarCopia(orgId, p, 'turnos', id, ahora.includes(p) ? copia : null);
-});
-
-export const portalMaterial = onDocumentWritten('organizations/{orgId}/materialDeliveries/{id}', async (event) => {
-  const { orgId, id } = event.params;
-  const envio = event.data?.after.data() ?? event.data?.before.data();
-  if (!envio || typeof envio.patientId !== 'string') return;
-  const material = typeof envio.materialId === 'string' ? (await db().doc(`organizations/${orgId}/educationalMaterials/${envio.materialId}`).get()).data() : undefined;
-  await guardarCopia(orgId, envio.patientId, 'materials', id, proyectarMaterial(event.data?.after.data(), material));
 });
 
 /** Si cambia la verificación del calendario, se rehacen las copias de las vacunas pendientes. */

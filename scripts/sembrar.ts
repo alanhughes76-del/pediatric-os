@@ -100,7 +100,7 @@ async function main() {
       ...resto,
       ...firma(g.createdBy, g.createdAt),
       phone: phone ? normalizarTelefono(phone) : null,
-      contactPreference: 'whatsapp',
+      contactPreference: 'llamada',
       portalEnabled: accessEnabled,
       authUid: accessEnabled ? g.id : null,
     });

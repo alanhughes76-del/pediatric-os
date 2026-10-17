@@ -64,8 +64,8 @@ export function vistaFamilia(db: Database, guardianId: ID): Database {
     studies: [],
     fever: delPaciente(db.fever),
     certificates: delPaciente(db.certificates).map((c) => ({ ...c, voidReason: undefined })),
-    // Documentos: solo los habilitados para la familia (los certificados emitidos, siempre).
-    documents: delPaciente(db.documents).filter((d) => d.visibleToFamily === true || (d.visibleToFamily === undefined && !!d.certificateId)),
+    // Documentos y materiales no: la familia no baja archivos desde el portal (decisión del Dr., 17/10/2026).
+    documents: [],
     // Turnos de sus hijos o de su familia, sin notas operativas ni contactos de terceros; sin historial ni bloqueos.
     appointments: db.appointments
       .filter((a) => !a.archivedAt && (a.patientIds.some((id) => pacienteIds.has(id)) || (a.familyId !== null && familyIds.has(a.familyId))))
@@ -74,9 +74,8 @@ export function vistaFamilia(db: Database, guardianId: ID): Database {
     blocks: [],
     communications: [],
     notifications: [],
-    // Prevención: solo lo que el Dr. le mandó a esta familia.
-    materialDeliveries: delPaciente(db.materialDeliveries),
-    educationalMaterials: db.educationalMaterials.filter((m) => db.materialDeliveries.some((e) => e.materialId === m.id && pacienteIds.has(e.patientId) && !e.archivedAt)),
+    materialDeliveries: [],
+    educationalMaterials: [],
     agenda: db.agenda,
     ia: { enabled: false },
     vacunas: db.vacunas,

@@ -197,6 +197,11 @@ describe('adultos responsables', () => {
   test('un teléfono que no está en E.164 se rechaza', async () => {
     await assertFails(cambio('lucia', { phone: '011 5555-0101' }));
   });
+  test('preferencia de contacto: llamada o email, nunca WhatsApp', async () => {
+    await assertSucceeds(cambio('lucia', { contactPreference: 'email' }));
+    await assertFails(cambio('lucia', { contactPreference: 'whatsapp' }));
+    await assertFails(cambio('medico', { contactPreference: 'whatsapp' }));
+  });
   test('el adulto no puede habilitarse ni cambiar su nombre', async () => {
     await assertFails(cambio('lucia', { portalEnabled: false }));
     await assertFails(cambio('lucia', { firstName: 'Otra' }));

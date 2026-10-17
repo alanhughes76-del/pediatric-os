@@ -3,14 +3,13 @@
  *
  * pedirVisita — crea una SOLICITUD en la agenda (estado "solicitado", origen portal). No es una
  *   confirmación: la confirma el Dr. Solo para sus hijos (portalAccess) y con un tope de pedidos abiertos.
- * enlaceDescarga — un documento o material habilitado: enlace firmado de 5 minutos (nunca público).
- *   En el emulador no se pueden firmar enlaces: devuelve el archivo.
+ * (La descarga de documentos y materiales desde el portal se anuló a pedido del Dr., 17/10/2026: las
+ *  comunicaciones a las familias las va a manejar un agente aparte.)
  * avisoDatosFamilia / avisoDireccionFamilia — si la familia cambia su teléfono, email, preferencia
  *   o direcciones, le llega un aviso al Dr. y sale `familia.datos_actualizados` (solo qué cambió).
  */
 import { onCall, HttpsError, type CallableRequest } from 'firebase-functions/v2/https';
 import { onDocumentUpdated, onDocumentWritten } from 'firebase-functions/v2/firestore';
-import { getStorage } from 'firebase-admin/storage';
 import { db } from '../config';
 import { exigirRol, id } from '../permisos';
 import { encolarEvento } from '../outbox/encolar';
@@ -82,45 +81,6 @@ export const pedirVisita = onCall<Record<string, unknown>>(async (req) => {
     }, config),
   });
   return { ok: true, id: ref.id };
-});
-
-export const enlaceDescarga = onCall<Record<string, unknown>>(async (req) => {
-  const { org, guardianId, patientIds } = await accesoDe(req);
-  const patientId = id(req.data?.patientId, 'El paciente');
-  if (!patientIds.includes(patientId)) throw new HttpsError('permission-denied', 'No tenés acceso a ese archivo.');
-  const base = `organizations/${org}`;
-
-  // Solo lo que está en su portal (o sea, lo que el Dr. habilitó).
-  let archivo = '';
-  let nombre = 'archivo';
-  let tipo = 'application/pdf';
-  if (typeof req.data?.documentId === 'string') {
-    const documentId = id(req.data.documentId, 'El documento');
-    if (!(await db().doc(`${base}/portal/${patientId}/documents/${documentId}`).get()).exists) throw new HttpsError('permission-denied', 'Ese documento no está habilitado.');
-    const original = (await db().doc(`${base}/clinical/${patientId}/documents/${documentId}`).get()).data();
-    archivo = String(original?.file ?? '');
-    nombre = String(original?.title ?? 'documento');
-    tipo = String(original?.mimeType ?? 'application/pdf');
-  } else if (typeof req.data?.deliveryId === 'string') {
-    const copia = (await db().doc(`${base}/portal/${patientId}/materials/${id(req.data.deliveryId, 'El material')}`).get()).data();
-    if (!copia) throw new HttpsError('permission-denied', 'Ese material no está disponible.');
-    const material = (await db().doc(`${base}/educationalMaterials/${copia.materialId}`).get()).data();
-    archivo = String(material?.file ?? '');
-    nombre = String(material?.title ?? 'material');
-  }
-  if (!archivo) throw new HttpsError('not-found', 'Este documento no tiene archivo para descargar.');
-
-  await db().collection(`${base}/auditLog`).add({
-    at: isoArgentina(), actorId: guardianId, actorType: 'persona', action: 'descarga', entity: 'documents', patientId, path: archivo,
-  });
-  const file = getStorage().bucket().file(archivo);
-  if (process.env.FUNCTIONS_EMULATOR === 'true') {
-    // El emulador no firma enlaces: se devuelve el archivo (solo en desarrollo).
-    const [bytes] = await file.download();
-    return { nombre, tipo, base64: bytes.toString('base64') };
-  }
-  const [url] = await file.getSignedUrl({ version: 'v4', action: 'read', expires: Date.now() + 5 * 60_000 });
-  return { nombre, tipo, url };
 });
 
 const CAMPOS_CONTACTO = ['phone', 'email', 'contactPreference'];
