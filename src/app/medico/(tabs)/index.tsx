@@ -1,7 +1,8 @@
 /**
- * "Hoy" del médico: cifras del día, visitas del día, seguimientos pendientes y acceso al
- * registro de accesos. En pantalla ancha, visitas a la izquierda y seguimientos a la derecha;
- * en el teléfono, seguimientos primero y visitas abajo.
+ * "Hoy" del médico (prompt maestro 7.1): cifras del día, turnos de hoy en orden, lo que falta
+ * confirmar, los próximos días, seguimientos pendientes y acceso al registro de accesos.
+ * En pantalla ancha, turnos a la izquierda y seguimientos a la derecha; en el teléfono,
+ * seguimientos primero y turnos abajo.
  */
 import type { ReactNode } from 'react';
 import { View, StyleSheet } from 'react-native';
@@ -9,12 +10,13 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '@/data/store';
 import {
-  visitasDelDia, alergiasDe, paciente, nombreCompleto, domicilioDe, textoDomicilio, seguimientosPendientes, sinRevisar,
-  TEXTO_VISITA, TEXTO_MODALIDAD, esUrgencia,
+  turnosDelDia, turnosEntre, porConfirmar, alergiasDe, pacientesDeTurno, nombreDeTurno, textoDireccionTurno, consultaDeTurno,
+  seguimientosPendientes, sinRevisar, TEXTO_MODALIDAD,
 } from '@/data/selectores';
-import type { Consultation } from '@/data/types';
+import type { Appointment } from '@/data/types';
+import { TEXTO_TIPO_TURNO, diaDe, sumarDiasA } from '@shared/agenda';
 import { edades } from '@/lib/edad';
-import { hoyISO, diaYFecha, hora, ahoraISO } from '@/lib/fechas';
+import { diaYFecha, hora, ahoraISO } from '@/lib/fechas';
 import { abrirEnGoogleMaps, abrirEnWaze } from '@/lib/mapas';
 import { Pantalla } from '@/components/Pantalla';
 import { Titulo, Texto, TextoFuerte, TextoChico } from '@/components/Texto';
@@ -24,6 +26,8 @@ import { Boton } from '@/components/Boton';
 import { Etiqueta } from '@/components/Etiqueta';
 import { Avatar } from '@/components/Avatar';
 import { SeguimientosPendientes } from '@/components/SeguimientosPendientes';
+import { EtiquetaEstado, TarjetaTurno } from '@/components/agenda/piezas';
+import { useAbrirConsulta } from '@/components/agenda/abrirConsulta';
 import { useEscritorio } from '@/components/escritorio/Marco';
 import { categorias, colors, fonts, type Categoria } from '@/theme';
 
@@ -32,8 +36,11 @@ type NombreIcono = keyof typeof Ionicons.glyphMap;
 export default function Hoy() {
   const { db } = useApp();
   const escritorio = useEscritorio();
-  const visitas = visitasDelDia(db);
-  const atendidas = visitas.filter((v) => v.status === 'realizada').length;
+  const hoy = diaDe(ahoraISO());
+  const visitas = turnosDelDia(db, hoy);
+  const atendidas = visitas.filter((v) => v.status === 'realizado').length;
+  const pendientes = porConfirmar(db, hoy);
+  const proximos = turnosEntre(db, sumarDiasA(hoy, 1), sumarDiasA(hoy, 3)).filter((t) => t.status === 'confirmado');
   const seguimientos = seguimientosPendientes(db);
   const ahora = ahoraISO();
   const vencidos = seguimientos.filter((f) => f.dueAt < ahora).length;
@@ -46,10 +53,31 @@ export default function Hoy() {
     </Seccion>
   );
   const bloqueVisitas = (
-    <Seccion titulo="Visitas del día">
-      {visitas.length === 0 ? <Texto color={colors.textMuted}>No hay visitas para hoy.</Texto> : null}
-      {visitas.map((v) => <Visita key={v.id} visita={v} />)}
-    </Seccion>
+    <>
+      <Seccion titulo="Turnos de hoy" accion={<Boton titulo="+ Turno" compacto variante="secundario" onPress={() => router.push('/medico/turno/nuevo')} />}>
+        {visitas.length === 0 ? <Texto color={colors.textMuted}>No hay turnos para hoy.</Texto> : null}
+        {visitas.map((v) => <Visita key={v.id} turno={v} />)}
+      </Seccion>
+      {pendientes.length > 0 ? (
+        <Seccion titulo="Por confirmar" bajada="Solicitudes nuevas y turnos pendientes">
+          {pendientes.map((t) => (
+            <View key={t.id} style={{ gap: 4 }}>
+              <TextoChico>{diaYFecha(t.day)}</TextoChico>
+              <TarjetaTurno turno={t} />
+            </View>
+          ))}
+        </Seccion>
+      ) : null}
+      <Seccion titulo="Próximos días" accion={<Boton titulo="Ver agenda" compacto variante="contorno" onPress={() => router.navigate('/medico/agenda')} />}>
+        {proximos.length === 0 ? <Texto color={colors.textMuted}>No hay turnos confirmados en los próximos tres días.</Texto> : null}
+        {proximos.map((t) => (
+          <View key={t.id} style={{ gap: 4 }}>
+            <TextoChico>{diaYFecha(t.day)}</TextoChico>
+            <TarjetaTurno turno={t} />
+          </View>
+        ))}
+      </Seccion>
+    </>
   );
   const botonAccesos = (
     <Boton titulo="Registro de accesos al portal" icono="log-in-outline" variante="contorno" onPress={() => router.push('/medico/accesos')} />
@@ -58,12 +86,12 @@ export default function Hoy() {
   return (
     <Pantalla ancho>
       <View>
-        <TextoChico>{diaYFecha(hoyISO())}</TextoChico>
+        <TextoChico>{diaYFecha(hoy)}</TextoChico>
         <Titulo>{visitas.length === 0 ? 'Hoy no hay visitas' : `${visitas.length} ${visitas.length === 1 ? 'visita' : 'visitas'} hoy`}</Titulo>
       </View>
 
       <View style={s.cifras}>
-        <Cifra color="celeste" icono="calendar-outline" numero={visitas.length} texto="Visitas hoy" detalle={`${atendidas} ${atendidas === 1 ? 'atendida' : 'atendidas'}`} />
+        <Cifra color="celeste" icono="calendar-outline" numero={visitas.length} texto="Visitas hoy" detalle={`${atendidas} ${atendidas === 1 ? 'realizada' : 'realizadas'}`} onPress={() => router.navigate('/medico/agenda')} />
         <Cifra
           color="rosado"
           icono="flag-outline"
@@ -113,63 +141,74 @@ function Cifra({ color, icono, numero, texto, detalle, alerta, onPress }: {
   );
 }
 
-function Visita({ visita: v }: { visita: Consultation }) {
-  const { db, actualizar } = useApp();
+function Visita({ turno: t }: { turno: Appointment }) {
+  const { db, operaciones } = useApp();
   const escritorio = useEscritorio();
-  const p = paciente(db, v.patientId);
-  if (!p) return null;
-  const familia = db.families.find((f) => f.id === p.familyId);
-  const domicilio = domicilioDe(db, v);
-  const direccion = textoDomicilio(domicilio);
-  const alergias = alergiasDe(db, p.id, 'medico').filter((a) => a.status === 'confirmada');
-  const atendida = v.status === 'realizada';
+  const abrirConsulta = useAbrirConsulta();
+  const pacientes = pacientesDeTurno(db, t);
+  const primero = pacientes[0];
+  const familia = db.families.find((f) => f.id === t.familyId);
+  const direccion = textoDireccionTurno(t);
+  const alergias = pacientes.flatMap((p) => alergiasDe(db, p.id, 'medico').filter((a) => a.status === 'confirmada'));
+  const atendida = t.status === 'realizado';
+  const sePuedeAtender = t.status === 'confirmado' || t.status === 'realizado';
+
+  const abrir = (patientId: string) => {
+    // Al abrir la consulta de un turno confirmado, el turno pasa a realizado.
+    if (t.status === 'confirmado') void operaciones.accionTurno({ turno: t, accion: 'realizado' });
+    abrirConsulta(t, patientId);
+  };
 
   return (
     <Tarjeta style={{ gap: 14 }}>
       <View style={s.arriba}>
         <View style={[s.hora, atendida && { backgroundColor: colors.bg }]}>
-          <TextoFuerte style={s.horaTexto} color={atendida ? colors.textMuted : categorias.celeste.texto}>{hora(v.occurredAt)}</TextoFuerte>
+          <TextoFuerte style={s.horaTexto} color={atendida ? colors.textMuted : categorias.celeste.texto}>{hora(t.start)}</TextoFuerte>
           <TextoChico>h</TextoChico>
         </View>
-        {escritorio ? <Avatar paciente={p} /> : null}
+        {escritorio && primero ? <Avatar paciente={primero} /> : null}
         <View style={{ flex: 1, minWidth: 170, gap: 2 }}>
-          <TextoFuerte style={{ fontSize: 20 }}>{nombreCompleto(p)}</TextoFuerte>
-          <TextoChico>{edades(p, undefined, 'abreviado').cronologica}{familia ? ` · ${familia.name}` : ''}</TextoChico>
+          <TextoFuerte style={{ fontSize: 20 }}>{nombreDeTurno(db, t)}</TextoFuerte>
+          <TextoChico>
+            {pacientes.length === 1 ? edades(primero, undefined, 'abreviado').cronologica : ''}
+            {pacientes.length === 1 && familia ? ' · ' : ''}
+            {familia ? familia.name : ''}
+          </TextoChico>
           <View style={s.etiquetas}>
-            <Etiqueta texto={TEXTO_VISITA[v.visitType]} tono={esUrgencia(v.visitType) ? 'azul' : 'celeste'} />
-            {atendida ? <Etiqueta texto="Atendida" tono="neutro" /> : null}
+            <Etiqueta texto={TEXTO_TIPO_TURNO[t.type]} tono={t.type.startsWith('urgencia') ? 'azul' : 'celeste'} />
+            {t.status !== 'confirmado' ? <EtiquetaEstado estado={t.status} /> : null}
             {alergias.length > 0 ? <Etiqueta tono="alerta" texto={`Alergia: ${alergias.map((a) => a.allergen).join(', ')}`} /> : null}
           </View>
         </View>
       </View>
 
-      {v.modality === 'domicilio' ? (
+      {t.modality === 'domicilio' ? (
         <View style={s.fila}>
           <Ionicons name="location-outline" size={22} color={colors.primary2} />
           <View style={{ flex: 1 }}>
             <Texto>{direccion}</Texto>
-            {domicilio?.notes ? <TextoChico>{domicilio.notes}</TextoChico> : null}
+            {t.opsNotes ? <TextoChico>{t.opsNotes}</TextoChico> : null}
           </View>
         </View>
       ) : (
-        <TextoChico>{TEXTO_MODALIDAD[v.modality]}</TextoChico>
+        <TextoChico>{TEXTO_MODALIDAD[t.modality]}</TextoChico>
       )}
 
       <View style={s.botones}>
-        <Ancho completo>
-          <Boton
-            compacto
-            titulo="Abrir consulta"
-            icono="create-outline"
-            onPress={() => {
-              // Al abrirla, el turno pasa a ser una consulta realizada.
-              if (v.status === 'programada') actualizar('consultations', v.id, { status: 'realizada' }, 'consulta.abrir');
-              router.push(`/medico/consulta/${v.id}`);
-            }}
-          />
+        {sePuedeAtender ? pacientes.map((p) => (
+          <Ancho key={p.id} completo>
+            <Boton
+              compacto
+              titulo={`${consultaDeTurno(db, t.id, p.id) ? 'Ver consulta' : 'Abrir consulta'}${pacientes.length > 1 ? ` de ${p.firstName}` : ''}`}
+              icono="create-outline"
+              onPress={() => abrir(p.id)}
+            />
+          </Ancho>
+        )) : null}
+        <Ancho completo={!escritorio && !sePuedeAtender}>
+          <Boton compacto titulo="Ver turno" icono="calendar-outline" variante={sePuedeAtender ? 'contorno' : 'principal'} onPress={() => router.push(`/medico/turno/${t.id}`)} />
         </Ancho>
-        <Ancho completo={!escritorio}><Boton compacto titulo="Ver ficha" icono="document-text-outline" variante="contorno" onPress={() => router.push(`/medico/hijo/${p.id}`)} /></Ancho>
-        {v.modality === 'domicilio' && domicilio ? (
+        {t.modality === 'domicilio' && t.address ? (
           <>
             <Ancho><Boton compacto titulo="Google Maps" variante="secundario" onPress={() => abrirEnGoogleMaps(direccion)} /></Ancho>
             <Ancho><Boton compacto titulo="Waze" variante="secundario" onPress={() => abrirEnWaze(direccion)} /></Ancho>

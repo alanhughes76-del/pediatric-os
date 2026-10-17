@@ -10,7 +10,8 @@ import { View, Text, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '@/data/store';
-import { alergiasDe, medicionesDe, nombreCompleto, proximaVisita, textoCobertura, TEXTO_COBERTURA, TEXTO_VISITA } from '@/data/selectores';
+import { alergiasDe, medicionesDe, nombreCompleto, proximoTurno, textoCobertura, TEXTO_COBERTURA } from '@/data/selectores';
+import { TEXTO_TIPO_TURNO, TEXTO_ESTADO_TURNO } from '@shared/agenda';
 import { GRUPOS_SANGUINEOS, type BloodType, type CoverageKind, type Patient, type Scope } from '@/data/types';
 import { edades, textoEG } from '@/lib/edad';
 import { cuandoEs, fechaCorta, hora } from '@/lib/fechas';
@@ -39,7 +40,7 @@ export function Encabezado({ paciente: p, acciones }: { paciente: Patient; accio
   const talla = [...mediciones].reverse().find((m) => m.heightCm != null);
   const familia = db.families.find((f) => f.id === p.familyId);
   const cobertura = textoCobertura(p.coverage);
-  const turno = proximaVisita(db, [p.id]);
+  const turno = proximoTurno(db, [p.id]);
 
   return (
     <Tarjeta style={s.tarjeta}>
@@ -64,11 +65,13 @@ export function Encabezado({ paciente: p, acciones }: { paciente: Patient; accio
           <TextoChico style={{ fontFamily: fonts.bodySemi }}>Próximo turno</TextoChico>
           {turno ? (
             <>
-              <TextoFuerte>{cuandoEs(turno.occurredAt)}, {hora(turno.occurredAt)} h</TextoFuerte>
-              <TextoChico>{TEXTO_VISITA[turno.visitType]}</TextoChico>
+              <TextoFuerte>{cuandoEs(turno.start)}, {hora(turno.start)} h</TextoFuerte>
+              <TextoChico>{TEXTO_TIPO_TURNO[turno.type]} · {TEXTO_ESTADO_TURNO[turno.status]}</TextoChico>
             </>
           ) : <Texto color={colors.textMuted}>Sin turnos programados</Texto>}
-          <BotonTexto texto="Ver agenda" onPress={() => router.navigate('/medico/agenda')} />
+          {turno
+            ? <BotonTexto texto="Ver turno" onPress={() => router.push(`/medico/turno/${turno.id}`)} />
+            : <BotonTexto texto="Dar turno" onPress={() => router.push({ pathname: '/medico/turno/nuevo', params: { paciente: p.id } })} />}
         </View>
       </View>
 

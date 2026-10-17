@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '@/data/store';
 import { fiebreDe, membresiaDeFamilia, nombreCompleto, sinRevisar, TEXTO_VISITA } from '@/data/selectores';
 import { telefonoLegible } from '@shared/telefono';
+import { TEXTO_TIPO_TURNO, TEXTO_ESTADO_TURNO } from '@shared/agenda';
 import { edades } from '@/lib/edad';
 import { fechaCorta, hora, hoyISO } from '@/lib/fechas';
 import { Pantalla } from '@/components/Pantalla';
@@ -36,7 +37,9 @@ export default function FichaFamilia() {
   const nombreHijo = (pid: string) => hijos.find((h) => h.id === pid)?.firstName ?? '';
   const hoy = hoyISO();
   const consultas = db.consultations.filter((c) => idsHijos.has(c.patientId) && !c.archivedAt);
-  const proximos = consultas.filter((c) => c.status === 'programada' && c.occurredAt.slice(0, 10) >= hoy).sort((a, b) => a.occurredAt.localeCompare(b.occurredAt));
+  const proximos = db.appointments
+    .filter((a) => !a.archivedAt && a.familyId === familia.id && a.day >= hoy && ['solicitado', 'pendiente', 'confirmado'].includes(a.status))
+    .sort((a, b) => a.start.localeCompare(b.start));
   const historial = consultas.filter((c) => c.status === 'realizada').sort((a, b) => b.occurredAt.localeCompare(a.occurredAt)).slice(0, 8);
   const { membership, estado } = membresiaDeFamilia(db, familia.id);
   const pagos = membership ? db.payments.filter((p) => p.membershipId === membership.id).sort((a, b) => b.date.localeCompare(a.date)) : [];
@@ -111,13 +114,14 @@ export default function FichaFamilia() {
 
         <Caja titulo="Próximos turnos" icono="calendar-outline" color="celeste">
           {proximos.length === 0 ? <Texto color={colors.textMuted}>No hay turnos programados.</Texto> : null}
-          {proximos.map((c) => (
-            <View key={c.id} style={s.filaSimple}>
-              <TextoFuerte>{fechaCorta(c.occurredAt)} {hora(c.occurredAt)}</TextoFuerte>
-              <Texto style={{ flex: 1 }}>{TEXTO_VISITA[c.visitType]} · {nombreHijo(c.patientId)}</Texto>
-            </View>
+          {proximos.map((t) => (
+            <Tarjeta key={t.id} style={s.fila} onPress={() => router.push(`/medico/turno/${t.id}`)} accessibilityLabel={`Abrir el turno del ${fechaCorta(t.start)}`}>
+              <TextoFuerte>{fechaCorta(t.start)} {hora(t.start)}</TextoFuerte>
+              <Texto style={{ flex: 1 }}>{TEXTO_TIPO_TURNO[t.type]} · {t.patientIds.map(nombreHijo).filter(Boolean).join(' y ') || 'Familia'}</Texto>
+              <Etiqueta texto={TEXTO_ESTADO_TURNO[t.status]} tono={t.status === 'confirmado' ? 'celeste' : 'naranja'} />
+            </Tarjeta>
           ))}
-          <TextoChico>La agenda completa llega en la Etapa 3.</TextoChico>
+          <Boton titulo="+ Turno para esta familia" variante="secundario" compacto onPress={() => router.push({ pathname: '/medico/turno/nuevo', params: { familia: familia.id } })} />
         </Caja>
 
         <Caja titulo="Historial de visitas" icono="time-outline" color="celeste">

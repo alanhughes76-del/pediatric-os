@@ -36,7 +36,7 @@ const aPacientes = { titulo: 'Ir a Pacientes', href: '/medico/pacientes' as Href
 
 export const MODULOS: Modulo[] = [
   { clave: 'inicio', titulo: 'Inicio', icono: 'home-outline', href: '/medico', rutas: ['/medico', '/medico/seguimiento', '/medico/fiebre', '/medico/accesos'] },
-  { clave: 'agenda', titulo: 'Agenda', icono: 'calendar-outline', href: '/medico/agenda', rutas: ['/medico/agenda'] },
+  { clave: 'agenda', titulo: 'Agenda', icono: 'calendar-outline', href: '/medico/agenda', rutas: ['/medico/agenda', '/medico/turno'] },
   {
     clave: 'pacientes', titulo: 'Pacientes', icono: 'people-outline', href: '/medico/pacientes',
     rutas: ['/medico/pacientes', '/medico/hijo', '/medico/paciente', '/medico/consulta', '/medico/certificado'],

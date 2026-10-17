@@ -3,7 +3,8 @@ import { View, Pressable, Text, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp, useSesionFamilia } from '@/data/store';
-import { pacientesDeAdulto, proximaVisita, membresiaDeFamilia, domicilioDe, textoDomicilio, TEXTO_VISITA } from '@/data/selectores';
+import { pacientesDeAdulto, proximoTurno, membresiaDeFamilia, textoDireccionTurno } from '@/data/selectores';
+import { TEXTO_TIPO_TURNO } from '@shared/agenda';
 import { cuandoEs, hora, fechaCorta } from '@/lib/fechas';
 import { Pantalla } from '@/components/Pantalla';
 import { BarraPacienteX } from '@/components/BotonPacienteX';
@@ -19,7 +20,7 @@ export default function InicioFamilia() {
   const { guardian } = useSesionFamilia();
   const hijos = pacientesDeAdulto(db, guardian.id);
   const familia = db.families.find((f) => f.id === (hijos[0]?.familyId ?? guardian.familyId));
-  const proxima = proximaVisita(db, hijos.map((h) => h.id));
+  const proxima = proximoTurno(db, hijos.map((h) => h.id));
   const { membership, estado } = membresiaDeFamilia(db, familia?.id);
   const nombreDe = (id: string) => hijos.find((h) => h.id === id)?.firstName ?? '';
   const [elegidoId, setElegidoId] = useState<string | undefined>(undefined);
@@ -37,9 +38,12 @@ export default function InicioFamilia() {
           <TextoChico color={colors.bgSoft}>PRÓXIMA VISITA</TextoChico>
           {proxima ? (
             <>
-              <Subtitulo color={colors.white}>{cuandoEs(proxima.occurredAt)}, {hora(proxima.occurredAt)} h</Subtitulo>
-              <Texto color={colors.white}>{TEXTO_VISITA[proxima.visitType]} · {nombreDe(proxima.patientId)}</Texto>
-              <TextoChico color={colors.bgSoft}>{textoDomicilio(domicilioDe(db, proxima))}</TextoChico>
+              <Subtitulo color={colors.white}>{cuandoEs(proxima.start)}, {hora(proxima.start)} h</Subtitulo>
+              <Texto color={colors.white}>
+                {TEXTO_TIPO_TURNO[proxima.type]} · {proxima.patientIds.map(nombreDe).filter(Boolean).join(' y ')}
+                {proxima.status === 'pendiente' ? ' · A confirmar' : ''}
+              </Texto>
+              <TextoChico color={colors.bgSoft}>{textoDireccionTurno(proxima)}</TextoChico>
             </>
           ) : (
             <Texto color={colors.white}>No tenés visitas programadas.</Texto>
