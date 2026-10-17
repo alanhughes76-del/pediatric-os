@@ -7,6 +7,7 @@ export { crearPaciente } from './pacientes';
 export { aprobarNota, corregirNota } from './notas';
 export { emitirCertificado, anularCertificado } from './certificados';
 export { crearTurno, accionTurno } from './turnos/callables';
+export { enviarResumenFamilia } from './resumen';
 export { reservaCalcom } from './turnos/endpoint';
 export { auditarAdministrativo, auditarClinico, auditarDomicilios } from './auditoria/triggers';
 export { accesoPorAdulto, accesoPorVinculo } from './acceso/triggers';

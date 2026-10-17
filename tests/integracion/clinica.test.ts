@@ -67,10 +67,30 @@ test('una nota aprobada no se aprueba de nuevo', async () => {
   await expect(llamar(medico, 'aprobarNota', { patientId: P, noteId: 'n-urg', campos })).rejects.toMatchObject({ code: 'functions/failed-precondition' });
 });
 
+test('resumen para la familia: solo el médico, solo con nota aprobada y con algún email', async () => {
+  const mail = { patientId: P, noteId: 'n-urg', asunto: 'Resumen de la consulta de Ana', texto: 'Hola, Laura.\n\nTiene una otitis.' };
+  await expect(llamar(asistente, 'enviarResumenFamilia', mail)).rejects.toMatchObject({ code: 'functions/permission-denied' });
+  await expect(llamar(medico, 'enviarResumenFamilia', mail)).rejects.toMatchObject({ code: 'functions/failed-precondition', message: expect.stringContaining('email') });
+  await fs.doc(`organizations/${ORG}/guardians/g-clin`).update({ email: 'laura@ejemplo.com' });
+  const r = await llamar<{ destinatarios: number }>(medico, 'enviarResumenFamilia', mail);
+  expect(r.data.destinatarios).toBe(1);
+  // El evento es el único con texto clínico; la comunicación registrada no lo guarda.
+  const ev = (await fs.collection(`organizations/${ORG}/outbox`).where('type', '==', 'resumen.envio_aprobado').get()).docs[0].data();
+  expect(ev.data).toMatchObject({ patientId: P, noteId: 'n-urg', texto: mail.texto, destinatarios: [{ guardianId: 'g-clin', email: 'laura@ejemplo.com' }] });
+  const com = (await fs.doc(`organizations/${ORG}/communications/${ev.data.communicationId}`).get()).data()!;
+  expect(com).toMatchObject({ kind: 'resumen_familia', status: 'enviado_a_make', recipientIds: ['g-clin'] });
+  expect(com.texto).toBeUndefined();
+});
+
 test('corregir: la aprobada queda reemplazada y nace la versión 2 en borrador', async () => {
   const r = await llamar<{ id: string }>(medico, 'corregirNota', { patientId: P, noteId: 'n-urg' });
   expect((await fs.doc(`${raiz}/notes/n-urg`).get()).data()!.status).toBe('reemplazada');
   expect((await fs.doc(`${raiz}/notes/${r.data.id}`).get()).data()).toMatchObject({ status: 'borrador', version: 2, previousVersionId: 'n-urg', findings: 'Otitis' });
+});
+
+test('el resumen de una nota que no está aprobada no se manda', async () => {
+  await expect(llamar(medico, 'enviarResumenFamilia', { patientId: P, noteId: 'n-urg', asunto: 'x', texto: 'y' }))
+    .rejects.toMatchObject({ code: 'functions/failed-precondition' });
 });
 
 test('certificado: se emite con su documento, se anula con motivo y no dos veces', async () => {
