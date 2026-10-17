@@ -2,7 +2,7 @@
   "name": "pediatric-os-functions",
   "private": true,
   "description": "Cloud Functions de Pediatric OS: roles, auditoría, acceso al portal y eventos para Make.",
-  "main": "lib/index.js",
+  "main": "lib/functions/src/index.js",
   "engines": {
     "node": "22"
   },

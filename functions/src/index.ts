@@ -3,6 +3,7 @@
  * Lo que falta (turnos, notas, certificados, endpoints entrantes, IA) llega en sus etapas.
  */
 export { asignarRol } from './roles';
+export { crearPaciente } from './pacientes';
 export { auditarAdministrativo, auditarClinico, auditarDomicilios } from './auditoria/triggers';
 export { accesoPorAdulto, accesoPorVinculo } from './acceso/triggers';
 export { despacharEvento, reintentarEventos } from './outbox/triggers';

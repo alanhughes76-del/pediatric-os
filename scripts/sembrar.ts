@@ -17,7 +17,8 @@ import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, type WriteBatch } from 'firebase-admin/firestore';
 import { datosDeEjemplo, DOCTOR_ID } from '../src/data/mock';
-import { normalizarTelefono } from '../src/lib/telefono';
+import { normalizarTelefono } from '../shared/telefono';
+import { normalizar, soloDigitos } from '../shared/duplicados';
 import { calcularAcceso } from '../functions/src/acceso/calcular';
 import { CONFIG } from '../src/config';
 
@@ -105,7 +106,10 @@ async function main() {
   });
   d.addresses.forEach((a) => agregar(o('guardians', a.guardianId, 'addresses', a.id), { ...limpio(a), ...firma(a.createdBy, a.createdAt) }));
   d.relationships.forEach((r) => agregar(o('relationships', r.id), { ...limpio(r), ...firma(r.createdBy, r.createdAt) }));
-  d.patients.forEach((p) => agregar(o('patients', p.id), { ...limpio(p), ...firma(p.createdBy, p.createdAt) }));
+  // lastNameNorm y dniDigits: los usa el control de duplicados del servidor (crearPaciente).
+  d.patients.forEach((p) => agregar(o('patients', p.id), {
+    ...limpio(p), ...firma(p.createdBy, p.createdAt), lastNameNorm: normalizar(p.lastName), ...(p.dni ? { dniDigits: soloDigitos(p.dni) } : {}),
+  }));
   d.memberships.forEach((m) => agregar(o('memberships', m.id), { ...limpio(m), ...firma(m.createdBy, m.createdAt) }));
   d.payments.forEach((p) => agregar(o('payments', p.id), { ...limpio(p), ...firma(p.createdBy, p.createdAt) }));
 
