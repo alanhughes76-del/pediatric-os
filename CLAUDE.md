@@ -4,7 +4,7 @@ App móvil (iOS y Android) de la práctica de pediatría a domicilio del Dr. Ala
 
 Dos roles: el médico (único usuario) y las familias, donde cada adulto responsable tiene su propio acceso.
 
-**Desde el 17/10/2026 manda `docs/PROMPT_MAESTRO.md`** (Pediatric OS, backend Firebase). Donde choque con lo de abajo, gana el prompt maestro. Etapa 0 (exploración y propuesta, sin código): `docs/ETAPA_0_PROPUESTA.md`; respuestas del Dr. en su sección 13 (botón "Escribime por PacienteX", email del enlace por SMTP, región southamerica-east1, Expo Go hasta necesitar un development build, proyecto Firebase nuevo "pediatric-os" más adelante). Etapas 1a (Firebase, ver abajo), 1b (diseño y navegación) y 2a (pacientes y familias sobre los datos de ejemplo) hechas. Etapa 2b hecha: la app se conecta a Firebase (ver "Datos de la app"). Etapa 3 hecha: agenda y turnos (ver "Agenda"). Próximo paso: Etapa 4 (clínica), con el OK del Dr.
+**Desde el 17/10/2026 manda `docs/PROMPT_MAESTRO.md`** (Pediatric OS, backend Firebase). Donde choque con lo de abajo, gana el prompt maestro. Etapa 0 (exploración y propuesta, sin código): `docs/ETAPA_0_PROPUESTA.md`; respuestas del Dr. en su sección 13 (botón "Escribime por PacienteX", email del enlace por SMTP, región southamerica-east1, Expo Go hasta necesitar un development build, proyecto Firebase nuevo "pediatric-os" más adelante). Etapas 1a (Firebase, ver abajo), 1b (diseño y navegación) y 2a (pacientes y familias sobre los datos de ejemplo) hechas. Etapa 2b hecha: la app se conecta a Firebase (ver "Datos de la app"). Etapa 3 hecha: agenda y turnos (ver "Agenda"). Etapa 4 hecha: clínica (ver "Clínica"). Próximo paso: Etapa 5 (seguimiento: vacunas, medicación, estudios, certificados, documentos y prevención), con el OK del Dr.
 
 Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionadas, Expo Router).
 
@@ -22,7 +22,7 @@ Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionad
 - Dos fuentes con el mismo contrato (`src/data/contrato.ts`); las pantallas solo usan `useApp()`:
   - `demo` (por defecto): datos ficticios en memoria y selector de rol (`src/data/fuenteDemo.tsx`).
   - `firebase`: ingreso real del médico con email y contraseña, lecturas en vivo de Firestore y escrituras con la firma que piden las reglas (`src/data/firebase/`). Se elige con `EXPO_PUBLIC_DATOS=firebase` (`npm run web:firebase`, con `npm run emuladores` y `npm run sembrar`).
-- Lo crítico va por Functions (`operaciones` del contrato): `crearPaciente`, `aprobarNota`, `corregirNota`, `emitirCertificado`, `anularCertificado`, `crearTurno` y `accionTurno`. En demostración hacen lo mismo en memoria.
+- Lo crítico va por Functions (`operaciones` del contrato): `crearPaciente`, `aprobarNota`, `corregirNota`, `emitirCertificado`, `anularCertificado`, `crearTurno`, `accionTurno` y `enviarResumen` (`enviarResumenFamilia`). En demostración hacen lo mismo en memoria.
 - En `firebase`, el portal de las familias todavía no entra: las copias filtradas del portal llegan en la Etapa 6. El asistente tampoco tiene pantallas todavía.
 - El servidor escribe las fechas como la app (hora de Argentina con `-03:00`, `shared/fechaHora.ts`), porque la app compara fechas como texto.
 - En el celular la sesión de Firebase no queda guardada: se vuelve a ingresar al abrir la app. La sesión persistente llega con la versión propia de la app (EAS).
@@ -35,6 +35,14 @@ Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionad
 - Configuración en `settings/agenda` (horarios, duración por tipo, buffer, zonas). Los valores iniciales de `CONFIG_AGENDA_INICIAL` son provisorios: se editan en Configuración (Etapa 7).
 - Eventos para Make: `turno.solicitado`, `turno.confirmado`, `turno.reprogramado`, `turno.cancelado`, `turno.en_camino`, solo con ids, horario y modalidad. `turno.recordatorio_24h` llega en la Etapa 8.
 - Pantallas: Agenda (día, semana, mes), `medico/turno/nuevo`, `medico/turno/[id]` (acciones e historial). Inicio muestra los turnos de hoy, lo que falta confirmar y los próximos días.
+
+## Clínica (desde la Etapa 4)
+
+- Antecedentes (`backgrounds`, `components/ficha/Antecedentes.tsx`): uno por paciente, en la pestaña Historia clínica; se guardan solos. La familia no los ve.
+- La consulta registra los problemas que se abordaron (`problemIds`) y muestra su turno de origen.
+- IA apagada (`db.ia`, en Firebase `settings/ia`): "Generar borrador con IA" queda deshabilitado con la explicación y no aparece "Volver a generar". `lib/notaIA.ts` (borrador de ejemplo) queda para cuando se conecte la IA (Etapa 9).
+- Resumen para la familia: en la nota aprobada, "Preparar el mail" (`shared/resumen.ts`, solo el resumen) → el Dr. lo edita → "Revisé y lo mando". El servidor emite `resumen.envio_aprobado` (el único evento con texto clínico) y registra una comunicación sin el texto.
+- Módulos de la barra lateral: Historia clínica (`medico/historia`: notas sin aprobar, problemas activos, alergias), Consultas (`medico/consultas`) y Crecimiento (`medico/crecimiento`: última medición con percentilos; primero los avisos). Lecturas en `src/data/clinica.ts`. La ficha abre en una pestaña con `?solapa=`.
 
 ## Firebase (desde la Etapa 1a)
 

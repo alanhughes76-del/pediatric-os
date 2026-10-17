@@ -34,7 +34,7 @@ Estado al 17/10/2026, Etapa 1a. Las reglas están en `firestore.rules` y `storag
 | `…/relationships/{id}` (paciente ↔ adulto, tipo, principal, vigencia) | M, A | M, A | Se cierran con `validTo`, no se borran |
 | `…/patients/{id}` | M, A | Alta: S (control de duplicados, Etapa 2). Cambios: M, A | Firma |
 | `…/memberships/{id}`, `…/payments/{id}` | M, A | M, A (y S para los pagos de Telegram, Etapa 8) | Firma |
-| `…/communications/{id}` | M, A | M, A, S | Firma |
+| `…/communications/{id}` | M, A | M, A, S | Firma. No guarda textos clínicos (la lee el asistente). Hoy la escribe `enviarResumenFamilia` al mandar un resumen |
 | `…/educationalMaterials/{id}` | M, A | M | Firma |
 | `…/materialDeliveries/{id}` | M | M | Firma |
 
@@ -59,6 +59,8 @@ Horarios, duraciones, buffer y zonas viven en `settings/agenda` (en lugar de las
 Subcolecciones de `…/clinical/{patientId}/`:
 
 `background` · `problems` · `allergies` · `consultations` · `growth` · `milestones` · `vaccineDoses` · `medications` · `prescriptions` · `studyOrders` (y `studyOrders/{id}/results`) · `carePlan` · `notes` · `followUps` · `fever` · `certificates` · `documents`
+
+`background` es un documento por paciente (`ant-{patientId}`): peso al nacer, tipo de parto, complicaciones perinatales, patológicos e internaciones, familiares, hábitos y medicación actual. La edad gestacional queda en el paciente. `consultations` guarda `problemIds` (problemas que se abordaron) y `appointmentId` (turno de origen).
 
 | Subcolección | Escribe | Regla especial |
 | --- | --- | --- |
