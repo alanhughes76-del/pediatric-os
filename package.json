@@ -9,6 +9,8 @@
     "expo": "~57.0.0",
     "expo-clipboard": "~57.0.2",
     "expo-constants": "~57.0.22",
+    "expo-document-picker": "~57.0.3",
+    "expo-file-system": "~57.0.7",
     "expo-font": "~57.0.4",
     "expo-linking": "~57.0.13",
     "expo-print": "~57.0.2",
@@ -49,7 +51,7 @@
     "test": "jest",
     "test:reglas": "firebase emulators:exec --only firestore,storage --project demo-pediatric-os \"jest -c jest.reglas.config.js\"",
     "test:funciones": "jest -c jest.funciones.config.js",
-    "test:integracion": "npm --prefix functions run build && firebase emulators:exec --only auth,firestore,functions --project demo-pediatric-os \"jest -c jest.integracion.config.js\"",
+    "test:integracion": "npm --prefix functions run build && firebase emulators:exec --only auth,firestore,functions,storage --project demo-pediatric-os \"jest -c jest.integracion.config.js\"",
     "emuladores": "npm --prefix functions run build && firebase emulators:start --project demo-pediatric-os",
     "sembrar": "tsx scripts/sembrar.ts",
     "web:firebase": "EXPO_PUBLIC_DATOS=firebase expo start --web --port 8083"

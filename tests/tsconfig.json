@@ -1,8 +1,24 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "types": ["jest", "node"]
+    "types": [
+      "jest",
+      "node"
+    ],
+    "paths": {
+      "@/*": [
+        "../src/*"
+      ],
+      "@shared/*": [
+        "../shared/*"
+      ],
+      "pdf-lib": [
+        "../functions/node_modules/pdf-lib"
+      ]
+    }
   },
-  "include": ["**/*.ts"],
+  "include": [
+    "**/*.ts"
+  ],
   "exclude": []
 }

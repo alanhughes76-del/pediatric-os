@@ -6,6 +6,7 @@
 import { initializeApp as initAdmin, deleteApp as deleteAdmin, type App } from 'firebase-admin/app';
 import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
 import { initializeApp, deleteApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator, signInWithEmailAndPassword } from 'firebase/auth';
 import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'firebase/functions';
@@ -98,10 +99,26 @@ test('certificado: se emite con su documento, se anula con motivo y no dos veces
   const r = await llamar<{ id: string }>(medico, 'emitirCertificado', datos);
   const cert = (await fs.doc(`${raiz}/certificates/${r.data.id}`).get()).data()!;
   expect(cert).toMatchObject({ status: 'emitido', type: 'aptitud-fisica', place: 'Buenos Aires' });
-  expect((await fs.doc(`${raiz}/documents/${cert.documentId}`).get()).exists).toBe(true);
+  const documento = (await fs.doc(`${raiz}/documents/${cert.documentId}`).get()).data()!;
+  expect(documento).toMatchObject({ kind: 'certificado', origin: 'sistema', visibleToFamily: true, mimeType: 'application/pdf' });
+  // El PDF quedó guardado en Storage (sin enlace público).
+  const [existe] = await getStorage(admin).bucket('demo-pediatric-os.appspot.com').file(documento.file).exists();
+  expect(existe).toBe(true);
+  const [contenido] = await getStorage(admin).bucket('demo-pediatric-os.appspot.com').file(documento.file).download();
+  expect(contenido.subarray(0, 5).toString()).toBe('%PDF-');
 
   await expect(llamar(medico, 'anularCertificado', { patientId: P, certificateId: r.data.id, reason: '' })).rejects.toMatchObject({ code: 'functions/invalid-argument' });
   await llamar(medico, 'anularCertificado', { patientId: P, certificateId: r.data.id, reason: 'Fecha equivocada' });
   expect((await fs.doc(`${raiz}/certificates/${r.data.id}`).get()).data()).toMatchObject({ status: 'anulado', voidReason: 'Fecha equivocada' });
   await expect(llamar(medico, 'anularCertificado', { patientId: P, certificateId: r.data.id, reason: 'Otra vez' })).rejects.toMatchObject({ code: 'functions/failed-precondition' });
+});
+
+test('enviar material: solo el médico, registra el envío y emite el aviso sin datos clínicos', async () => {
+  await fs.doc(`organizations/${ORG}/educationalMaterials/mat-1`).set({ organizationId: ORG, title: 'Sueño seguro', kind: 'enlace', url: 'https://ejemplo.com', topics: ['sueño'] });
+  await expect(llamar(asistente, 'enviarMaterial', { materialId: 'mat-1', patientId: P })).rejects.toMatchObject({ code: 'functions/permission-denied' });
+  await expect(llamar(medico, 'enviarMaterial', { materialId: 'no-existe', patientId: P })).rejects.toMatchObject({ code: 'functions/not-found' });
+  const r = await llamar<{ id: string }>(medico, 'enviarMaterial', { materialId: 'mat-1', patientId: P });
+  expect((await fs.doc(`organizations/${ORG}/materialDeliveries/${r.data.id}`).get()).data()).toMatchObject({ patientId: P, materialId: 'mat-1' });
+  const ev = (await fs.collection(`organizations/${ORG}/outbox`).where('type', '==', 'material.enviado').get()).docs[0].data();
+  expect(Object.keys(ev.data).sort()).toEqual(['deliveryId', 'familyId', 'materialId', 'patientId', 'titulo']);
 });

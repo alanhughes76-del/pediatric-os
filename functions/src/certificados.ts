@@ -9,6 +9,8 @@ import { db } from './config';
 import { exigirMedico, id, texto } from './permisos';
 import { encolarEvento } from './outbox/encolar';
 import { isoArgentina } from '../../shared/fechaHora';
+import { getStorage } from 'firebase-admin/storage';
+import { pdfCertificado } from './certificadoPdf';
 
 const TIPOS = ['aptitud-fisica', 'control-salud', 'buena-salud', 'constancia-atencion', 'libre'];
 const TITULOS: Record<string, string> = {
@@ -42,13 +44,19 @@ export const emitirCertificado = onCall<Record<string, unknown>>(async (req) => 
   const certRef = db().collection(`${raiz}/certificates`).doc();
   const docRef = db().collection(`${raiz}/documents`).doc();
   const ahora = isoArgentina();
+  const firmaTexto = typeof firmaProfesional === 'string' ? firmaProfesional : FIRMA;
+
+  // El PDF se arma y se guarda antes de registrar el certificado: si no se pudo guardar, no se emite.
+  const archivo = `orgs/${org}/patients/${patientId}/certificados/${certRef.id}.pdf`;
+  const pdf = await pdfCertificado({ titulo: TITULOS[type], cuerpo: body, lugar: place, fecha: date, firma: firmaTexto });
+  await getStorage().bucket().file(archivo).save(Buffer.from(pdf), { contentType: 'application/pdf', resumable: false });
   const firma = { organizationId: org, patientId, createdBy: uid, createdAt: ahora, updatedBy: uid, updatedAt: ahora };
   const batch = db().batch();
   batch.set(certRef, {
     ...firma, type, body, requestedBy, destination, place, date,
-    signature: typeof firmaProfesional === 'string' ? firmaProfesional : FIRMA, status: 'emitido', documentId: docRef.id,
+    signature: firmaTexto, status: 'emitido', documentId: docRef.id,
   });
-  batch.set(docRef, { ...firma, title: TITULOS[type], date, file: `orgs/${org}/patients/${patientId}/certificados/${certRef.id}.pdf`, certificateId: certRef.id, visibleToFamily: true });
+  batch.set(docRef, { ...firma, title: TITULOS[type], date, file: archivo, certificateId: certRef.id, kind: 'certificado', origin: 'sistema', mimeType: 'application/pdf', visibleToFamily: true });
   await batch.commit();
   await encolarEvento(org, 'certificado.emitido', { patientId, certificateId: certRef.id });
   return { ok: true, id: certRef.id };
