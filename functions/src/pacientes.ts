@@ -8,6 +8,7 @@
  *   solo si el médico confirma que es otro paciente (`confirmarPosibleDuplicado`).
  */
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { esquemaPara } from '../../shared/vacunas';
 import { db } from './config';
 import { buscarDuplicados, normalizar, soloDigitos } from '../../shared/duplicados';
 import { isoArgentina } from '../../shared/fechaHora';
@@ -87,5 +88,17 @@ export const crearPaciente = onCall<PedidoAlta>(async (req) => {
     ...(d.bloodType ? { bloodType: d.bloodType } : {}),
     createdBy: req.auth!.uid, createdAt: ahora, updatedBy: req.auth!.uid, updatedAt: ahora,
   });
+
+  // Esquema de vacunas según el calendario (prompt maestro 7.8). El calendario es un borrador
+  // hasta que el Dr. lo verifique: las dosis se generan igual, pero no salen recordatorios.
+  const lote = db().batch();
+  for (const v of esquemaPara(d.birthDate)) {
+    lote.set(db().doc(`organizations/${t.organizationId}/clinical/${ref.id}/vaccineDoses/vd-${ref.id}-${v.clave}`), {
+      organizationId: t.organizationId, patientId: ref.id, vaccine: v.vaccine, dose: v.dose, ageText: v.ageText,
+      ageMonths: v.ageMonths, dueDate: v.dueDate, status: 'pendiente', source: 'calendario',
+      createdBy: req.auth!.uid, createdAt: ahora, updatedBy: req.auth!.uid, updatedAt: ahora,
+    });
+  }
+  await lote.commit();
   return { estado: 'creado' as const, id: ref.id };
 });

@@ -4,6 +4,8 @@
  */
 import { initializeApp as initAdmin, deleteApp as deleteAdmin, type App } from 'firebase-admin/app';
 import { getAuth as getAdminAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
+import { CALENDARIO } from '../../shared/vacunas';
 import { initializeApp, deleteApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator, signInWithEmailAndPassword } from 'firebase/auth';
 import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'firebase/functions';
@@ -30,9 +32,14 @@ afterAll(async () => { await deleteApp(app); await deleteAdmin(admin); });
 
 const hermana = { firstName: 'Ana', lastName: 'Prueba Mellizas', birthDate: '2024-03-10', sex: 'F', dni: `60.${Date.now() % 1000}.001` };
 
-test('crea un paciente nuevo', async () => {
+test('crea un paciente nuevo, con su esquema de vacunas según el calendario', async () => {
   const r = await alta(hermana);
   expect(r.data.estado).toBe('creado');
+  // Prueba 10 del prompt maestro: el esquema se arma aunque el calendario no esté verificado.
+  const dosis = (await getFirestore(admin).collection(`organizations/${ORG}/clinical/${r.data.id}/vaccineDoses`).get()).docs.map((d) => d.data());
+  expect(dosis).toHaveLength(CALENDARIO.filter((d) => d.tipo === 'obligatoria').length);
+  expect(dosis.every((d) => d.status === 'pendiente' && d.source === 'calendario' && d.patientId === r.data.id)).toBe(true);
+  expect(dosis.find((d) => d.vaccine === 'BCG')?.dueDate).toBe('2024-03-10');
 });
 
 test('con el mismo DNI (escrito distinto) el servidor rechaza el alta', async () => {

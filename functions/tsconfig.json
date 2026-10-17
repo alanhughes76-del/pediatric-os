@@ -15,11 +15,13 @@
     "noUnusedLocals": true,
     "types": [
       "node"
-    ]
+    ],
+    "resolveJsonModule": true
   },
   "include": [
     "src",
-    "../shared"
+    "../shared",
+    "../assets/data/calendario_vacunas.json"
   ],
   "exclude": [
     "../shared/**/*.test.ts"
