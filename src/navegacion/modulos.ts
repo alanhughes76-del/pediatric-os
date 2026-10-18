@@ -42,7 +42,7 @@ export const MODULOS: Modulo[] = [
   },
   {
     clave: 'familias', titulo: 'Familias', icono: 'people-circle-outline', href: '/medico/familias',
-    rutas: ['/medico/familias', '/medico/familia', '/medico/membresias', '/medico/adulto'],
+    rutas: ['/medico/familias', '/medico/familia', '/medico/membresias', '/medico/membresia', '/medico/pago', '/medico/adulto'],
   },
   { clave: 'historia', titulo: 'Historia clínica', icono: 'document-text-outline', href: '/medico/historia', rutas: ['/medico/historia'] },
   { clave: 'consultas', titulo: 'Consultas', icono: 'medkit-outline', href: '/medico/consultas', rutas: ['/medico/consultas'] },

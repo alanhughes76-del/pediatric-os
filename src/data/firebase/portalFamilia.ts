@@ -5,7 +5,7 @@
  */
 import type {
   Address, Allergy, Appointment, CarePlanItem, Certificate, ClinicalNote, ClinicalProblem, Consultation, Database,
-  Family, FeverEntry, GrowthMeasurement, Guardian, Membership, Patient, PatientRelationship, VaccineDose,
+  Family, FeverEntry, GrowthMeasurement, Guardian, Membership, Patient, Payment, PatientRelationship, VaccineDose,
 } from '../types';
 
 type Datos = Record<string, unknown>;
@@ -37,6 +37,7 @@ export function armarVistaFamilia(p: {
   // Familia y membresía (una por familia).
   const families: Family[] = [];
   const memberships: Membership[] = [];
+  const payments: Payment[] = [];
   for (const pac of patients) {
     const d = filas(pac.id, 'datos').find((f) => f.id === 'familia')?.datos;
     const familyId = pac.familyId;
@@ -48,6 +49,13 @@ export function armarVistaFamilia(p: {
         ...base, id: `m-${familyId}`, familyId, plan: m.plan as Membership['plan'], status: m.status as Membership['status'],
         startDate: s(m.startDate) ?? '', renewalDate: s(m.renewalDate) ?? '',
         patientIds: patients.filter((x) => x.familyId === familyId).map((x) => x.id),
+      });
+    }
+    // Pagos confirmados de la familia (solo lectura).
+    for (const [i, x] of ((d.payments ?? []) as Datos[]).entries()) {
+      payments.push({
+        ...base, id: `pg-${familyId}-${i}`, familyId, date: s(x.date) ?? '', amount: Number(x.amount ?? 0),
+        currency: x.currency as Payment['currency'], method: x.method as Payment['method'], concept: s(x.concept), status: 'confirmado',
       });
     }
   }
@@ -91,6 +99,7 @@ export function armarVistaFamilia(p: {
     addresses: p.addresses.filter((a) => a.guardianId === guardian.id && !a.archivedAt),
     patients,
     memberships,
+    payments,
     notes,
     consultations,
     allergies: plano<Allergy>('allergies', () => ({ status: 'confirmada' })),

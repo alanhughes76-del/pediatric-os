@@ -2,6 +2,7 @@ import { armarVistaFamilia } from './portalFamilia';
 import { datosDeEjemplo } from '../mock';
 import { pacientesDeAdulto, proximoTurno, membresiaDeFamilia, informesFamilia } from '../selectores';
 import type { Database, Guardian } from '../types';
+import { pagosDeFamilia } from '../membresias';
 
 const guardian = { ...datosDeEjemplo.guardians.find((g) => g.id === 'g-lucia')! } as Guardian;
 const vacia = { ...datosDeEjemplo, patients: [], families: [], notes: [] } as unknown as Database;
@@ -15,7 +16,7 @@ const vista = armarVistaFamilia({
     'p-tomas': {
       datos: [
         { id: 'paciente', datos: { firstName: 'Tomás', lastName: 'Ruiz', birthDate: '2023-05-12', sex: 'M', familyId: 'f-1' } },
-        { id: 'familia', datos: { familyName: 'Familia Ruiz', membership: { plan: 'anual', status: 'activa', startDate: '2026-03-01', renewalDate: '2027-02-28' } } },
+        { id: 'familia', datos: { familyName: 'Familia Ruiz', membership: { plan: 'anual', status: 'activa', startDate: '2026-03-01', renewalDate: '2027-02-28' }, payments: [{ date: '2026-03-01', amount: 600, currency: 'USD', method: 'transferencia', concept: 'Membresía' }] } },
       ],
       summaries: [{ id: 'n1', datos: { consultationId: 'c1', version: 1, familySummary: 'Está muy bien.', approvedAt: '2026-10-10T11:00:00-03:00', occurredAt: '2026-10-10T10:00:00-03:00', visitType: 'control' } }],
       turnos: [{ id: 't1', datos: { start: '2099-01-01T10:00:00-03:00', day: '2099-01-01', durationMin: 45, type: 'control', status: 'confirmado', patientIds: ['p-tomas', 'p-emma'] } }],
@@ -33,6 +34,7 @@ describe('portal en Firebase: las copias con la forma de las pantallas', () => {
     expect(pacientesDeAdulto(vista, 'g-lucia').map((p) => p.firstName).sort()).toEqual(['Emma', 'Tomás']);
     expect(vista.families).toEqual([expect.objectContaining({ id: 'f-1', name: 'Familia Ruiz' })]);
     expect(membresiaDeFamilia(vista, 'f-1').estado).toBe('activa');
+    expect(pagosDeFamilia(vista, 'f-1')).toEqual([expect.objectContaining({ amount: 600, currency: 'USD', concept: 'Membresía' })]);
   });
 
   test('resúmenes como notas aprobadas, sin nada clínico', () => {

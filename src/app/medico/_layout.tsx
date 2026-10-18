@@ -41,6 +41,8 @@ export default function MedicoLayout() {
         <Stack.Screen name="documentos" options={{ title: 'Documentos' }} />
         <Stack.Screen name="prevencion" options={{ title: 'Prevención' }} />
         <Stack.Screen name="configuracion" options={{ title: 'Configuración' }} />
+        <Stack.Screen name="membresia/[familia]" options={{ title: 'Membresía' }} />
+        <Stack.Screen name="pago" options={{ title: 'Pago' }} />
       </Stack>
     </Marco>
   );

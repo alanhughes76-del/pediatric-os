@@ -166,8 +166,10 @@ const base: Database = {
   ],
 
   payments: [
-    { ...b('pg-1', '2026-03-01T12:00:00-03:00'), membershipId: 'm-ferreyra', date: '2026-03-01', amount: 600, currency: 'USD', method: 'transferencia' },
-    { ...b('pg-2', '2026-04-05T12:00:00-03:00'), membershipId: 'm-godoy', date: '2026-04-05', amount: 450000, currency: 'ARS', method: 'mercadopago' },
+    { ...b('pg-1', '2026-03-01T12:00:00-03:00'), membershipId: 'm-ferreyra', familyId: 'f-ferreyra', date: '2026-03-01', amount: 600, currency: 'USD', method: 'transferencia', concept: 'Membresía anual (primera cuota)', status: 'confirmado' },
+    { ...b('pg-2', '2026-04-05T12:00:00-03:00'), membershipId: 'm-godoy', familyId: 'f-godoy', date: '2026-04-05', amount: 450000, currency: 'ARS', method: 'mercadopago', concept: 'Membresía semestral', status: 'confirmado' },
+    // Como si hubiera llegado por el bot de Telegram (Etapa 8): falta que el Dr. lo confirme.
+    { ...b('pg-3', enDias(-1, '19:10')), familyId: 'f-sosa', date: sumarDias(hoy, -1), amount: 150000, currency: 'ARS', method: 'transferencia', concept: 'Visita', status: 'a_confirmar' },
   ],
 
   // Antecedentes (ficticios). El peso al nacer de Emma coincide con su primera medición.

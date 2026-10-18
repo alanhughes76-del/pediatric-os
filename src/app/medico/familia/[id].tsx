@@ -7,6 +7,8 @@ import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '@/data/store';
 import { EtiquetaMembresia } from '@/components/membresia/EtiquetaMembresia';
+import { pagosDeFamilia, TEXTO_MEDIO, TEXTO_PLAN } from '@/data/membresias';
+import { dinero } from '@/data/configuracion';
 import { fiebreDe, membresiaDeFamilia, nombreCompleto, sinRevisar, TEXTO_VISITA } from '@/data/selectores';
 import { telefonoLegible } from '@shared/telefono';
 import { TEXTO_TIPO_TURNO, TEXTO_ESTADO_TURNO } from '@shared/agenda';
@@ -43,7 +45,7 @@ export default function FichaFamilia() {
     .sort((a, b) => a.start.localeCompare(b.start));
   const historial = consultas.filter((c) => c.status === 'realizada').sort((a, b) => b.occurredAt.localeCompare(a.occurredAt)).slice(0, 8);
   const { membership, estado } = membresiaDeFamilia(db, familia.id);
-  const pagos = membership ? db.payments.filter((p) => p.membershipId === membership.id).sort((a, b) => b.date.localeCompare(a.date)) : [];
+  const pagos = pagosDeFamilia(db, familia.id);
   const idsAdultos = new Set(adultos.map((g) => g.id));
   const accesos = db.auditLog.filter((a) => a.action === 'login' && idsAdultos.has(a.actorId)).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 6);
   const activa = familia.status !== 'inactiva';
@@ -138,18 +140,29 @@ export default function FichaFamilia() {
         <Caja titulo="Membresía y pagos" icono="wallet-outline" color="verde">
           {!membership ? <Texto color={colors.textMuted}>Esta familia no tiene membresía.</Texto> : (
             <>
-              <Texto>Plan {membership.plan} · desde {fechaCorta(membership.startDate)} · renueva el {fechaCorta(membership.renewalDate)}</Texto>
+              <Texto>Plan {TEXTO_PLAN[membership.plan].toLowerCase()} · desde {fechaCorta(membership.startDate)} · renueva el {fechaCorta(membership.renewalDate)}</Texto>
               <TextoChico>Hijos incluidos: {membership.patientIds.map(nombreHijo).filter(Boolean).join(', ') || '—'}</TextoChico>
-              {pagos.length === 0 ? <TextoChico>Sin pagos registrados.</TextoChico> : null}
-              {pagos.map((p) => (
-                <View key={p.id} style={s.filaSimple}>
-                  <Texto style={{ flex: 1 }}>{fechaCorta(p.date)} · {p.method}</Texto>
-                  <TextoFuerte>{p.currency} {p.amount.toLocaleString('es-AR')}</TextoFuerte>
-                </View>
-              ))}
+              {membership.notes ? <TextoChico>Observaciones: {membership.notes}</TextoChico> : null}
             </>
           )}
-          <TextoChico>La gestión de membresías y pagos llega en la Etapa 7.</TextoChico>
+          <View style={s.etiquetas}>
+            {membership ? <Boton titulo="Editar" variante="secundario" compacto onPress={() => router.push(`/medico/membresia/${familia.id}`)} /> : null}
+            <Boton titulo={membership ? 'Renovar' : '+ Cargar membresía'} variante="secundario" compacto
+              onPress={() => router.push({ pathname: '/medico/membresia/[familia]', params: { familia: familia.id, nueva: '1' } })} />
+          </View>
+          <TextoFuerte>Pagos</TextoFuerte>
+          {pagos.length === 0 ? <TextoChico>Sin pagos registrados.</TextoChico> : null}
+          {pagos.map((p) => (
+            <Tarjeta key={p.id} style={s.fila} onPress={() => router.push({ pathname: '/medico/pago', params: { id: p.id } })} accessibilityLabel={`Pago del ${fechaCorta(p.date)}`}>
+              <View style={{ flex: 1 }}>
+                <Texto>{fechaCorta(p.date)} · {p.concept ?? 'Pago'}</Texto>
+                <TextoChico>{TEXTO_MEDIO[p.method]}</TextoChico>
+              </View>
+              {p.status === 'a_confirmar' ? <Etiqueta texto="A confirmar" tono="naranja" /> : null}
+              <TextoFuerte>{dinero(p.amount, p.currency)}</TextoFuerte>
+            </Tarjeta>
+          ))}
+          <Boton titulo="+ Registrar un pago" variante="secundario" compacto onPress={() => router.push({ pathname: '/medico/pago', params: { familia: familia.id } })} />
         </Caja>
 
         <Caja titulo="Registro de accesos" icono="log-in-outline" color="celeste" ver={{ texto: 'Ver el registro completo', onPress: () => router.push('/medico/accesos') }}>

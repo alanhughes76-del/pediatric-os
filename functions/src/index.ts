@@ -15,4 +15,4 @@ export { reservaCalcom } from './turnos/endpoint';
 export { auditarAdministrativo, auditarClinico, auditarDomicilios } from './auditoria/triggers';
 export { accesoPorAdulto, accesoPorVinculo } from './acceso/triggers';
 export { despacharEvento, reintentarEventos } from './outbox/triggers';
-export { portalClinico, portalPaciente, portalFamilia, portalMembresia, portalTurno, portalCalendario } from './portal/triggers';
+export { portalClinico, portalPaciente, portalFamilia, portalMembresia, portalTurno, portalPago, portalCalendario } from './portal/triggers';

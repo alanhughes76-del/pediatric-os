@@ -4,6 +4,8 @@
  */
 import type { Href } from 'expo-router';
 import type { Database } from './types';
+import { pagosAConfirmar } from './membresias';
+import { dinero } from './configuracion';
 import { fiebreDe, membresiaDeFamilia, nombreCompleto, seguimientosPendientes, sinRevisar } from './selectores';
 import { fechaCorta, hoyISO } from '@/lib/fechas';
 import { estadoDosis } from '@shared/vacunas';
@@ -91,6 +93,17 @@ export function avisosDelMedico(db: Database, ahora = new Date().toISOString()):
       detalle: estado === 'vencida'
         ? `Venció el ${fechaCorta(membership.renewalDate)}`
         : `Se renueva el ${fechaCorta(membership.renewalDate)} (en ${diasRestantes} ${diasRestantes === 1 ? 'día' : 'días'})`,
+      href: `/medico/familia/${fam.id}`,
+    });
+  }
+
+  // Pagos que llegaron por una automatización y falta confirmar.
+  const pendientes = pagosAConfirmar(db);
+  if (pendientes.length > 0) {
+    avisos.push({
+      id: 'pagos-a-confirmar', tipo: 'membresia', alerta: false,
+      titulo: `${pendientes.length === 1 ? 'Un pago' : `${pendientes.length} pagos`} para confirmar`,
+      detalle: pendientes.map((p) => `${fechaCorta(p.date)} · ${dinero(p.amount, p.currency)}`).join(' · '),
       href: '/medico/membresias',
     });
   }

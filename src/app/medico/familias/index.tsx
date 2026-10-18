@@ -32,6 +32,7 @@ export default function Familias() {
           <Campo value={busqueda} onChangeText={setBusqueda} placeholder="Apellido, adulto, teléfono o hijo" autoCorrect={false} accessibilityLabel="Buscar familia" />
         </View>
         <View style={s.nueva}><Boton titulo="+ Nueva familia" onPress={() => router.push('/medico/familias/nueva')} /></View>
+        <View style={s.nueva}><Boton titulo="Membresías y pagos" icono="wallet-outline" variante="secundario" onPress={() => router.push('/medico/membresias')} /></View>
       </View>
       <TextoChico>{lista.length} {lista.length === 1 ? 'familia' : 'familias'}</TextoChico>
       {lista.length === 0 ? (

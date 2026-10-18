@@ -44,8 +44,8 @@ export function vistaFamilia(db: Database, guardianId: ID): Database {
     addresses: db.addresses.filter((a) => adultoIds.has(a.guardianId) && !a.archivedAt),
     patients,
     memberships,
-    // Sus pagos (de la membresía o de la familia), sin los archivados. Solo lectura.
-    payments: db.payments.filter((p) => !p.archivedAt && ((p.membershipId && membershipIds.has(p.membershipId)) || (p.familyId && familyIds.has(p.familyId)))),
+    // Sus pagos confirmados (de la membresía o de la familia), sin los archivados. Solo lectura.
+    payments: db.payments.filter((p) => !p.archivedAt && (p.status ?? 'confirmado') === 'confirmado' && ((p.membershipId && membershipIds.has(p.membershipId)) || (p.familyId && familyIds.has(p.familyId)))),
     // Los antecedentes no se muestran en el portal.
     backgrounds: [],
     problems: delPaciente(db.problems).filter((p) => p.visibleToFamily),

@@ -20,11 +20,15 @@ describe('avisos del médico', () => {
 
   test('las membresías vencidas o por renovar avisan; las activas no', () => {
     const esperadas = datosDeEjemplo.families.filter((f) => ['vencida', 'por-vencer'].includes(membresiaDeFamilia(datosDeEjemplo, f.id).estado));
-    expect(avisos.filter((a) => a.tipo === 'membresia')).toHaveLength(esperadas.length);
+    expect(avisos.filter((a) => a.tipo === 'membresia' && a.id.startsWith('mem-'))).toHaveLength(esperadas.length);
+  });
+
+  test('los pagos a confirmar avisan en un solo renglón', () => {
+    expect(avisos.filter((a) => a.id === 'pagos-a-confirmar').map((a) => a.titulo)).toEqual(['Un pago para confirmar']);
   });
 
   test('sin datos, no hay avisos', () => {
-    expect(avisosDelMedico({ ...datosDeEjemplo, followUps: [], fever: [], memberships: [], studies: [], vaccineDoses: [] }, ahora)).toEqual([]);
+    expect(avisosDelMedico({ ...datosDeEjemplo, followUps: [], fever: [], memberships: [], payments: [], studies: [], vaccineDoses: [] }, ahora)).toEqual([]);
   });
 
   test('resultado de estudio sin revisar y vacunas atrasadas', () => {

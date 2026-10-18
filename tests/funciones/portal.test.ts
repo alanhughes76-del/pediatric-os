@@ -60,7 +60,22 @@ describe('copias del portal: lo que ve la familia', () => {
     expect(proyectarTurno({ status: 'cancelado' })).toBeNull();
     expect(proyectarTurno({ status: 'confirmado', start: 's', opsNotes: 'interno', porIdentificar: {}, address: { text: 'Calle 1', locality: 'Olivos', addressId: 'a' } }))
       .toEqual({ status: 'confirmado', start: 's', address: { text: 'Calle 1', locality: 'Olivos' } });
-    expect(proyectarFamilia({ name: 'Familia P' }, { status: 'activa', renewalDate: 'r', patientIds: ['x'] }))
-      .toEqual({ familyName: 'Familia P', membership: { status: 'activa', renewalDate: 'r' } });
+    expect(proyectarFamilia({ name: 'Familia P' }, { status: 'activa', renewalDate: 'r', patientIds: ['x'], notes: 'privado' }))
+      .toEqual({ familyName: 'Familia P', membership: { status: 'activa', renewalDate: 'r' }, payments: [] });
+  });
+});
+
+describe('pagos en el portal', () => {
+  test('solo los confirmados, sin archivados, sin datos de quién los cargó', () => {
+    const r = proyectarFamilia({ name: 'F' }, undefined, [
+      { date: '2026-03-01', amount: 600, currency: 'USD', method: 'transferencia', concept: 'Membresía', status: 'confirmado', createdBy: 'u' },
+      { date: '2026-04-01', amount: 100, currency: 'ARS', method: 'efectivo', status: 'a_confirmar' },
+      { date: '2026-05-01', amount: 100, currency: 'ARS', method: 'efectivo', archivedAt: 'x' },
+      { date: '2026-06-01', amount: 200, currency: 'ARS', method: 'efectivo' },
+    ]);
+    expect(r.payments).toEqual([
+      { date: '2026-06-01', amount: 200, currency: 'ARS', method: 'efectivo' },
+      { date: '2026-03-01', amount: 600, currency: 'USD', method: 'transferencia', concept: 'Membresía' },
+    ]);
   });
 });

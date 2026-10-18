@@ -1,12 +1,14 @@
 /**
  * "Mis datos" del portal (prompt maestro 7.19): la familia actualiza su teléfono, su email, cómo
  * prefiere que la contacten y sus direcciones. Cada cambio queda auditado y al Dr. le llega un aviso.
- * También ve su membresía.
+ * También ve su membresía y sus pagos (solo lectura).
  */
 import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useApp, useSesionFamilia } from '@/data/store';
-import { membresiaDeFamilia, pacientesDeAdulto } from '@/data/selectores';
+import { membresiaDeFamilia, pacientesDeAdulto, TEXTO_ESTADO_MEMBRESIA } from '@/data/selectores';
+import { pagosDeFamilia, TEXTO_MEDIO, TEXTO_PLAN } from '@/data/membresias';
+import { dinero } from '@/data/configuracion';
 import type { Address, ContactPreference } from '@/data/types';
 import { fechaCorta } from '@/lib/fechas';
 import { Pantalla } from '@/components/Pantalla';
@@ -20,7 +22,6 @@ import { CampoEditable, CampoTelefono, BotonTexto, TEXTO_PREFERENCIA, validarEma
 import { colors } from '@/theme';
 
 const PREFERENCIAS = (Object.keys(TEXTO_PREFERENCIA) as ContactPreference[]).map((v) => ({ valor: v, texto: TEXTO_PREFERENCIA[v] }));
-const ESTADO: Record<string, string> = { activa: 'Activa', 'por-vencer': 'Por renovar', vencida: 'Vencida' };
 
 export default function MisDatos() {
   const { db, operaciones } = useApp();
@@ -29,6 +30,7 @@ export default function MisDatos() {
   const hijos = pacientesDeAdulto(db, g.id);
   const { membership, estado } = membresiaDeFamilia(db, hijos[0]?.familyId ?? g.familyId);
   const direcciones = db.addresses.filter((a) => a.guardianId === g.id && !a.archivedAt);
+  const pagos = pagosDeFamilia(db, hijos[0]?.familyId ?? g.familyId ?? '');
 
   const guardar = async (cambios: Parameters<typeof operaciones.actualizarMisDatos>[0]) => {
     const e = await operaciones.actualizarMisDatos(cambios);
@@ -57,15 +59,28 @@ export default function MisDatos() {
         <Direccion onMensaje={setMensaje} />
       </Seccion>
 
-      <Seccion titulo="Membresía">
-        <Tarjeta style={{ gap: 6 }}>
-          {membership ? (
+      <Seccion titulo="Membresía y pagos" bajada="Solo para consultar">
+        <Tarjeta style={{ gap: 8 }}>
+          {membership && estado !== 'cancelada' ? (
             <>
-              <TextoFuerte>{ESTADO[estado] ?? 'Sin membresía'}</TextoFuerte>
-              <TextoChico>{estado === 'vencida' ? `Venció el ${fechaCorta(membership.renewalDate)}` : `Se renueva el ${fechaCorta(membership.renewalDate)}`}</TextoChico>
+              <TextoFuerte>{TEXTO_ESTADO_MEMBRESIA[estado]} · plan {TEXTO_PLAN[membership.plan].toLowerCase()}</TextoFuerte>
+              <TextoChico>
+                {estado === 'vencida' ? `Venció el ${fechaCorta(membership.renewalDate)}` : `Desde el ${fechaCorta(membership.startDate)} · se renueva el ${fechaCorta(membership.renewalDate)}`}
+              </TextoChico>
+              {estado === 'vencida' || estado === 'suspendida' ? <TextoChico>Seguís viendo toda la información de tus hijos.</TextoChico> : null}
             </>
           ) : <Texto color={colors.textMuted}>No tenés una membresía activa.</Texto>}
-          <TextoChico>Pagos y renovación: se suman más adelante. Si tenés dudas, escribime por PacienteX.</TextoChico>
+          {pagos.length > 0 ? <TextoFuerte>Tus pagos</TextoFuerte> : null}
+          {pagos.map((p) => (
+            <View key={p.id} style={s.fila}>
+              <View style={{ flex: 1 }}>
+                <Texto>{fechaCorta(p.date)}{p.concept ? ` · ${p.concept}` : ''}</Texto>
+                <TextoChico>{TEXTO_MEDIO[p.method]}</TextoChico>
+              </View>
+              <TextoFuerte>{dinero(p.amount, p.currency)}</TextoFuerte>
+            </View>
+          ))}
+          <TextoChico>Si algo no coincide o tenés dudas, escribime por PacienteX.</TextoChico>
         </Tarjeta>
       </Seccion>
     </Pantalla>

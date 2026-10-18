@@ -93,9 +93,15 @@ export function proyectarTurno(d: Datos | undefined): Datos | null {
 }
 
 /** Familia y membresía (para el saludo y el banner). */
-export function proyectarFamilia(familia: Datos | undefined, membresia: Datos | undefined): Datos {
+export function proyectarFamilia(familia: Datos | undefined, membresia: Datos | undefined, pagos: Datos[] = []): Datos {
   return {
     familyName: familia?.name ?? null,
+    // Sin las observaciones del Dr.
     membership: membresia && !membresia.archivedAt ? tomar(membresia, ['plan', 'status', 'startDate', 'renewalDate']) : null,
+    // Sus pagos confirmados, solo lectura (los "a confirmar" todavía no los revisó el Dr.).
+    payments: pagos
+      .filter((p) => !p.archivedAt && (p.status ?? 'confirmado') === 'confirmado')
+      .map((p) => tomar(p, ['date', 'amount', 'currency', 'method', 'concept']))
+      .sort((a, b) => String(b.date).localeCompare(String(a.date))),
   };
 }

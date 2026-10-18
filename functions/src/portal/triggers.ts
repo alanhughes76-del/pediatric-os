@@ -46,12 +46,19 @@ export const portalClinico = onDocumentWritten('organizations/{orgId}/clinical/{
 async function copiarFamilia(org: string, patientId: string, familyId: string | undefined) {
   if (!familyId) return guardarCopia(org, patientId, 'datos', 'familia', proyectarFamilia(undefined, undefined));
   const base = `organizations/${org}`;
-  const [familia, membresias] = await Promise.all([
+  const [familia, membresias, pagosFamilia] = await Promise.all([
     db().doc(`${base}/families/${familyId}`).get(),
     db().collection(`${base}/memberships`).where('familyId', '==', familyId).get(),
+    db().collection(`${base}/payments`).where('familyId', '==', familyId).get(),
   ]);
   const vigente = membresias.docs.map((m) => m.data()).filter((m) => !m.archivedAt).sort((a, b) => String(b.renewalDate).localeCompare(String(a.renewalDate)))[0];
-  await guardarCopia(org, patientId, 'datos', 'familia', proyectarFamilia(familia.data(), vigente));
+  // Los pagos viejos solo tienen la membresía: se suman los de sus membresías (sin repetir).
+  const idsMembresias = membresias.docs.map((m) => m.id);
+  const pagosViejos = idsMembresias.length
+    ? (await db().collection(`${base}/payments`).where('membershipId', 'in', idsMembresias.slice(0, 30)).get()).docs
+    : [];
+  const pagos = new Map([...pagosFamilia.docs, ...pagosViejos].map((p) => [p.id, p.data()]));
+  await guardarCopia(org, patientId, 'datos', 'familia', proyectarFamilia(familia.data(), vigente, [...pagos.values()]));
 }
 
 async function copiarFamiliaDe(org: string, familyId: string) {
@@ -82,6 +89,19 @@ export const portalTurno = onDocumentWritten('organizations/{orgId}/appointments
   const ahora = (despues?.patientIds ?? []) as string[];
   const copia = proyectarTurno(despues);
   for (const p of new Set([...antes, ...ahora])) await guardarCopia(orgId, p, 'turnos', id, ahora.includes(p) ? copia : null);
+});
+
+export const portalPago = onDocumentWritten('organizations/{orgId}/payments/{id}', async (event) => {
+  const { orgId } = event.params;
+  const ids = new Set<string>();
+  for (const d of [event.data?.before.data(), event.data?.after.data()]) {
+    if (typeof d?.familyId === 'string') ids.add(d.familyId);
+    else if (typeof d?.membershipId === 'string') {
+      const m = (await db().doc(`organizations/${orgId}/memberships/${d.membershipId}`).get()).data();
+      if (typeof m?.familyId === 'string') ids.add(m.familyId);
+    }
+  }
+  for (const f of ids) await copiarFamiliaDe(orgId, f);
 });
 
 /** Si cambia la verificación del calendario, se rehacen las copias de las vacunas pendientes. */

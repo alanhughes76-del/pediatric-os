@@ -179,3 +179,22 @@ describe('acciones de la familia', () => {
     expect(ev.data).toEqual({ guardianId: G, familyId: 'f-portal', campos: ['phone'] });
   });
 });
+
+describe('membresía y pagos en el portal', () => {
+  const db = () => getCliente(familia);
+  test('la familia ve su membresía sin observaciones y solo los pagos confirmados', async () => {
+    const firmaAdm = { organizationId: ORG, createdBy: 'medico-x', createdAt: '2026-10-17', updatedBy: 'medico-x', updatedAt: '2026-10-17' };
+    await fs.doc(`${base}/memberships/m-portal`).set({ ...firmaAdm, familyId: 'f-portal', plan: 'anual', status: 'activa', startDate: '2026-03-01', renewalDate: '2027-03-01', patientIds: [P], notes: 'NOTA PRIVADA' });
+    await fs.doc(`${base}/payments/pg-ok`).set({ ...firmaAdm, familyId: 'f-portal', membershipId: 'm-portal', date: '2026-03-01', amount: 2000, currency: 'USD', method: 'transferencia', concept: 'Membresía anual', status: 'confirmado' });
+    await fs.doc(`${base}/payments/pg-pend`).set({ ...firmaAdm, familyId: 'f-portal', date: '2026-10-16', amount: 150000, currency: 'ARS', method: 'transferencia', concept: 'PAGO SIN CONFIRMAR', status: 'a_confirmar' });
+    const copia = () => fs.doc(`${portal('datos')}/familia`).get().then((d) => d.data());
+    await esperar(async () => ((await copia())?.payments ?? []).length === 1 && (await copia())?.membership?.plan === 'anual');
+    const d = (await getDoc(doc(db(), `${portal('datos')}/familia`))).data()!;
+    expect(d.membership).toEqual({ plan: 'anual', status: 'activa', startDate: '2026-03-01', renewalDate: '2027-03-01' });
+    expect(d.payments).toEqual([{ date: '2026-03-01', amount: 2000, currency: 'USD', method: 'transferencia', concept: 'Membresía anual' }]);
+    expect(JSON.stringify(d)).not.toContain('NOTA PRIVADA');
+    expect(JSON.stringify(d)).not.toContain('SIN CONFIRMAR');
+    // Los originales siguen cerrados para la familia.
+    await expect(getDoc(doc(db(), `${base}/payments/pg-ok`))).rejects.toThrow();
+  });
+});
