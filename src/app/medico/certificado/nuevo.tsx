@@ -8,7 +8,7 @@ import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useApp } from '@/data/store';
 import { adultosDe, adultoPrincipal, nombreCompleto, paciente as buscarPaciente } from '@/data/selectores';
 import type { CertificateType } from '@/data/types';
-import { LUGAR_POR_DEFECTO, TIPOS_CERTIFICADO, lugarYFecha, textoCertificado, tipoCertificado } from '@/lib/certificados';
+import { LUGAR_POR_DEFECTO, TIPOS_CERTIFICADO, destinoDePlantilla, lugarYFecha, textoCertificado, textoDePlantilla, tipoCertificado } from '@/lib/certificados';
 import { edades } from '@/lib/edad';
 import { aCampos, ahoraISO, deFecha, hoyISO } from '@/lib/fechas';
 import { Pantalla } from '@/components/Pantalla';
@@ -26,9 +26,13 @@ export default function NuevoCertificado() {
   const principal = p ? adultoPrincipal(db, p.id) : undefined;
 
   const [tipo, setTipo] = useState<CertificateType>('aptitud-fisica');
-  const [texto, setTexto] = useState(() => (p ? tipoCertificado('aptitud-fisica').texto(p.sex) : ''));
-  const [destino, setDestino] = useState(tipoCertificado('aptitud-fisica').destino);
-  const [adulto, setAdulto] = useState(principal ? `${principal.guardian.firstName} ${principal.guardian.lastName}` : '');
+  // null = sin tocar: lo de la plantilla (también si los datos llegan después de abrir la pantalla).
+  const [textoEditado, setTexto] = useState<string | null>(null);
+  const [destinoEditado, setDestino] = useState<string | null>(null);
+  const [adultoEditado, setAdulto] = useState<string | null>(null);
+  const texto = textoEditado ?? (p ? textoDePlantilla(db.plantillas, tipo, p.sex) : '');
+  const destino = destinoEditado ?? destinoDePlantilla(db.plantillas, tipo);
+  const adulto = adultoEditado ?? (principal ? `${principal.guardian.firstName} ${principal.guardian.lastName}` : '');
   const [lugar, setLugar] = useState(LUGAR_POR_DEFECTO);
   const [fecha, setFecha] = useState(aCampos(ahoraISO()).fecha);
   const [confirmar, setConfirmar] = useState(false);
@@ -44,8 +48,8 @@ export default function NuevoCertificado() {
 
   const cambiarTipo = (t: CertificateType) => {
     setTipo(t);
-    setTexto(tipoCertificado(t).texto(p.sex));
-    setDestino(tipoCertificado(t).destino);
+    setTexto(null);
+    setDestino(null);
     setConfirmar(false);
   };
 

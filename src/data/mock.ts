@@ -8,6 +8,7 @@ import { enDias, hoyISO, sumarDias, sumarHoras } from '@/lib/fechas';
 import { pacientesExtra } from './mockPacientes';
 import { FIRMA, textoCertificado, tipoCertificado } from '@/lib/certificados';
 import { LINKS_INICIALES, PRECIOS_INICIALES } from './configuracion';
+import { TEXTO_AMBITO } from '@/lib/busqueda';
 import { normalizarTelefono } from '@shared/telefono';
 import { CONFIG_AGENDA_INICIAL, diaDe, type EstadoTurno } from '@shared/agenda';
 import { esquemaPara, type DosisDelEsquema } from '@shared/vacunas';
@@ -338,6 +339,8 @@ const base: Database = {
   vacunas: { calendarioVerificado: false },
   links: LINKS_INICIALES,
   precios: PRECIOS_INICIALES,
+  ambitos: TEXTO_AMBITO,
+  plantillas: {},
 
   auditLog: [
     { id: 'au-1', at: enDias(-2, '20:40'), actorId: 'g-lucia', action: 'login' },

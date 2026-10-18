@@ -113,6 +113,7 @@ async function main() {
   }));
   d.memberships.forEach((m) => agregar(o('memberships', m.id), { ...limpio(m), ...firma(m.createdBy, m.createdAt) }));
   d.payments.forEach((p) => agregar(o('payments', p.id), { ...limpio(p), ...firma(p.createdBy, p.createdAt) }));
+  d.communications.forEach((c) => agregar(o('communications', c.id), { ...limpio(c), ...firma(c.createdBy, c.createdAt) }));
 
   // Clínico, por paciente
   const clinico = <T extends { id: string; patientId: string; createdBy: string; createdAt: string }>(sub: string, xs: T[], extra?: (x: T) => Record<string, unknown>) =>

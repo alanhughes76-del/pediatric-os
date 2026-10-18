@@ -15,7 +15,6 @@ import { TEXTO_TIPO_TURNO, TEXTO_ESTADO_TURNO } from '@shared/agenda';
 import { GRUPOS_SANGUINEOS, type BloodType, type CoverageKind, type Patient, type Scope } from '@/data/types';
 import { edades, textoEG } from '@/lib/edad';
 import { cuandoEs, fechaCorta, hora } from '@/lib/fechas';
-import { TEXTO_AMBITO } from '@/lib/busqueda';
 import { Titulo, Texto, TextoFuerte, TextoChico } from '../Texto';
 import { Opciones } from '../Formulario';
 import { Tarjeta } from '../Tarjeta';
@@ -91,7 +90,7 @@ export function Encabezado({ paciente: p, acciones }: { paciente: Patient; accio
         {confirmadas.map((a) => <Etiqueta key={a.id} texto={`Alergia: ${a.allergen}`} tono="alerta" />)}
         {referidas.map((a) => <Etiqueta key={a.id} texto={`Alergia referida: ${a.allergen}`} tono="naranja" />)}
         {alergias.length === 0 ? <Etiqueta texto="Sin alergias cargadas" tono="verde" /> : null}
-        <Etiqueta texto={TEXTO_AMBITO[p.scope]} tono={TONO_AMBITO[p.scope]} />
+        <Etiqueta texto={db.ambitos[p.scope]} tono={TONO_AMBITO[p.scope]} />
       </View>
     </Tarjeta>
   );
@@ -118,7 +117,7 @@ export function BloqueDatos({ paciente: p }: { paciente: Patient }) {
         />
         <Opciones<Scope>
           etiqueta="Ámbito"
-          opciones={(Object.keys(TEXTO_AMBITO) as Scope[]).map((v) => ({ valor: v, texto: TEXTO_AMBITO[v] }))}
+          opciones={(Object.keys(db.ambitos) as Scope[]).map((v) => ({ valor: v, texto: db.ambitos[v] }))}
           valor={p.scope}
           onCambio={(v) => v !== p.scope && actualizar('patients', p.id, { scope: v }, 'paciente.ambito')}
         />

@@ -177,6 +177,9 @@ export interface Links {
   recetasUrl: string;
 }
 
+/** Texto y destino prearmados de cada tipo de certificado (settings/certificados). "{apto}" = apto/apta. */
+export type PlantillasCertificado = Partial<Record<Exclude<CertificateType, 'libre'>, { texto: string; destino: string }>>;
+
 /** Precios y condiciones (settings/precios). Los carga el Dr.; no van en el código. */
 export interface Precios {
   membresia: {
@@ -651,5 +654,9 @@ export interface Database {
   links: Links;
   /** settings/precios. */
   precios: Precios;
+  /** settings/ambitos: el nombre que el Dr. le da a cada ámbito. */
+  ambitos: Record<Scope, string>;
+  /** settings/certificados: lo que el Dr. cambió de los textos prearmados. */
+  plantillas: PlantillasCertificado;
   auditLog: AuditLog[];
 }

@@ -11,7 +11,7 @@ import { View } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useApp } from '@/data/store';
 import { GRUPOS_SANGUINEOS, type BloodType, type CoverageKind, type Scope, type Sex } from '@/data/types';
-import { buscarDuplicados, TEXTO_AMBITO } from '@/lib/busqueda';
+import { buscarDuplicados } from '@/lib/busqueda';
 import { TEXTO_COBERTURA } from '@/data/selectores';
 import { deFecha, diasEntre, hoyISO, fechaCorta } from '@/lib/fechas';
 import { Pantalla } from '@/components/Pantalla';
@@ -110,7 +110,7 @@ export default function NuevoPaciente() {
       ) : null}
       <Opciones
         etiqueta="Ámbito (opcional)"
-        opciones={(Object.keys(TEXTO_AMBITO) as Scope[]).map((v) => ({ valor: v, texto: TEXTO_AMBITO[v] }))}
+        opciones={(Object.keys(db.ambitos) as Scope[]).map((v) => ({ valor: v, texto: db.ambitos[v] }))}
         valor={ambito}
         onCambio={setAmbito}
       />

@@ -8,7 +8,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '@/data/store';
 import { fiebreDe, sinRevisar } from '@/data/selectores';
-import { SOLAPAS, TEXTO_AMBITO, contarPorSolapa, filtrarPacientes, type Solapa } from '@/lib/busqueda';
+import { SOLAPAS, contarPorSolapa, filtrarPacientes, type Solapa } from '@/lib/busqueda';
 import { edades } from '@/lib/edad';
 import { fechaCorta } from '@/lib/fechas';
 import { Pantalla } from '@/components/Pantalla';
@@ -68,7 +68,7 @@ export default function Pacientes() {
               accessibilityState={{ selected: activa }}
               style={[s.solapa, activa && s.solapaActiva]}
             >
-              <Text style={[s.solapaTexto, activa && { color: colors.white }]}>{x.texto}</Text>
+              <Text style={[s.solapaTexto, activa && { color: colors.white }]}>{x.clave === 'todos' ? x.texto : db.ambitos[x.clave]}</Text>
               <Text style={[s.solapaNumero, activa && { color: colors.bgSoft }]}>{conteo[x.clave]}</Text>
             </Pressable>
           );
@@ -94,7 +94,7 @@ export default function Pacientes() {
                 <TextoChico>{edades(p, undefined, 'abreviado').cronologica} · {fechaCorta(p.birthDate)}</TextoChico>
                 {solapa === 'todos' || fiebre > 0 ? (
                   <View style={s.etiquetas}>
-                    {solapa === 'todos' ? <Etiqueta texto={TEXTO_AMBITO[p.scope]} tono={TONO_AMBITO[p.scope]} /> : null}
+                    {solapa === 'todos' ? <Etiqueta texto={db.ambitos[p.scope]} tono={TONO_AMBITO[p.scope]} /> : null}
                     {fiebre > 0 ? <Etiqueta texto={`${fiebre} de fiebre sin revisar`} tono="azul" /> : null}
                   </View>
                 ) : null}

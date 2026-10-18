@@ -20,7 +20,7 @@ Estado al 17/10/2026, Etapa 1a. Las reglas están en `firestore.rules` y `storag
 | --- | --- | --- | --- |
 | `users/{uid}` | el propio usuario | S | Rol y organización los fija `asignarRol` o el acceso al portal |
 | `organizations/{orgId}` | M, A | S | — |
-| `…/settings/{doc}` (`links`: PacienteX, Cal.com y recetas; `precios`: membresía y visitas sueltas; `ia`; `vacunas`; `agenda`: horarios por día, duración por tipo, buffer y zonas) | M; A todo menos `ia`; F solo `links` | M | Firma. Los secretos no van acá: van en Secret Manager |
+| `…/settings/{doc}` (`links`: PacienteX, Cal.com y recetas; `precios`: membresía y visitas sueltas; `ia`; `vacunas`; `ambitos`: nombres de los ámbitos; `certificados`: plantillas; `agenda`: horarios por día, duración por tipo, buffer y zonas) | M; A todo menos `ia`; F solo `links` | M | Firma. Los secretos no van acá: van en Secret Manager |
 | `…/professionals/{id}` | M, A | M | Firma |
 | `…/consents/{id}` (portal, foto, grabación, IA) | M; F los suyos | M, o F los suyos | No se edita ni se borra: solo se revoca una vez (`revokedAt`) |
 
@@ -34,7 +34,7 @@ Estado al 17/10/2026, Etapa 1a. Las reglas están en `firestore.rules` y `storag
 | `…/relationships/{id}` (paciente ↔ adulto, tipo, principal, vigencia) | M, A | M, A | Se cierran con `validTo`, no se borran |
 | `…/patients/{id}` | M, A | Alta: S (control de duplicados, Etapa 2). Cambios: M, A | Firma |
 | `…/memberships/{id}` (`plan`, `status` activa/suspendida/cancelada, `startDate`, `renewalDate`, `patientIds`, `notes`), `…/payments/{id}` (`familyId`, `membershipId?`, `date`, `amount`, `currency`, `method`, `concept`, `status` confirmado/a_confirmar) | M, A | M, A (y S para los pagos de Telegram, Etapa 8) | Firma. Nunca se borran: se archivan. La familia ve su membresía (sin `notes`) y sus pagos confirmados en la copia `portal/{p}/datos/familia` |
-| `…/communications/{id}` | M, A | M, A, S | Firma. No guarda textos clínicos (la lee el asistente). Hoy la escribe `enviarResumenFamilia` al mandar un resumen |
+| `…/communications/{id}` (`kind`, `channel`, `direction`, `classification`, `at`, `subject`, `status`, `familyId`, `patientId`) | M, A | M, A, S | Firma. No guarda textos clínicos (la lee el asistente): solo un asunto breve. La escriben `enviarResumenFamilia` y el registro a mano; Make, desde la Etapa 8 |
 | `…/educationalMaterials/{id}` (título, PDF o enlace, edades en meses, temas) | M, A | M | Firma |
 | `…/materialDeliveries/{id}` | M | **Solo S** (`enviarMaterial`, que emite `material.enviado`) | — |
 

@@ -14,6 +14,8 @@ export interface ReporteMensual {
   /** "AAAA-MM" */
   mes: string;
   visitas: { total: number; porTipo: Record<VisitType, number>; porAmbito: Record<Scope, number> };
+  /** Nombres de los ámbitos (Configuración). */
+  ambitos: Record<Scope, string>;
   pacientesNuevos: Patient[];
   vacunas: { atrasadas: number; delMes: number; pacientes: number; calendarioVerificado: boolean };
   membresias: { activas: number; porRenovar: number; vencidas: number; suspendidas: number };
@@ -54,6 +56,7 @@ export function reporteMensual(db: Database, mes: string, hoy: string): ReporteM
   return {
     mes,
     visitas: { total: consultas.length, porTipo, porAmbito },
+    ambitos: db.ambitos,
     pacientesNuevos: activos.filter((p) => enMes(p.createdAt, mes)).sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     vacunas: { atrasadas: atrasadas.length, delMes: delMes.length, pacientes: new Set([...atrasadas, ...delMes].map((d) => d.patientId)).size, calendarioVerificado: db.vacunas.calendarioVerificado },
     membresias: { activas: cuenta.activa, porRenovar: cuenta['por-vencer'], vencidas: cuenta.vencida, suspendidas: cuenta.suspendida },
@@ -75,7 +78,7 @@ export function moverMes(mes: string, delta: number): string {
 export function filasReporte(r: ReporteMensual): [string, string, string][] {
   const filas: [string, string, string][] = [['Visitas', 'Total del mes', String(r.visitas.total)]];
   for (const [k, n] of Object.entries(r.visitas.porTipo)) if (n) filas.push(['Visitas por tipo', TEXTO_VISITA[k as VisitType] ?? k, String(n)]);
-  for (const [k, n] of Object.entries(r.visitas.porAmbito)) if (n) filas.push(['Visitas por ámbito', TEXTO_AMBITO[k as Scope] ?? k, String(n)]);
+  for (const [k, n] of Object.entries(r.visitas.porAmbito)) if (n) filas.push(['Visitas por ámbito', r.ambitos[k as Scope] ?? k, String(n)]);
   filas.push(['Pacientes nuevos', 'Cantidad', String(r.pacientesNuevos.length)]);
   filas.push(['Vacunas pendientes', 'Dosis atrasadas', String(r.vacunas.atrasadas)]);
   filas.push(['Vacunas pendientes', 'Dosis que vencen en el mes', String(r.vacunas.delMes)]);

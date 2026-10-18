@@ -14,12 +14,16 @@ import { Profesional } from '@/components/configuracion/Profesional';
 import { Agenda } from '@/components/configuracion/Agenda';
 import { Precios } from '@/components/configuracion/Precios';
 import { Links } from '@/components/configuracion/Links';
+import { Ambitos } from '@/components/configuracion/Ambitos';
+import { Certificados } from '@/components/configuracion/Certificados';
 
 const SECCIONES = [
   { valor: 'profesional', texto: 'Profesional' },
   { valor: 'agenda', texto: 'Agenda' },
   { valor: 'precios', texto: 'Membresía y precios' },
   { valor: 'links', texto: 'Links' },
+  { valor: 'ambitos', texto: 'Ámbitos' },
+  { valor: 'certificados', texto: 'Certificados' },
   { valor: 'clinica', texto: 'Vacunas y biblioteca' },
   { valor: 'mas', texto: 'IA y más' },
 ] as const;
@@ -50,6 +54,12 @@ export default function Configuracion() {
       {seccion === 'links' ? (
         <Caja key="links" titulo="Links" icono="link-outline" color="celeste" ancha><Links /></Caja>
       ) : null}
+      {seccion === 'ambitos' ? (
+        <Caja key="ambitos" titulo="Ámbitos de atención" icono="business-outline" color="celeste" ancha><Ambitos /></Caja>
+      ) : null}
+      {seccion === 'certificados' ? (
+        <Caja key="certificados" titulo="Plantillas de certificados" icono="ribbon-outline" color="celeste" ancha><Certificados /></Caja>
+      ) : null}
       {seccion === 'clinica' ? (
         <>
           <Caja titulo="Calendario de vacunas" icono="shield-checkmark-outline" color="rosado" ancha>
@@ -70,7 +80,6 @@ export default function Configuracion() {
             <Texto>La IA todavía no está conectada: se conecta en la Etapa 9, después de que revises el consentimiento para usar IA con datos de salud. Hasta entonces queda apagada.</Texto>
           </Caja>
           <Caja titulo="Todavía no se configuran acá" icono="construct-outline" color="celeste" ancha>
-            <TextoChico>Ámbitos de atención y plantillas de certificados: Etapa 7b.</TextoChico>
             <TextoChico>Automatizaciones (webhook de Make, secreto de firma y eventos): Etapa 8. El secreto se guarda en el servidor, nunca en la app.</TextoChico>
           </Caja>
         </>

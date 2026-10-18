@@ -82,6 +82,8 @@ export function vistaFamilia(db: Database, guardianId: ID): Database {
     vacunas: db.vacunas,
     links: db.links,
     precios: db.precios,
+    ambitos: db.ambitos,
+    plantillas: {},
     auditLog: [],
   };
 }

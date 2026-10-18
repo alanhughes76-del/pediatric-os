@@ -7,7 +7,7 @@
  * Luego lugar y fecha ("Buenos Aires, 16 de octubre de 2026") y la firma.
  * El género (apto/apta) sale del sexo del paciente; con sexo X, redacción neutra.
  */
-import type { CertificateType, Sex } from '@/data/types';
+import type { CertificateType, PlantillasCertificado, Sex } from '@/data/types';
 import { fechaLarga } from './fechas';
 
 export const FIRMA = 'Dr. Alan Hughes · Médico Pediatra · MN 111.725 · MP 448.970';
@@ -89,4 +89,29 @@ export function textoCertificado(d: DatosCertificado): string {
 /** "Buenos Aires, 16 de octubre de 2026" */
 export function lugarYFecha(lugar: string, fechaISO: string): string {
   return `${lugar.trim() || LUGAR_POR_DEFECTO}, ${fechaLarga(fechaISO)}`;
+}
+
+export type TipoConPlantilla = Exclude<CertificateType, 'libre'>;
+export const TIPOS_CON_PLANTILLA: TipoConPlantilla[] = ['aptitud-fisica', 'control-salud', 'buena-salud', 'constancia-atencion'];
+
+/** El texto prearmado como plantilla editable: "{apto}" va donde cambia apto/apta. */
+export function plantillaInicial(tipo: TipoConPlantilla): { texto: string; destino: string } {
+  const t = tipoCertificado(tipo);
+  const texto = tipo === 'aptitud-fisica' ? t.texto('M').replace(' apto ', ' {apto} ') : t.texto('M');
+  return { texto, destino: t.destino };
+}
+
+/**
+ * Texto para un certificado nuevo: el que guardó el Dr. o el prearmado. Con sexo X, "{apto}" queda
+ * "en condiciones" (el prearmado tiene su propia redacción neutra).
+ */
+export function textoDePlantilla(plantillas: PlantillasCertificado, tipo: CertificateType, sexo: Sex): string {
+  const guardada = tipo === 'libre' ? undefined : plantillas[tipo];
+  if (!guardada?.texto.trim()) return tipoCertificado(tipo).texto(sexo);
+  return guardada.texto.trim().replace(/\{apto\}/g, sexo === 'F' ? 'apta' : sexo === 'M' ? 'apto' : 'en condiciones');
+}
+
+export function destinoDePlantilla(plantillas: PlantillasCertificado, tipo: CertificateType): string {
+  const guardada = tipo === 'libre' ? undefined : plantillas[tipo];
+  return guardada ? guardada.destino : tipoCertificado(tipo).destino;
 }

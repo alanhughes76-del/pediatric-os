@@ -21,7 +21,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { mostrarBytes, nombreSeguro, problemaDelArchivo, tipoPorNombre } from '@/lib/archivos';
 import { FirebaseError } from 'firebase/app';
 import type { AppState, ResultadoTurno, Sesion, Tabla } from '../contrato';
-import type { Address, AppNotification, Appointment, AppointmentChange, AuditLog, Communication, Database, Guardian, MaterialDelivery } from '../types';
+import type { Address, AppNotification, Appointment, AppointmentChange, AuditLog, Communication, Database, Guardian, MaterialDelivery, PlantillasCertificado } from '../types';
 import { armarVistaFamilia, type CopiasPaciente } from './portalFamilia';
 import { CONFIG_AGENDA_INICIAL } from '@shared/agenda';
 import { firebase } from './config';
@@ -29,6 +29,7 @@ import { ADMINISTRATIVAS, CLINICAS, aFirestore, coleccion, desdeFirestore, difer
 import { ahoraISO } from '@/lib/fechas';
 import { FIRMA } from '@/lib/certificados';
 import { conLinks, conPrecios, LINKS_INICIALES, PRECIOS_INICIALES } from '../configuracion';
+import { TEXTO_AMBITO } from '@/lib/busqueda';
 
 /** Copias del portal que lee la familia, por chico (ver functions/src/portal/proyeccion.ts). */
 const SUBS_PORTAL = ['datos', 'summaries', 'allergies', 'problems', 'plan', 'growth', 'vaccines', 'certificates', 'fever', 'turnos'];
@@ -41,7 +42,7 @@ const VACIA: Database = {
   families: [], guardians: [], relationships: [], addresses: [], patients: [], memberships: [], payments: [],
   backgrounds: [], problems: [], allergies: [], consultations: [], measurements: [], milestoneChecks: [], notes: [], followUps: [],
   carePlan: [], vaccineDoses: [], medications: [], prescriptions: [], studies: [], fever: [], certificates: [], documents: [], appointments: [], appointmentHistory: [], blocks: [], communications: [], educationalMaterials: [], materialDeliveries: [], notifications: [],
-  agenda: CONFIG_AGENDA_INICIAL, ia: { enabled: false }, vacunas: { calendarioVerificado: false }, links: LINKS_INICIALES, precios: PRECIOS_INICIALES, auditLog: [],
+  agenda: CONFIG_AGENDA_INICIAL, ia: { enabled: false }, vacunas: { calendarioVerificado: false }, links: LINKS_INICIALES, precios: PRECIOS_INICIALES, ambitos: TEXTO_AMBITO, plantillas: {}, auditLog: [],
 };
 
 /** Mensajes que se entienden, sin códigos técnicos. */
@@ -171,6 +172,12 @@ export function useFuenteFirebase(): AppState {
     subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/links`), (snap) => {
       setDatos((d) => ({ ...d, links: conLinks(snap.data()) }));
     }, fallo));
+    subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/ambitos`), (snap) => {
+      setDatos((d) => ({ ...d, ambitos: { ...TEXTO_AMBITO, ...((snap.data()?.nombres ?? {}) as Record<string, string>) } }));
+    }, fallo));
+    subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/certificados`), (snap) => {
+      setDatos((d) => ({ ...d, plantillas: (snap.data()?.plantillas ?? {}) as PlantillasCertificado }));
+    }, fallo));
     subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/precios`), (snap) => {
       setDatos((d) => ({ ...d, precios: conPrecios(snap.data()) }));
     }, fallo));
@@ -271,15 +278,11 @@ export function useFuenteFirebase(): AppState {
         const ahora = ahoraISO();
         const datosCalendario = { calendarioVerificado: verificado, verifiedAt: verificado ? ahora : deleteField(), verifiedBy: verificado ? uid : deleteField(), updatedBy: uid, updatedAt: ahora };
         try {
-          await updateDoc(ref, datosCalendario);
+          // Actualizar uno inexistente lo rechazan las reglas: si no existe, se crea con la firma completa.
+          if ((await getDoc(ref)).exists()) await updateDoc(ref, datosCalendario);
+          else await setDoc(ref, { calendarioVerificado: verificado, ...(verificado ? { verifiedAt: ahora, verifiedBy: uid } : {}), organizationId: org, createdBy: uid, createdAt: ahora, updatedBy: uid, updatedAt: ahora });
           return null;
-        } catch (e) {
-          if (!(e instanceof FirebaseError && e.code === 'not-found')) return mensajeDeError(e);
-          try {
-            await setDoc(ref, { calendarioVerificado: verificado, ...(verificado ? { verifiedAt: ahora, verifiedBy: uid } : {}), organizationId: org, createdBy: uid, createdAt: ahora, updatedBy: uid, updatedAt: ahora });
-            return null;
-          } catch (e2) { return mensajeDeError(e2); }
-        }
+        } catch (e) { return mensajeDeError(e); }
       },
       registrarComunicacion: async (datos) => {
         if (!datos.subject.trim()) return 'Escribí el asunto (breve, sin datos clínicos).';
@@ -294,18 +297,16 @@ export function useFuenteFirebase(): AppState {
         const ref = ajuste.clave === 'profesional' ? doc(fs, `organizations/${org}/professionals/${uid}`) : doc(fs, `organizations/${org}/settings/${ajuste.clave}`);
         const datosAjuste = ajuste.clave === 'profesional'
           ? { name: ajuste.datos.name, signature: ajuste.datos.signature, mn: ajuste.datos.mn ?? '', mp: ajuste.datos.mp ?? '' }
-          : { ...ajuste.datos };
+          : ajuste.clave === 'ambitos' ? { nombres: ajuste.datos }
+            : ajuste.clave === 'certificados' ? { plantillas: ajuste.datos }
+              : { ...ajuste.datos };
         const ahora = ahoraISO();
         try {
-          await updateDoc(ref, { ...datosAjuste, updatedBy: uid, updatedAt: ahora });
+          // Si todavía no existe se crea con la firma completa (actualizar uno inexistente lo rechazan las reglas).
+          if ((await getDoc(ref)).exists()) await updateDoc(ref, { ...datosAjuste, updatedBy: uid, updatedAt: ahora });
+          else await setDoc(ref, { ...datosAjuste, organizationId: org, createdBy: uid, createdAt: ahora, updatedBy: uid, updatedAt: ahora });
           return null;
-        } catch (e) {
-          if (!(e instanceof FirebaseError && e.code === 'not-found')) return mensajeDeError(e);
-          try {
-            await setDoc(ref, { ...datosAjuste, organizationId: org, createdBy: uid, createdAt: ahora, updatedBy: uid, updatedAt: ahora });
-            return null;
-          } catch (e2) { return mensajeDeError(e2); }
-        }
+        } catch (e) { return mensajeDeError(e); }
       },
       enviarResumen: ({ nota, asunto, texto }) => llamar('enviarResumenFamilia', { patientId: nota.patientId, noteId: nota.id, asunto, texto }),
 

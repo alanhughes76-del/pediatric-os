@@ -2,7 +2,7 @@
  * Lo que la app pide a la capa de datos, sea la demostración en memoria o Firebase.
  * Las pantallas solo usan `useApp()` (store.tsx): no saben de dónde vienen los datos.
  */
-import type { Appointment, AuditLog, Certificate, Communication, ClinicalNote, Consultation, Database, Doctor, Document, DocumentKind, EducationalMaterial, Guardian, Links, Patient, Precios } from './types';
+import type { Appointment, AuditLog, Certificate, Communication, ClinicalNote, Consultation, Database, Doctor, Document, DocumentKind, EducationalMaterial, Guardian, Links, Patient, PlantillasCertificado, Precios, Scope } from './types';
 import type { ArchivoElegido } from '@/lib/archivos';
 import type { AccionTurno, Aviso, ConfigAgenda } from '@shared/agenda';
 import type { Fuente } from './fuente';
@@ -15,7 +15,7 @@ export type Sesion =
  * Tablas que la app escribe fila por fila (todas menos `doctor`, la configuración de la agenda,
  * la auditoría y los turnos con su historial, que pasan por `operaciones`).
  */
-export type Tabla = Exclude<keyof Database, 'doctor' | 'agenda' | 'ia' | 'vacunas' | 'links' | 'precios' | 'auditLog' | 'communications' | 'materialDeliveries' | 'notifications' | 'appointments' | 'appointmentHistory'>;
+export type Tabla = Exclude<keyof Database, 'doctor' | 'agenda' | 'ia' | 'vacunas' | 'links' | 'precios' | 'ambitos' | 'plantillas' | 'auditLog' | 'communications' | 'materialDeliveries' | 'notifications' | 'appointments' | 'appointmentHistory'>;
 export type Fila<T extends Tabla> = Database[T][number];
 
 export interface CamposNota {
@@ -97,7 +97,9 @@ export type Ajuste =
   | { clave: 'agenda'; datos: ConfigAgenda }
   | { clave: 'links'; datos: Links }
   | { clave: 'precios'; datos: Precios }
-  | { clave: 'profesional'; datos: DatosProfesional };
+  | { clave: 'profesional'; datos: DatosProfesional }
+  | { clave: 'ambitos'; datos: Record<Scope, string> }
+  | { clave: 'certificados'; datos: PlantillasCertificado };
 
 export interface PedidoVisita {
   patientIds: string[];

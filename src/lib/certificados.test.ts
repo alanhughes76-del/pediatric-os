@@ -1,4 +1,4 @@
-import { textoCertificado, tipoCertificado, lugarYFecha, TIPOS_CERTIFICADO } from './certificados';
+import { textoCertificado, tipoCertificado, lugarYFecha, TIPOS_CERTIFICADO, plantillaInicial, textoDePlantilla, destinoDePlantilla } from './certificados';
 
 const base = { nombre: 'Tomás Ruiz Ferreyra', edad: '3 años y 5 meses', adulto: 'Lucía Ferreyra', destino: 'el colegio' };
 
@@ -43,4 +43,26 @@ test('constancia de atención: redacción neutra, igual para cualquier sexo', ()
   expect(t.titulo).toBe('Constancia de atención');
   expect(t.texto('M')).toBe(t.texto('F'));
   expect(t.texto('X')).toBe('recibió atención pediátrica en el día de la fecha');
+});
+
+describe('plantillas de certificados (Configuración)', () => {
+  test('sin cambios, el texto prearmado de siempre (con su redacción neutra)', () => {
+    expect(textoDePlantilla({}, 'aptitud-fisica', 'F')).toBe(tipoCertificado('aptitud-fisica').texto('F'));
+    expect(textoDePlantilla({}, 'aptitud-fisica', 'X')).toBe(tipoCertificado('aptitud-fisica').texto('X'));
+    expect(destinoDePlantilla({}, 'control-salud')).toBe('la prepaga');
+  });
+
+  test('la plantilla inicial marca dónde va apto/apta', () => {
+    expect(plantillaInicial('aptitud-fisica').texto).toContain('{apto}');
+    expect(plantillaInicial('control-salud').texto).not.toContain('{apto}');
+  });
+
+  test('lo que guardó el Dr., con apto/apta según el sexo', () => {
+    const p = { 'aptitud-fisica': { texto: 'está {apto} para natación', destino: 'el club' } };
+    expect(textoDePlantilla(p, 'aptitud-fisica', 'F')).toBe('está apta para natación');
+    expect(textoDePlantilla(p, 'aptitud-fisica', 'M')).toBe('está apto para natación');
+    expect(textoDePlantilla(p, 'aptitud-fisica', 'X')).toBe('está en condiciones para natación');
+    expect(destinoDePlantilla(p, 'aptitud-fisica')).toBe('el club');
+    expect(textoDePlantilla(p, 'libre', 'F')).toBe('');
+  });
 });
