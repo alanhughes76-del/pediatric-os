@@ -26,11 +26,11 @@ Funcionan en la web y en el celular (Expo Go), sobre los emuladores y con los da
 - **Gestión:** Configuración, membresías y pagos, comunicaciones (registro), reportes (CSV y PDF), nombres de los ámbitos, plantillas de certificados.
 - **Automatizaciones:** eventos firmados hacia Make con reintentos, avisos programados, entrada desde Make (formulario web, Tally, Plaud, pago por Telegram, mensajería), endpoint de Cal.com.
 - **IA Asistente:** cinco acciones en el servidor, datos mínimos sin identificar, registro de cada uso; apagada hasta que la enciendas.
+- **Equipo:** segundo factor del médico (app de autenticación), sesión guardada en el celular y usuario asistente (agenda, turnos, familias, membresías y pagos; nunca datos clínicos).
 - **Calidad:** auditoría de cada cambio; nada clínico se borra; 373 tests de la app, 72 de las Functions, 83 de reglas y 55 de integración.
 
 ## Pendientes (dentro del alcance)
 
-- **Asistente:** el rol existe y las reglas lo contemplan, pero todavía no tiene pantallas (al entrar, la app le dice que llega más adelante).
 - **Foto del paciente:** todavía no se puede cargar.
 - **Sumar un adulto desde la pantalla de la familia:** hoy se suma desde cada hijo.
 - **Precio semestral:** sin descuento por hijo adicional, porque no lo definiste.

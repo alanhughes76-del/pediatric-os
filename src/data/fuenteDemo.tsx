@@ -5,6 +5,7 @@
  */
 import { useCallback, useMemo, useState } from 'react';
 import { datosDeEjemplo, DOCTOR_ID } from './mock';
+import { vistaAsistente } from '@/navegacion/permisos';
 import type { AuditLog, Certificate, ClinicalNote, Communication, Database, Document, EducationalMaterial, FollowUp, MaterialDelivery } from './types';
 import type { AppState, Sesion } from './contrato';
 import { vistaFamilia } from './vistaFamilia';
@@ -32,6 +33,9 @@ async function abrirMaterialDemo(m: EducationalMaterial): Promise<string | null>
 
 let contador = 0;
 export const nuevoId = (prefijo: string) => `${prefijo}-${Date.now().toString(36)}-${(contador++).toString(36)}`;
+
+/** Asistente de ejemplo (en la demostración no hay usuarios de verdad). */
+const ASISTENTE_ID = 'asistente-demo';
 
 const SEGURIDAD_DEMO = {
   noDisponible: 'En el modo demostración no hay ingreso con contraseña, así que tampoco segundo factor.',
@@ -339,7 +343,8 @@ export function useFuenteDemo(): AppState {
 
   // Con sesión de familia, las pantallas solo reciben la vista filtrada.
   const guardianId = sesion?.rol === 'familia' ? sesion.guardian.id : null;
-  const dbVisible = useMemo(() => (guardianId ? vistaFamilia(db, guardianId) : db), [db, guardianId]);
+  const esAsistente = sesion?.rol === 'asistente';
+  const dbVisible = useMemo(() => (guardianId ? vistaFamilia(db, guardianId) : esAsistente ? vistaAsistente(db) : db), [db, guardianId, esAsistente]);
 
   return useMemo<AppState>(() => ({
     fuente: 'demo',
@@ -355,6 +360,7 @@ export function useFuenteDemo(): AppState {
     cancelarSegundoFactor: () => {},
     seguridad: SEGURIDAD_DEMO,
     entrarComoMedico: () => setSesion({ rol: 'medico', usuarioId: DOCTOR_ID }),
+    entrarComoAsistente: () => setSesion({ rol: 'asistente', usuarioId: ASISTENTE_ID }),
     entrarComoAdulto: (id) => {
       const guardian = db.guardians.find((g) => g.id === id);
       if (!guardian?.accessEnabled) return;

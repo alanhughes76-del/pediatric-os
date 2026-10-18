@@ -203,7 +203,7 @@ export function FormularioTurno({ inicial, conHorario, conConfirmar, textoGuarda
       ) : null}
 
       <Campo etiqueta="Motivo general" value={reason} onChangeText={setReason} maxLength={200} placeholder="Control, fiebre, vacunas…" ayuda="Solo lo necesario para organizar la visita. Lo clínico va en la consulta." />
-      <Campo etiqueta="Notas operativas" value={opsNotes} onChangeText={setOpsNotes} maxLength={1000} multiline placeholder="Timbre, estacionamiento, quién recibe…" ayuda="Solo las ven vos y el asistente. La familia no." />
+      <Campo etiqueta="Notas operativas" value={opsNotes} onChangeText={setOpsNotes} maxLength={1000} multiline placeholder="Timbre, estacionamiento, quién recibe…" ayuda="Solo las ve el equipo (el Dr. y el asistente). La familia no." />
 
       {conConfirmar ? <Interruptor texto={confirmar ? 'Queda confirmado' : 'Queda pendiente de confirmación'} activo={confirmar} onCambio={setConfirmar} /> : null}
       {/* Un error del propio formulario reemplaza a la respuesta anterior del servidor. */}

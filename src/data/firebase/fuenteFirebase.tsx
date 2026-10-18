@@ -32,6 +32,7 @@ import { ahoraISO } from '@/lib/fechas';
 import { FIRMA } from '@/lib/certificados';
 import { conLinks, conPrecios, LINKS_INICIALES, PRECIOS_INICIALES } from '../configuracion';
 import { TEXTO_AMBITO } from '@/lib/busqueda';
+import { vistaAsistente } from '@/navegacion/permisos';
 
 /** Copias del portal que lee la familia, por chico (ver functions/src/portal/proyeccion.ts). */
 const SUBS_PORTAL = ['datos', 'summaries', 'allergies', 'problems', 'plan', 'growth', 'vaccines', 'certificates', 'fever', 'turnos'];
@@ -104,10 +105,13 @@ export function useFuenteFirebase(): AppState {
         await signOut(auth);
         setError('Tu acceso al portal no está habilitado. Escribile al Dr. por PacienteX.');
       }
+    } else if (claims.rol === 'asistente' && orgId) {
+      // Asistente: agenda, turnos, familias, membresías y pagos (las reglas le cierran lo clínico).
+      setSesion({ rol: 'asistente', usuarioId: u.uid });
+      setOrg(orgId);
     } else {
-      // El asistente todavía no tiene pantallas.
       await signOut(auth);
-      setError('El acceso del asistente llega más adelante.');
+      setError('Tu usuario todavía no tiene un rol asignado. Pedíselo al Dr.');
     }
     setListo(true);
   }), [auth, fs]);
@@ -144,9 +148,12 @@ export function useFuenteFirebase(): AppState {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fs, auth, org, esFamilia, acceso?.guardianId, idsFamilia, uid]);
 
-  // Médico: suscripciones en vivo a los datos de la organización.
+  // Equipo: suscripciones en vivo a los datos de la organización. Lo clínico, la trazabilidad y lo
+  // que entra desde Make (salvo los interesados) solo para el médico: el asistente no los pide.
+  const rolEquipo = sesion?.rol === 'medico' || sesion?.rol === 'asistente' ? sesion.rol : null;
   useEffect(() => {
-    if (!org || sesion?.rol !== 'medico') return;
+    if (!org || !rolEquipo) return;
+    const medico = rolEquipo === 'medico';
     const subs: Unsubscribe[] = [];
     const poner = (tabla: Tabla) => (snap: { docs: { id: string; data: () => Record<string, unknown> }[] }) =>
       setDatos((d) => ({ ...d, [tabla]: snap.docs.map((x) => desdeFirestore(tabla, x.id, x.data())) }));
@@ -157,7 +164,7 @@ export function useFuenteFirebase(): AppState {
     }
     // Lo clínico y los domicilios, de todos los pacientes y adultos (por grupo de colecciones).
     // Las copias del portal (Etapa 6) no llevan organizationId, así que no se mezclan acá.
-    for (const tabla of ['addresses', ...Object.keys(CLINICAS)] as Tabla[]) {
+    for (const tabla of ['addresses', ...(medico ? Object.keys(CLINICAS) : [])] as Tabla[]) {
       subs.push(onSnapshot(query(collectionGroup(fs, coleccion(tabla)), where('organizationId', '==', org)), poner(tabla), fallo));
     }
     // Agenda: los turnos y su historial los escribe solo el servidor; acá se leen.
@@ -171,7 +178,7 @@ export function useFuenteFirebase(): AppState {
       const a = snap.data() ?? {};
       setDatos((d) => ({ ...d, agenda: { ...CONFIG_AGENDA_INICIAL, ...a, duracionMin: { ...CONFIG_AGENDA_INICIAL.duracionMin, ...(a.duracionMin ?? {}) } } }));
     }, fallo));
-    subs.push(onSnapshot(collection(fs, `organizations/${org}/materialDeliveries`), (snap) => {
+    if (medico) subs.push(onSnapshot(collection(fs, `organizations/${org}/materialDeliveries`), (snap) => {
       setDatos((d) => ({ ...d, materialDeliveries: snap.docs.map((x) => ({ id: x.id, ...x.data() }) as MaterialDelivery) }));
     }, fallo));
     subs.push(onSnapshot(collection(fs, `organizations/${org}/communications`), (snap) => {
@@ -190,7 +197,7 @@ export function useFuenteFirebase(): AppState {
       setDatos((d) => ({ ...d, plantillas: (snap.data()?.plantillas ?? {}) as PlantillasCertificado }));
     }, fallo));
     // Lo que entra desde Make (Etapa 8b): interesados, formularios, triage y transcripciones de Plaud.
-    for (const coleccion of ['interesados', 'admisiones', 'triage', 'transcripciones'] as const) {
+    for (const coleccion of medico ? ['interesados', 'admisiones', 'triage', 'transcripciones'] as const : ['interesados'] as const) {
       subs.push(onSnapshot(collection(fs, `organizations/${org}/${coleccion}`), (snap) => {
         setDatos((d) => ({ ...d, [coleccion]: snap.docs.map((x) => ({ id: x.id, ...x.data() })) }));
       }, fallo));
@@ -199,24 +206,24 @@ export function useFuenteFirebase(): AppState {
       const a = snap.data()?.apagados;
       setDatos((d) => ({ ...d, automatizaciones: { apagados: Array.isArray(a) ? a.filter((x): x is string => typeof x === 'string') : [] } }));
     }, fallo));
-    subs.push(onSnapshot(query(collection(fs, `organizations/${org}/outbox`), orderBy('createdAt', 'desc'), limit(100)), (snap) => {
+    if (medico) subs.push(onSnapshot(query(collection(fs, `organizations/${org}/outbox`), orderBy('createdAt', 'desc'), limit(100)), (snap) => {
       setDatos((d) => ({ ...d, outbox: snap.docs.map((x) => ({ id: x.id, type: String(x.data().type), status: x.data().status, createdAt: String(x.data().createdAt ?? ''), attempts: x.data().attempts, lastError: x.data().lastError ?? null })) }));
     }, fallo));
     subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/precios`), (snap) => {
       setDatos((d) => ({ ...d, precios: conPrecios(snap.data()) }));
     }, fallo));
-    subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/ia`), (snap) => {
+    if (medico) subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/ia`), (snap) => {
       const ia = snap.data();
       setDatos((d) => ({ ...d, ia: { enabled: ia?.enabled === true, consentimientoRevisadoAt: typeof ia?.consentimientoRevisadoAt === 'string' ? ia.consentimientoRevisadoAt : undefined } }));
     }, fallo));
-    subs.push(onSnapshot(query(collection(fs, `organizations/${org}/aiInteractions`), orderBy('createdAt', 'desc'), limit(50)), (snap) => {
+    if (medico) subs.push(onSnapshot(query(collection(fs, `organizations/${org}/aiInteractions`), orderBy('createdAt', 'desc'), limit(50)), (snap) => {
       setDatos((d) => ({ ...d, aiInteractions: snap.docs.map((x) => ({ id: x.id, ...x.data() }) as InteraccionIA) }));
     }, fallo));
     // Avisos de la campana para el Dr. (por ejemplo, una familia cambió su contacto) y registro de accesos.
     subs.push(onSnapshot(query(collection(fs, `organizations/${org}/notifications`), where('recipientUid', '==', uid), where('readAt', '==', null)), (snap) => {
       setDatos((d) => ({ ...d, notifications: snap.docs.map((x) => ({ id: x.id, ...x.data() }) as AppNotification) }));
     }, fallo));
-    subs.push(onSnapshot(query(collection(fs, `organizations/${org}/auditLog`), where('action', '==', 'login')), (snap) => {
+    if (medico) subs.push(onSnapshot(query(collection(fs, `organizations/${org}/auditLog`), where('action', '==', 'login')), (snap) => {
       setDatos((d) => ({ ...d, auditLog: snap.docs.map((x) => ({ id: x.id, ...x.data() }) as AuditLog) }));
     }, fallo));
     subs.push(onSnapshot(collection(fs, `organizations/${org}/professionals`), (snap) => {
@@ -225,7 +232,7 @@ export function useFuenteFirebase(): AppState {
       if (x) setDatos((d) => ({ ...d, doctor: { id: uid, name: String(x.name ?? d.doctor.name), email: '', signature: String(x.signature ?? FIRMA), mn: x.mn ? String(x.mn) : undefined, mp: x.mp ? String(x.mp) : undefined } }));
     }, fallo));
     return () => subs.forEach((u) => u());
-  }, [fs, org, uid, sesion?.rol]);
+  }, [fs, org, uid, rolEquipo]);
 
   const fallo = useCallback((e: unknown) => setError(mensajeDeError(e)), []);
   const firmaNueva = useCallback(() => {
@@ -443,7 +450,7 @@ export function useFuenteFirebase(): AppState {
   return useMemo<AppState>(() => ({
     fuente: 'firebase',
     listo,
-    db: vistaDeFamilia ?? datos,
+    db: vistaDeFamilia ?? (sesion?.rol === 'asistente' ? vistaAsistente(datos) : datos),
     sesion,
     usuarioId: uid,
     error,
@@ -492,6 +499,7 @@ export function useFuenteFirebase(): AppState {
       },
     },
     entrarComoMedico: () => {},
+    entrarComoAsistente: () => {},
     entrarComoAdulto: () => {},
     pedirEnlaceEmail: async (email) => {
       try {

@@ -30,10 +30,17 @@ import { EtiquetaEstado, TarjetaTurno } from '@/components/agenda/piezas';
 import { useAbrirConsulta } from '@/components/agenda/abrirConsulta';
 import { useEscritorio } from '@/components/escritorio/Marco';
 import { categorias, colors, fonts, type Categoria } from '@/theme';
+import { useRolEquipo } from '@/navegacion/useRolEquipo';
+import { InicioAsistente } from '@/components/InicioAsistente';
 
 type NombreIcono = keyof typeof Ionicons.glyphMap;
 
-export default function Hoy() {
+/** El asistente tiene su propio Inicio, sin nada clínico. */
+export default function Inicio() {
+  return useRolEquipo() === 'asistente' ? <InicioAsistente /> : <Hoy />;
+}
+
+function Hoy() {
   const { db } = useApp();
   const escritorio = useEscritorio();
   const hoy = diaDe(ahoraISO());

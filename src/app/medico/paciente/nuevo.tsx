@@ -23,6 +23,8 @@ import { Boton } from '@/components/Boton';
 import { ErrorComprensible } from '@/components/Estados';
 import { Tarjeta } from '@/components/Tarjeta';
 import { TextoFuerte, TextoChico } from '@/components/Texto';
+import { useRolEquipo } from '@/navegacion/useRolEquipo';
+import { rutaDelPaciente } from '@/navegacion/permisos';
 
 const SEXOS: { valor: Sex; texto: string }[] = [
   { valor: 'M', texto: 'M' },
@@ -41,6 +43,7 @@ interface Vinculo { incluir: boolean; tipo?: RelationshipType; detalle: string }
 const COBERTURAS = (Object.keys(TEXTO_COBERTURA) as CoverageKind[]).map((v) => ({ valor: v, texto: TEXTO_COBERTURA[v] }));
 
 export default function NuevoPaciente() {
+  const rol = useRolEquipo();
   const { familia: familiaId } = useLocalSearchParams<{ familia?: string }>();
   const { db, operaciones, agregar } = useApp();
   const [guardando, setGuardando] = useState(false);
@@ -111,7 +114,7 @@ export default function NuevoPaciente() {
           isPrimary: g.id === principal, validFrom: hoyISO(),
         }, 'vinculo.crear');
       }
-      return router.replace(`/medico/hijo/${r.id}`);
+      return router.replace(rutaDelPaciente(rol, { id: r.id, familyId: familia?.id }));
     }
     if (r.estado === 'posible-duplicado') return setDuplicadoVisto(true);
     setErrorServidor(r.mensaje);
@@ -139,7 +142,7 @@ export default function NuevoPaciente() {
       {mismoDni.length > 0 ? (
         <Tarjeta style={{ gap: 10 }}>
           <Aviso tono="alerta" texto={`Ya hay un paciente con ese DNI: ${mismoDni[0].lastName}, ${mismoDni[0].firstName}. No se puede cargar dos veces.`} />
-          <Boton titulo="Abrir el existente" variante="secundario" onPress={() => router.replace(`/medico/hijo/${mismoDni[0].id}`)} />
+          <Boton titulo="Abrir el existente" variante="secundario" onPress={() => router.replace(rutaDelPaciente(rol, mismoDni[0]))} />
         </Tarjeta>
       ) : null}
       <Opciones
@@ -196,7 +199,7 @@ export default function NuevoPaciente() {
           {duplicados.map((d) => (
             <View key={d.id} style={{ gap: 6 }}>
               <TextoFuerte>{d.lastName}, {d.firstName}</TextoFuerte>
-              <Boton titulo="Abrir el existente" variante="secundario" onPress={() => router.replace(`/medico/hijo/${d.id}`)} />
+              <Boton titulo="Abrir el existente" variante="secundario" onPress={() => router.replace(rutaDelPaciente(rol, d))} />
             </View>
           ))}
           <Boton titulo="Es otro paciente: guardar igual" variante="contorno" onPress={() => guardar(true)} />

@@ -9,6 +9,8 @@ import type { Fuente } from './fuente';
 
 export type Sesion =
   | { rol: 'medico'; usuarioId: string }
+  /** Asistente administrativo: agenda, turnos, familias, membresías y pagos; nunca datos clínicos. */
+  | { rol: 'asistente'; usuarioId: string }
   | { rol: 'familia'; usuarioId: string; guardian: Guardian };
 
 /**
@@ -192,6 +194,7 @@ export interface AppState {
   seguridad: Seguridad;
   /** Demostración: selector de rol. */
   entrarComoMedico: () => void;
+  entrarComoAsistente: () => void;
   entrarComoAdulto: (guardianId: string) => void;
   /**
    * Familias: pide el enlace mágico. La respuesta es la misma exista o no el email.

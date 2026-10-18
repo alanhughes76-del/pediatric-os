@@ -25,8 +25,11 @@ import { Interruptor } from '@/components/Formulario';
 import { EstadoVacio } from '@/components/Estados';
 import { textoPreferencia } from '@/components/ficha/piezas';
 import { colors } from '@/theme';
+import { useRolEquipo } from '@/navegacion/useRolEquipo';
+import { rutaDelPaciente } from '@/navegacion/permisos';
 
 export default function FichaFamilia() {
+  const rol = useRolEquipo();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { db, actualizar } = useApp();
   const familia = db.families.find((f) => f.id === id);
@@ -73,7 +76,7 @@ export default function FichaFamilia() {
           {hijos.map((h) => {
             const fiebre = fiebreDe(db, h.id).filter(sinRevisar).length;
             return (
-              <Tarjeta key={h.id} onPress={() => router.push(`/medico/hijo/${h.id}`)} accessibilityLabel={`Abrir la ficha de ${h.firstName}`} style={s.fila}>
+              <Tarjeta key={h.id} onPress={rol === 'medico' ? () => router.push(rutaDelPaciente(rol, h)) : undefined} accessibilityLabel={rol === 'medico' ? `Abrir la ficha de ${h.firstName}` : undefined} style={s.fila}>
                 <Avatar paciente={h} tamano={40} />
                 <View style={{ flex: 1 }}>
                   <TextoFuerte>{nombreCompleto(h)}</TextoFuerte>
@@ -109,7 +112,7 @@ export default function FichaFamilia() {
               <TextoChico>{g.accessEnabled ? 'Habilitado' : g.email ? 'Sin acceso' : 'Sin email'}</TextoChico>
             </View>
           ))}
-          <TextoChico>Se habilita o deshabilita desde la ficha de cada adulto.</TextoChico>
+          <TextoChico>{rol === 'medico' ? 'Se habilita o deshabilita desde la ficha de cada adulto.' : 'Lo habilita o deshabilita el Dr.'}</TextoChico>
         </Caja>
 
         <Caja titulo="Próximos turnos" icono="calendar-outline" color="celeste">
@@ -124,6 +127,8 @@ export default function FichaFamilia() {
           <Boton titulo="+ Turno para esta familia" variante="secundario" compacto onPress={() => router.push({ pathname: '/medico/turno/nuevo', params: { familia: familia.id } })} />
         </Caja>
 
+        {/* Las visitas son consultas (clínico) y los accesos salen de la auditoría: solo el médico. */}
+        {rol === 'medico' ? (
         <Caja titulo="Historial de visitas" icono="time-outline" color="celeste">
           {historial.length === 0 ? <Texto color={colors.textMuted}>Todavía no hay visitas.</Texto> : null}
           {historial.map((c) => (
@@ -136,6 +141,7 @@ export default function FichaFamilia() {
             </Tarjeta>
           ))}
         </Caja>
+        ) : null}
 
         <Caja titulo="Membresía y pagos" icono="wallet-outline" color="verde">
           {!membership ? <Texto color={colors.textMuted}>Esta familia no tiene membresía.</Texto> : (
@@ -165,6 +171,7 @@ export default function FichaFamilia() {
           <Boton titulo="+ Registrar un pago" variante="secundario" compacto onPress={() => router.push({ pathname: '/medico/pago', params: { familia: familia.id } })} />
         </Caja>
 
+        {rol === 'medico' ? (
         <Caja titulo="Registro de accesos" icono="log-in-outline" color="celeste" ver={{ texto: 'Ver el registro completo', onPress: () => router.push('/medico/accesos') }}>
           {accesos.length === 0 ? <Texto color={colors.textMuted}>Nadie de esta familia entró al portal todavía.</Texto> : null}
           {accesos.map((a) => {
@@ -172,6 +179,7 @@ export default function FichaFamilia() {
             return <TextoChico key={a.id}>{fechaCorta(a.at)} {hora(a.at)} · {g?.firstName} {g?.lastName}</TextoChico>;
           })}
         </Caja>
+        ) : null}
       </Grilla>
     </Pantalla>
   );

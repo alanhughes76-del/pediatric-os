@@ -17,8 +17,11 @@ import type { ContactPreference } from '@/data/types';
 import { Titulo, Texto, TextoFuerte, TextoChico } from '@/components/Texto';
 import { Agregar, BotonTexto, CampoEditable, CampoTelefono, TEXTO_PREFERENCIA, validarEmail } from '@/components/ficha/piezas';
 import { colors } from '@/theme';
+import { useRolEquipo } from '@/navegacion/useRolEquipo';
+import { rutaDelPaciente } from '@/navegacion/permisos';
 
 export default function Adulto() {
+  const rol = useRolEquipo();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { db, actualizar, agregar } = useApp();
   const g = db.guardians.find((x) => x.id === id);
@@ -76,11 +79,14 @@ export default function Adulto() {
         <Tarjeta style={{ gap: 10 }}>
           {g.email ? (
             <>
-              <Interruptor
-                texto="Puede entrar al portal"
-                activo={g.accessEnabled}
-                onCambio={(v) => actualizar('guardians', g.id, { accessEnabled: v }, v ? 'adulto.habilitar-portal' : 'adulto.deshabilitar-portal')}
-              />
+              {/* Habilitar el portal es decisión del médico (también en las reglas). */}
+              {rol === 'medico' ? (
+                <Interruptor
+                  texto="Puede entrar al portal"
+                  activo={g.accessEnabled}
+                  onCambio={(v) => actualizar('guardians', g.id, { accessEnabled: v }, v ? 'adulto.habilitar-portal' : 'adulto.deshabilitar-portal')}
+                />
+              ) : null}
               <TextoChico>{g.accessEnabled ? `Entra con un enlace que le llega a ${g.email}.` : 'No puede entrar al portal.'}</TextoChico>
             </>
           ) : (
@@ -124,7 +130,7 @@ export default function Adulto() {
       <Seccion titulo="Chicos vinculados">
         {chicos.length === 0 ? <Texto color={colors.textMuted}>No tiene chicos vinculados.</Texto> : null}
         {chicos.map(({ rel, paciente }) => (
-          <Tarjeta key={rel.id} style={s.fila} onPress={() => router.push(`/medico/hijo/${paciente.id}`)} accessibilityLabel={`Abrir la ficha de ${paciente.firstName}`}>
+          <Tarjeta key={rel.id} style={s.fila} onPress={() => router.push(rutaDelPaciente(rol, paciente))} accessibilityLabel={`Abrir la ficha de ${paciente.firstName}`}>
             <View style={{ flex: 1 }}>
               <TextoFuerte>{nombreCompleto(paciente)}</TextoFuerte>
               <TextoChico>{textoRelacion(rel)}{rel.isPrimary ? ' · contacto principal' : ''}</TextoChico>

@@ -3,7 +3,9 @@ import { View, StyleSheet } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '@/data/store';
-import { CONFIGURACION, EN_PESTANAS, MODULOS } from '@/navegacion/modulos';
+import { CONFIGURACION, EN_PESTANAS } from '@/navegacion/modulos';
+import { modulosDe } from '@/navegacion/permisos';
+import { useRolEquipo } from '@/navegacion/useRolEquipo';
 import { Pantalla } from '@/components/Pantalla';
 import { Seccion } from '@/components/Seccion';
 import { Tarjeta } from '@/components/Tarjeta';
@@ -26,7 +28,8 @@ function Fila({ titulo, icono, href, onPress, etiqueta }: { titulo: string; icon
 
 export default function Mas() {
   const { salir } = useApp();
-  const resto = MODULOS.filter((m) => !EN_PESTANAS.includes(m.clave));
+  const rol = useRolEquipo();
+  const resto = modulosDe(rol).filter((m) => !EN_PESTANAS.includes(m.clave));
   return (
     <Pantalla>
       <Seccion titulo="Módulos">
@@ -34,15 +37,17 @@ export default function Mas() {
           {resto.map((m) => <Fila key={m.clave} titulo={m.titulo} icono={m.icono} href={m.href} etiqueta={m.pendiente?.etapa} />)}
         </View>
       </Seccion>
+      {rol === 'medico' ? (
       <Seccion titulo="Lo que ya funciona">
         <View style={s.lista}>
           <Fila titulo="Registro de fiebre" icono="thermometer-outline" href="/medico/fiebre" />
           <Fila titulo="Registro de accesos al portal" icono="log-in-outline" href="/medico/accesos" />
         </View>
       </Seccion>
+      ) : null}
       <Seccion titulo="Cuenta">
         <View style={s.lista}>
-          <Fila titulo={CONFIGURACION.titulo} icono={CONFIGURACION.icono} href={CONFIGURACION.href} etiqueta={CONFIGURACION.pendiente?.etapa} />
+          {rol === 'medico' ? <Fila titulo={CONFIGURACION.titulo} icono={CONFIGURACION.icono} href={CONFIGURACION.href} etiqueta={CONFIGURACION.pendiente?.etapa} /> : null}
           <Fila titulo="Cerrar sesión" icono="log-out-outline" onPress={() => { salir(); router.replace('/'); }} />
         </View>
       </Seccion>

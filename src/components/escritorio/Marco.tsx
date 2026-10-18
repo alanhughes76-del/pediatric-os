@@ -11,7 +11,9 @@ import { router, usePathname, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '@/data/store';
 import { avisosDelMedico } from '@/data/avisos';
-import { CONFIGURACION, MODULOS, moduloActivo } from '@/navegacion/modulos';
+import { CONFIGURACION, moduloActivo } from '@/navegacion/modulos';
+import { modulosDe } from '@/navegacion/permisos';
+import { useRolEquipo } from '@/navegacion/useRolEquipo';
 import { Marca } from '@/components/Marca';
 import { anilloFoco, colors, fonts, size, ANCHO_ESCRITORIO } from '@/theme';
 
@@ -56,6 +58,7 @@ function Item({ texto, icono, activo, onPress, detalle }: { texto: string; icono
 function LateralMedico() {
   const ruta = usePathname();
   const { salir, db } = useApp();
+  const rol = useRolEquipo();
   const activo = moduloActivo(ruta);
   return (
     <View style={s.lateral}>
@@ -65,20 +68,20 @@ function LateralMedico() {
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: 2 }} accessibilityRole="menu">
-        {MODULOS.map((m) => (
+        {modulosDe(rol).map((m) => (
           <Item key={m.clave} texto={m.titulo} icono={m.icono} activo={activo === m.clave} detalle={m.pendiente ? `llega en la ${m.pendiente.etapa}` : undefined} onPress={() => router.navigate(m.href)} />
         ))}
       </ScrollView>
 
       <View style={s.pie}>
         <View style={s.perfil}>
-          <View style={s.avatar}><Text style={s.avatarTexto}>AH</Text></View>
+          <View style={s.avatar}><Text style={s.avatarTexto}>{rol === 'medico' ? 'AH' : 'AS'}</Text></View>
           <View style={{ flex: 1 }}>
-            <Text style={s.perfilNombre} numberOfLines={1}>{db.doctor.name}</Text>
-            <Text style={s.perfilDetalle}>Pediatra</Text>
+            <Text style={s.perfilNombre} numberOfLines={1}>{rol === 'medico' ? db.doctor.name : 'Asistente'}</Text>
+            <Text style={s.perfilDetalle}>{rol === 'medico' ? 'Pediatra' : 'Administración'}</Text>
           </View>
         </View>
-        <Item texto={CONFIGURACION.titulo} icono={CONFIGURACION.icono} activo={activo === 'configuracion'} onPress={() => router.navigate(CONFIGURACION.href)} />
+        {rol === 'medico' ? <Item texto={CONFIGURACION.titulo} icono={CONFIGURACION.icono} activo={activo === 'configuracion'} onPress={() => router.navigate(CONFIGURACION.href)} /> : null}
         <Item texto="Cerrar sesión" icono="log-out-outline" onPress={() => { salir(); router.replace('/'); }} />
       </View>
     </View>
@@ -112,7 +115,7 @@ function LateralFamilia() {
 function BarraSuperior({ rol }: { rol: Rol }) {
   const { db, sesion } = useApp();
   const [busqueda, setBusqueda] = useState('');
-  const nombre = sesion?.rol === 'familia' ? `${sesion.guardian.firstName} ${sesion.guardian.lastName}` : db.doctor.name;
+  const nombre = sesion?.rol === 'familia' ? `${sesion.guardian.firstName} ${sesion.guardian.lastName}` : sesion?.rol === 'asistente' ? 'Asistente' : db.doctor.name;
   const iniciales = nombre.replace(/^Dr\.\s*/, '').split(/\s+/).map((x) => x[0]).slice(0, 2).join('').toUpperCase();
 
   const buscar = () => {
@@ -145,7 +148,7 @@ function BarraSuperior({ rol }: { rol: Rol }) {
         <View style={s.avatarClaro}><Text style={s.avatarClaroTexto}>{iniciales}</Text></View>
         <View>
           <Text style={s.usuarioNombre}>{nombre}</Text>
-          <Text style={s.usuarioDetalle}>{rol === 'medico' ? 'Pediatra' : 'Adulto responsable'}</Text>
+          <Text style={s.usuarioDetalle}>{rol === 'familia' ? 'Adulto responsable' : sesion?.rol === 'asistente' ? 'Administración' : 'Pediatra'}</Text>
         </View>
       </View>
     </View>

@@ -1,15 +1,19 @@
-import { Redirect, Stack } from 'expo-router';
+import { Redirect, Stack, usePathname } from 'expo-router';
 import { useApp } from '@/data/store';
 import { encabezado } from '@/components/navegacion';
 import { Marco } from '@/components/escritorio/Marco';
 import { Cargando } from '@/components/Estados';
+import { puedeEntrar } from '@/navegacion/permisos';
 import { colors } from '@/theme';
 
 export default function MedicoLayout() {
   const { sesion, listo } = useApp();
+  const ruta = usePathname();
   // En Firebase la sesión se resuelve al arrancar: mientras tanto no se redirige.
   if (!listo) return <Cargando texto="Abriendo…" />;
-  if (sesion?.rol !== 'medico') return <Redirect href="/" />;
+  if (sesion?.rol !== 'medico' && sesion?.rol !== 'asistente') return <Redirect href="/" />;
+  // El asistente no entra a lo clínico ni a la configuración (las reglas tampoco se lo dan): vuelve a Inicio.
+  if (!puedeEntrar(sesion.rol, ruta)) return <Redirect href="/medico" />;
 
   return (
     <Marco rol="medico">

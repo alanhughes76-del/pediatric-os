@@ -19,12 +19,12 @@ import { Cargando } from '@/components/Estados';
 export default function Inicio() {
   const { sesion, listo, fuente } = useApp();
   if (!listo) return <Cargando texto="Abriendo…" />;
-  if (sesion) return <Redirect href={sesion.rol === 'medico' ? '/medico' : '/familia'} />;
+  if (sesion) return <Redirect href={sesion.rol === 'familia' ? '/familia' : '/medico'} />;
   return fuente === 'firebase' ? <IngresoEquipo /> : <SelectorDeRol />;
 }
 
 function SelectorDeRol() {
-  const { db, entrarComoMedico, entrarComoAdulto } = useApp();
+  const { db, entrarComoMedico, entrarComoAsistente, entrarComoAdulto } = useApp();
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -40,6 +40,8 @@ function SelectorDeRol() {
 
         <Subtitulo>Médico</Subtitulo>
         <Boton titulo="Entrar como Dr. Hughes" icono="medkit-outline" onPress={() => { entrarComoMedico(); router.replace('/medico'); }} />
+        <Boton titulo="Entrar como asistente" detalle="Agenda, familias, membresías y pagos; sin datos clínicos" icono="briefcase-outline" variante="secundario"
+          onPress={() => { entrarComoAsistente(); router.replace('/medico'); }} />
 
         <Subtitulo style={{ marginTop: 12 }}>Adultos responsables</Subtitulo>
         <Boton titulo="Ingresar con mi email" icono="mail-outline" variante="secundario" onPress={() => router.push('/ingresar')} />

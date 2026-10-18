@@ -19,6 +19,8 @@ import { Tarjeta } from '@/components/Tarjeta';
 import { Texto, TextoFuerte, TextoChico } from '@/components/Texto';
 import { validarEmail } from '@/components/ficha/piezas';
 import { colors } from '@/theme';
+import { useRolEquipo } from '@/navegacion/useRolEquipo';
+import { rutaDelPaciente } from '@/navegacion/permisos';
 
 const RELACIONES: { valor: RelationshipType; texto: string }[] = [
   { valor: 'madre', texto: 'Madre' },
@@ -27,6 +29,7 @@ const RELACIONES: { valor: RelationshipType; texto: string }[] = [
 ];
 
 export default function VincularAdulto() {
+  const rol = useRolEquipo();
   const { paciente: pid } = useLocalSearchParams<{ paciente: string }>();
   const { db, enLote } = useApp();
   const p = buscarPaciente(db, pid);
@@ -97,7 +100,7 @@ export default function VincularAdulto() {
       const relaciones = principal ? d.relationships.map((r) => (r.patientId === p.id ? { ...r, isPrimary: false } : r)) : d.relationships;
       return { ...d, guardians, addresses, relationships: [...relaciones, rel] };
     });
-    if (router.canGoBack()) router.back(); else router.replace(`/medico/hijo/${p.id}`);
+    if (router.canGoBack()) router.back(); else router.replace(rutaDelPaciente(rol, p));
   };
 
   return (

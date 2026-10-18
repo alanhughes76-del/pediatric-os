@@ -20,8 +20,11 @@ import { Avatar, TONO_AMBITO } from '@/components/Avatar';
 import { useEscritorio } from '@/components/escritorio/Marco';
 import { Texto, TextoFuerte, TextoChico } from '@/components/Texto';
 import { colors, fonts } from '@/theme';
+import { useRolEquipo } from '@/navegacion/useRolEquipo';
+import { rutaDelPaciente } from '@/navegacion/permisos';
 
 export default function Pacientes() {
+  const rol = useRolEquipo();
   const { db } = useApp();
   const escritorio = useEscritorio();
   // `q` llega desde el buscador de la barra superior (pantallas anchas).
@@ -87,7 +90,7 @@ export default function Pacientes() {
         {lista.map((p) => {
           const fiebre = fiebreDe(db, p.id).filter(sinRevisar).length;
           return (
-            <Tarjeta key={p.id} onPress={() => router.push(`/medico/hijo/${p.id}`)} accessibilityLabel={`Abrir la ficha de ${p.firstName} ${p.lastName}`} style={[s.fila, escritorio && s.media]}>
+            <Tarjeta key={p.id} onPress={() => router.push(rutaDelPaciente(rol, p))} accessibilityLabel={`${rol === 'medico' ? 'Abrir la ficha' : 'Abrir la familia'} de ${p.firstName} ${p.lastName}`} style={[s.fila, escritorio && s.media]}>
               <Avatar paciente={p} />
               <View style={{ flex: 1, gap: 2 }}>
                 <TextoFuerte style={{ fontSize: 19 }}>{p.lastName}, {p.firstName}</TextoFuerte>

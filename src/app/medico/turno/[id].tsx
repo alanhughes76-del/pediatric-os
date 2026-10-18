@@ -30,6 +30,8 @@ import { EtiquetaEstado, ListaAvisos, horaFin } from '@/components/agenda/piezas
 import { FormularioTurno } from '@/components/agenda/FormularioTurno';
 import { useAbrirConsulta } from '@/components/agenda/abrirConsulta';
 import { colors } from '@/theme';
+import { useRolEquipo } from '@/navegacion/useRolEquipo';
+import { rutaDelPaciente } from '@/navegacion/permisos';
 
 type Panel = null | 'reprogramar' | 'editar' | 'cancelar';
 const aDdMm = (dia: string) => `${dia.slice(8, 10)}/${dia.slice(5, 7)}/${dia.slice(0, 4)}`;
@@ -46,6 +48,7 @@ const BOTON: Record<AccionTurno, { titulo: string; icono: Parameters<typeof Boto
 };
 
 export default function Turno() {
+  const rol = useRolEquipo();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { db, operaciones, usuarioId } = useApp();
   const abrirConsulta = useAbrirConsulta();
@@ -105,7 +108,7 @@ export default function Turno() {
       case 'confirmar': return ejecutar({ accion: 'confirmar' }, 'Turno confirmado.');
       case 'pendiente': return ejecutar({ accion: 'pendiente' }, 'Quedó pendiente de confirmación.');
       case 'en_camino': return ejecutar({ accion: 'en_camino' }, 'Quedó registrado "Estoy en camino". El mensaje a la familia sale por Make cuando esté conectado (Etapa 8).');
-      case 'realizado': return ejecutar({ accion: 'realizado' }, 'Turno realizado. Podés abrir la consulta de cada chico.');
+      case 'realizado': return ejecutar({ accion: 'realizado' }, rol === 'medico' ? 'Turno realizado. Podés abrir la consulta de cada chico.' : 'Turno marcado como realizado.');
     }
   };
 
@@ -208,8 +211,10 @@ export default function Turno() {
                 <Tarjeta key={p.id} style={{ gap: 10 }}>
                   <TextoFuerte>{nombreCompleto(p)}</TextoFuerte>
                   <View style={s.fila}>
-                    <View style={s.accion}><Boton compacto titulo="Ver ficha" variante="contorno" icono="document-text-outline" onPress={() => router.push(`/medico/hijo/${p.id}`)} /></View>
-                    {puedeAbrirConsulta ? (
+                    {rol === 'asistente' ? (
+                      p.familyId ? <View style={s.accion}><Boton compacto titulo="Ver familia" variante="contorno" icono="people-outline" onPress={() => router.push(rutaDelPaciente(rol, p))} /></View> : null
+                    ) : <View style={s.accion}><Boton compacto titulo="Ver ficha" variante="contorno" icono="document-text-outline" onPress={() => router.push(`/medico/hijo/${p.id}`)} /></View>}
+                    {puedeAbrirConsulta && rol === 'medico' ? (
                       <View style={s.accion}><Boton compacto titulo={consulta ? 'Ver consulta' : 'Abrir consulta'} icono="create-outline" onPress={() => abrirConsulta(t, p.id)} /></View>
                     ) : null}
                   </View>
