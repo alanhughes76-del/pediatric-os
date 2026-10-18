@@ -343,6 +343,21 @@ const base: Database = {
   plantillas: {},
   automatizaciones: { apagados: [] },
   outbox: [],
+  // Lo que entra desde Make (ficticio): una consulta por la web y una transcripción de Plaud.
+  interesados: [
+    { ...b('int-1', enDias(-1, '21:10'), 'make'), origen: 'web', nombre: 'Carla Méndez', email: 'carla@ejemplo.com', telefono: '+5491155550909', zona: 'Martínez', estado: 'nuevo', recibidoAt: enDias(-1, '21:10') },
+  ],
+  admisiones: [
+    { ...b('adm-1', enDias(-1, '21:10'), 'make'), origen: 'web', interesadoId: 'int-1', mensaje: 'Estoy embarazada de 32 semanas y quería saber cómo funciona la membresía.', respuestas: [], recibidaAt: enDias(-1, '21:10') },
+  ],
+  triage: [],
+  transcripciones: [
+    {
+      ...b('tr-1', enDias(0, '08:30'), 'make'), grabadaAt: enDias(-3, '10:00'), recibidaAt: enDias(0, '08:30'), estado: 'pendiente',
+      texto: 'Control de salud de Tomás, nació el 12/05/2023. Peso 14,2 kg, talla 96 cm. Hablamos de la alimentación y de las rutinas para dormir. Próximo control en seis meses.',
+      fechasNacimiento: ['2023-05-12'], pacientesSugeridos: ['p-tomas'], medidas: { weightKg: 14.2, heightCm: 96 },
+    },
+  ],
 
   auditLog: [
     { id: 'au-1', at: enDias(-2, '20:40'), actorId: 'g-lucia', action: 'login' },

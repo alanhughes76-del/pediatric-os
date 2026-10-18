@@ -288,6 +288,25 @@ describe('trazabilidad', () => {
   test('el asistente no lee la auditoría', async () => {
     await assertFails(leer('asistente', r('auditLog', 'au1')));
   });
+  test('lo que entra desde Make: el asistente ve el contacto de un interesado, pero no mensajes, triage ni transcripciones', async () => {
+    await assertSucceeds(leer('asistente', r('interesados', 'i1')));
+    await assertFails(leer('lucia', r('interesados', 'i1')));
+    for (const ruta of [r('admisiones', 'ad1'), r('triage', 'tr1'), r('transcripciones', 'pl1')]) {
+      await assertSucceeds(leer('medico', ruta));
+      await assertFails(leer('asistente', ruta));
+      await assertFails(leer('lucia', ruta));
+    }
+    await assertFails(setDoc(doc(db('medico'), r('interesados', 'i2')), firma(uid('medico'), { nombre: 'x' })));
+  });
+  test('el Dr. marca un interesado, un triage leído o una transcripción usada; nada más', async () => {
+    await assertSucceeds(updateDoc(doc(db('asistente'), r('interesados', 'i1')), { estado: 'contactado', updatedBy: uid('asistente'), updatedAt: AHORA }));
+    await assertFails(updateDoc(doc(db('asistente'), r('interesados', 'i1')), { email: 'otro@ejemplo.com', updatedBy: uid('asistente'), updatedAt: AHORA }));
+    await assertSucceeds(updateDoc(doc(db('medico'), r('triage', 'tr1')), { revisadoAt: AHORA, updatedBy: uid('medico'), updatedAt: AHORA }));
+    await assertFails(updateDoc(doc(db('medico'), r('triage', 'tr1')), { respuestas: [{ pregunta: 'x', respuesta: 'y' }], updatedBy: uid('medico'), updatedAt: AHORA }));
+    await assertSucceeds(updateDoc(doc(db('medico'), r('transcripciones', 'pl1')), { estado: 'usada', patientId: 'p-tomas', updatedBy: uid('medico'), updatedAt: AHORA }));
+    await assertFails(updateDoc(doc(db('medico'), r('transcripciones', 'pl1')), { texto: 'otro', updatedBy: uid('medico'), updatedAt: AHORA }));
+    await assertFails(updateDoc(doc(db('asistente'), r('transcripciones', 'pl1')), { estado: 'descartada', updatedBy: uid('asistente'), updatedAt: AHORA }));
+  });
   test('los eventos para Make los escribe solo el servidor', async () => {
     await assertFails(setDoc(doc(db('medico'), r('outbox', 'ev2')), { type: 'falso' }));
   });

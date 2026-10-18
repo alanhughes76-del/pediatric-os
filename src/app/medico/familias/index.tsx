@@ -24,6 +24,7 @@ export default function Familias() {
   const escritorio = useEscritorio();
   const [busqueda, setBusqueda] = useState('');
   const lista = useMemo(() => filtrarFamilias(db, busqueda), [db, busqueda]);
+  const nuevos = db.interesados.filter((i) => i.estado === 'nuevo' && !i.archivedAt).length;
 
   return (
     <Pantalla ancho>
@@ -33,6 +34,7 @@ export default function Familias() {
         </View>
         <View style={s.nueva}><Boton titulo="+ Nueva familia" onPress={() => router.push('/medico/familias/nueva')} /></View>
         <View style={s.nueva}><Boton titulo="Membresías y pagos" icono="wallet-outline" variante="secundario" onPress={() => router.push('/medico/membresias')} /></View>
+        <View style={s.nueva}><Boton titulo={`Interesados${nuevos ? ` (${nuevos})` : ''}`} icono="person-add-outline" variante="secundario" onPress={() => router.push('/medico/interesados')} /></View>
       </View>
       <TextoChico>{lista.length} {lista.length === 1 ? 'familia' : 'familias'}</TextoChico>
       {lista.length === 0 ? (

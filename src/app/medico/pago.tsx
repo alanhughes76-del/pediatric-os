@@ -16,7 +16,9 @@ import { Pantalla } from '@/components/Pantalla';
 import { Tarjeta } from '@/components/Tarjeta';
 import { Campo, Casilla, Opciones, Aviso } from '@/components/Formulario';
 import { Boton } from '@/components/Boton';
-import { Subtitulo, TextoChico } from '@/components/Texto';
+import { Subtitulo, TextoFuerte, TextoChico } from '@/components/Texto';
+import { BotonTexto } from '@/components/ficha/piezas';
+import { normalizar } from '@/lib/busqueda';
 import { EstadoVacio } from '@/components/Estados';
 
 const MONEDAS = [{ valor: 'ARS' as Currency, texto: 'Pesos' }, { valor: 'USD' as Currency, texto: 'Dólares' }];
@@ -26,7 +28,10 @@ export default function Pago() {
   const { id, familia: familiaParam } = useLocalSearchParams<{ id?: string; familia?: string }>();
   const { db, agregar, actualizar } = useApp();
   const pago = id ? db.payments.find((p) => p.id === id) : undefined;
-  const familyId = pago ? familiaDePago(db, pago) : familiaParam;
+  // Un pago que llegó por Telegram puede no traer la familia: el Dr. la elige acá.
+  const [familiaElegida, setFamiliaElegida] = useState<string>();
+  const [busqueda, setBusqueda] = useState('');
+  const familyId = familiaElegida ?? (pago ? familiaDePago(db, pago) : familiaParam);
   const familia = db.families.find((f) => f.id === familyId);
   const { membership } = membresiaDeFamilia(db, familyId);
 
@@ -42,9 +47,12 @@ export default function Pago() {
   // Sin historial (se abrió por enlace), vuelve a la ficha de la familia.
   const volver = () => (router.canGoBack() ? router.back() : router.replace(`/medico/familia/${familyId ?? ""}`));
 
-  if (!familia || (id && !pago)) return <Pantalla><EstadoVacio icono="help-circle-outline" titulo="No encontramos este pago" /></Pantalla>;
+  if ((id && !pago) || (!id && !familia)) return <Pantalla><EstadoVacio icono="help-circle-outline" titulo="No encontramos este pago" /></Pantalla>;
+  const q = normalizar(busqueda.trim());
+  const opcionesFamilia = q.length < 2 ? [] : db.families.filter((f) => !f.archivedAt && normalizar(f.name).includes(q)).slice(0, 6);
 
   const guardar = (confirmar: boolean) => {
+    if (!familia) return setError('Elegí la familia del pago.');
     const date = deFecha(fecha);
     const amount = aNumero(monto);
     if (!date) return setError('Revisá la fecha (dd/mm/aaaa).');
@@ -71,7 +79,19 @@ export default function Pago() {
   return (
     <Pantalla>
       <Stack.Screen options={{ title: pago ? 'Pago' : 'Registrar pago' }} />
-      <Subtitulo>{familia.name}</Subtitulo>
+      {familia ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Subtitulo style={{ flex: 1 }}>{familia.name}</Subtitulo>
+          {pago?.status === 'a_confirmar' ? <BotonTexto texto="Cambiar" onPress={() => { setFamiliaElegida(undefined); setBusqueda(''); }} /> : null}
+        </View>
+      ) : (
+        <Tarjeta style={{ gap: 8 }}>
+          <TextoFuerte>¿De qué familia es este pago?</TextoFuerte>
+          <TextoChico>No la reconocimos en el mensaje.</TextoChico>
+          <Campo value={busqueda} onChangeText={setBusqueda} placeholder="Escribí el apellido" autoCorrect={false} accessibilityLabel="Buscar familia" />
+          {opcionesFamilia.map((f) => <BotonTexto key={f.id} texto={f.name} onPress={() => { setFamiliaElegida(f.id); setBusqueda(''); }} />)}
+        </Tarjeta>
+      )}
       {aConfirmar ? <Aviso texto="Este pago llegó por una automatización y falta que lo confirmes. Revisá los datos y tocá Confirmar." /> : null}
       <Tarjeta style={{ gap: 14 }}>
         <Campo etiqueta="Fecha" value={fecha} onChangeText={setFecha} placeholder="dd/mm/aaaa" keyboardType="numbers-and-punctuation" />

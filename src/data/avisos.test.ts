@@ -28,7 +28,7 @@ describe('avisos del médico', () => {
   });
 
   test('sin datos, no hay avisos', () => {
-    expect(avisosDelMedico({ ...datosDeEjemplo, followUps: [], fever: [], memberships: [], payments: [], studies: [], vaccineDoses: [] }, ahora)).toEqual([]);
+    expect(avisosDelMedico({ ...datosDeEjemplo, followUps: [], fever: [], memberships: [], payments: [], studies: [], vaccineDoses: [], interesados: [], transcripciones: [] }, ahora)).toEqual([]);
   });
 
   test('resultado de estudio sin revisar y vacunas atrasadas', () => {
@@ -37,5 +37,12 @@ describe('avisos del médico', () => {
     const vac = avisos.filter((a) => a.tipo === 'vacuna');
     expect(vac.map((a) => a.titulo).sort()).toEqual(['Vacunas atrasadas · Emma Ruiz Ferreyra', 'Vacunas atrasadas · Tomás Ruiz Ferreyra']);
     expect(vac.every((a) => a.detalle.includes('calendario sin verificar'))).toBe(true);
+  });
+
+  test('lo que entró desde Make y espera al Dr.: transcripción de Plaud e interesado nuevo', () => {
+    expect(avisos.find((a) => a.tipo === 'plaud')?.titulo).toBe('Transcripción de Plaud para revisar · Tomás Ruiz Ferreyra');
+    expect(avisos.find((a) => a.tipo === 'interesado')?.titulo).toBe('Consulta por la web · Carla Méndez');
+    const usada = avisosDelMedico({ ...datosDeEjemplo, transcripciones: datosDeEjemplo.transcripciones.map((t) => ({ ...t, estado: 'usada' as const })) }, ahora);
+    expect(usada.some((a) => a.tipo === 'plaud')).toBe(false);
   });
 });

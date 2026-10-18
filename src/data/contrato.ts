@@ -15,7 +15,7 @@ export type Sesion =
  * Tablas que la app escribe fila por fila (todas menos `doctor`, la configuración de la agenda,
  * la auditoría y los turnos con su historial, que pasan por `operaciones`).
  */
-export type Tabla = Exclude<keyof Database, 'doctor' | 'agenda' | 'ia' | 'vacunas' | 'links' | 'precios' | 'ambitos' | 'plantillas' | 'automatizaciones' | 'outbox' | 'auditLog' | 'communications' | 'materialDeliveries' | 'notifications' | 'appointments' | 'appointmentHistory'>;
+export type Tabla = Exclude<keyof Database, 'doctor' | 'agenda' | 'ia' | 'vacunas' | 'links' | 'precios' | 'ambitos' | 'plantillas' | 'automatizaciones' | 'outbox' | 'interesados' | 'admisiones' | 'triage' | 'transcripciones' | 'auditLog' | 'communications' | 'materialDeliveries' | 'notifications' | 'appointments' | 'appointmentHistory'>;
 export type Fila<T extends Tabla> = Database[T][number];
 
 export interface CamposNota {
@@ -86,6 +86,8 @@ export interface Operaciones {
   verificarCalendario: (verificado: boolean) => Promise<string | null>;
   /** Registro a mano de una comunicación (una llamada, algo que se habló en persona…). */
   registrarComunicacion: (datos: DatosComunicacion) => Promise<string | null>;
+  /** Lo que entró desde Make: el Dr. marca un interesado, un triage revisado o una transcripción usada. */
+  actualizarEntrada: <C extends 'interesados' | 'triage' | 'transcripciones'>(coleccion: C, id: string, cambios: Partial<Database[C][number]>) => Promise<string | null>;
   /** Configuración (solo el médico): agenda, links, precios o sus datos profesionales. */
   guardarAjustes: (p: Ajuste) => Promise<string | null>;
 }

@@ -114,6 +114,10 @@ async function main() {
   d.memberships.forEach((m) => agregar(o('memberships', m.id), { ...limpio(m), ...firma(m.createdBy, m.createdAt) }));
   d.payments.forEach((p) => agregar(o('payments', p.id), { ...limpio(p), ...firma(p.createdBy, p.createdAt) }));
   d.communications.forEach((c) => agregar(o('communications', c.id), { ...limpio(c), ...firma(c.createdBy, c.createdAt) }));
+  // Lo que entra desde Make (Etapa 8b), ficticio.
+  for (const tabla of ['interesados', 'admisiones', 'triage', 'transcripciones'] as const) {
+    (d[tabla] as { id: string; createdBy: string; createdAt: string }[]).forEach((x) => agregar(o(tabla, x.id), { ...limpio(x), ...firma(x.createdBy, x.createdAt) }));
+  }
 
   // Clínico, por paciente
   const clinico = <T extends { id: string; patientId: string; createdBy: string; createdAt: string }>(sub: string, xs: T[], extra?: (x: T) => Record<string, unknown>) =>

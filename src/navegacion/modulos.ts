@@ -42,10 +42,10 @@ export const MODULOS: Modulo[] = [
   },
   {
     clave: 'familias', titulo: 'Familias', icono: 'people-circle-outline', href: '/medico/familias',
-    rutas: ['/medico/familias', '/medico/familia', '/medico/membresias', '/medico/membresia', '/medico/pago', '/medico/adulto'],
+    rutas: ['/medico/familias', '/medico/familia', '/medico/membresias', '/medico/membresia', '/medico/pago', '/medico/adulto', '/medico/interesados'],
   },
   { clave: 'historia', titulo: 'Historia clínica', icono: 'document-text-outline', href: '/medico/historia', rutas: ['/medico/historia'] },
-  { clave: 'consultas', titulo: 'Consultas', icono: 'medkit-outline', href: '/medico/consultas', rutas: ['/medico/consultas'] },
+  { clave: 'consultas', titulo: 'Consultas', icono: 'medkit-outline', href: '/medico/consultas', rutas: ['/medico/consultas', '/medico/plaud'] },
   { clave: 'prescripciones', titulo: 'Prescripciones', icono: 'reader-outline', href: '/medico/prescripciones', rutas: ['/medico/prescripciones'] },
   { clave: 'estudios', titulo: 'Estudios', icono: 'flask-outline', href: '/medico/estudios', rutas: ['/medico/estudios'] },
   { clave: 'vacunas', titulo: 'Vacunas', icono: 'shield-checkmark-outline', href: '/medico/vacunas', rutas: ['/medico/vacunas'] },

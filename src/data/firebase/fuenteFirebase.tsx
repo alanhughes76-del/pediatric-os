@@ -42,7 +42,7 @@ const VACIA: Database = {
   families: [], guardians: [], relationships: [], addresses: [], patients: [], memberships: [], payments: [],
   backgrounds: [], problems: [], allergies: [], consultations: [], measurements: [], milestoneChecks: [], notes: [], followUps: [],
   carePlan: [], vaccineDoses: [], medications: [], prescriptions: [], studies: [], fever: [], certificates: [], documents: [], appointments: [], appointmentHistory: [], blocks: [], communications: [], educationalMaterials: [], materialDeliveries: [], notifications: [],
-  agenda: CONFIG_AGENDA_INICIAL, ia: { enabled: false }, vacunas: { calendarioVerificado: false }, links: LINKS_INICIALES, precios: PRECIOS_INICIALES, ambitos: TEXTO_AMBITO, plantillas: {}, automatizaciones: { apagados: [] }, outbox: [], auditLog: [],
+  agenda: CONFIG_AGENDA_INICIAL, ia: { enabled: false }, vacunas: { calendarioVerificado: false }, links: LINKS_INICIALES, precios: PRECIOS_INICIALES, ambitos: TEXTO_AMBITO, plantillas: {}, automatizaciones: { apagados: [] }, outbox: [], interesados: [], admisiones: [], triage: [], transcripciones: [], auditLog: [],
 };
 
 /** Mensajes que se entienden, sin códigos técnicos. */
@@ -178,6 +178,12 @@ export function useFuenteFirebase(): AppState {
     subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/certificados`), (snap) => {
       setDatos((d) => ({ ...d, plantillas: (snap.data()?.plantillas ?? {}) as PlantillasCertificado }));
     }, fallo));
+    // Lo que entra desde Make (Etapa 8b): interesados, formularios, triage y transcripciones de Plaud.
+    for (const coleccion of ['interesados', 'admisiones', 'triage', 'transcripciones'] as const) {
+      subs.push(onSnapshot(collection(fs, `organizations/${org}/${coleccion}`), (snap) => {
+        setDatos((d) => ({ ...d, [coleccion]: snap.docs.map((x) => ({ id: x.id, ...x.data() })) }));
+      }, fallo));
+    }
     subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/automatizaciones`), (snap) => {
       const a = snap.data()?.apagados;
       setDatos((d) => ({ ...d, automatizaciones: { apagados: Array.isArray(a) ? a.filter((x): x is string => typeof x === 'string') : [] } }));
@@ -296,6 +302,13 @@ export function useFuenteFirebase(): AppState {
         try {
           const limpio = Object.fromEntries(Object.entries({ ...datos, subject: datos.subject.trim() }).filter(([, v]) => v !== undefined));
           await setDoc(doc(collection(fs, `organizations/${org}/communications`)), { ...limpio, kind: 'manual', status: 'registrado', ...firmaNueva() });
+          return null;
+        } catch (e) { return mensajeDeError(e); }
+      },
+      actualizarEntrada: async (coleccion, id, cambios) => {
+        try {
+          const limpio = Object.fromEntries(Object.entries(cambios).filter(([, v]) => v !== undefined));
+          await updateDoc(doc(fs, `organizations/${org}/${coleccion}/${id}`), { ...limpio, updatedBy: uid, updatedAt: ahoraISO() });
           return null;
         } catch (e) { return mensajeDeError(e); }
       },

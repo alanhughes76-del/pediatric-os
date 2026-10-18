@@ -165,6 +165,57 @@ export interface Payment extends Base {
   updatedBy?: ID;
 }
 
+// ---------- Lo que entra desde Make (Etapa 8b) ----------
+
+/** Alguien que escribió por la web o completó la admisión y todavía no es una familia cargada. */
+export interface Interesado extends Base {
+  origen: 'web' | 'tally';
+  nombre: string;
+  email: string;
+  telefono: string | null;
+  zona?: string | null;
+  estado: 'nuevo' | 'contactado' | 'familia' | 'archivado';
+  familyId?: ID;
+  recibidoAt: ISODateTime;
+}
+
+export interface RespuestaFormulario { pregunta: string; respuesta: string }
+
+/** Mensaje y respuestas de un formulario (solo el médico). */
+export interface Admision extends Base {
+  origen: 'web' | 'tally';
+  interesadoId?: ID;
+  familyId?: ID | null;
+  mensaje: string;
+  respuestas: RespuestaFormulario[];
+  recibidaAt: ISODateTime;
+}
+
+/** Triage de urgencia (Tally): se adjunta a la solicitud de urgencia; solo el médico. */
+export interface Triage extends Base {
+  appointmentId: ID | null;
+  familyId: ID | null;
+  contacto: { nombre: string; email: string; telefono: string | null };
+  respuestas: RespuestaFormulario[];
+  recibidoAt: ISODateTime;
+  revisadoAt: ISODateTime | null;
+}
+
+/** Transcripción de Plaud: borrador que el Dr. pasa a una consulta. Nada se aprueba solo. */
+export interface Transcripcion extends Base {
+  texto: string;
+  grabadaAt: ISODateTime;
+  recibidaAt: ISODateTime;
+  fechasNacimiento: ISODate[];
+  pacientesSugeridos: ID[];
+  medidas: { weightKg?: number; heightCm?: number; headCm?: number };
+  estado: 'pendiente' | 'usada' | 'descartada';
+  patientId?: ID;
+  consultationId?: ID;
+  /** Si el Dr. usó las medidas propuestas (true), las descartó (false) o todavía no decidió. */
+  medidasUsadas?: boolean;
+}
+
 // ---------- Automatizaciones (Etapa 8) ----------
 
 /** Un evento de la outbox, tal como lo ve el Dr. en Configuración (sin abrir los datos). */
@@ -582,7 +633,7 @@ export interface Communication extends Base {
   patientId?: ID;
   familyId?: ID;
   noteId?: ID;
-  kind: 'resumen_familia' | 'recordatorio' | 'aviso' | 'manual';
+  kind: 'resumen_familia' | 'recordatorio' | 'aviso' | 'manual' | 'consulta_web' | 'encuesta' | 'mensaje';
   channel: CanalComunicacion;
   /** Sin dato = saliente (los registros viejos). */
   direction?: DireccionComunicacion;
@@ -601,7 +652,10 @@ export interface Communication extends Base {
 export interface AppNotification {
   id: ID;
   recipientUid: ID;
-  kind: 'datos_familia';
+  /** datos_familia: una familia cambió su contacto. Las demás llegan desde Make (Etapa 8b). */
+  kind: 'datos_familia' | 'interesado' | 'triage' | 'plaud' | 'pago';
+  /** A dónde lleva el aviso (los que llegan desde Make). */
+  href?: string;
   guardianId?: ID;
   /** Qué cambió (nunca los datos). */
   campos?: string[];
@@ -674,5 +728,10 @@ export interface Database {
   automatizaciones: { apagados: string[] };
   /** Los últimos eventos para Make (solo el médico; en la demostración, vacío). */
   outbox: EventoOutbox[];
+  /** Lo que entra desde Make (Etapa 8b). */
+  interesados: Interesado[];
+  admisiones: Admision[];
+  triage: Triage[];
+  transcripciones: Transcripcion[];
   auditLog: AuditLog[];
 }

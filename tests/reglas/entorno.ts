@@ -65,6 +65,12 @@ export async function sembrar(env: RulesTestEnvironment) {
     await set(r('guardians', 'g-sinmail'), { ...base, authUid: 'g-sinmail', firstName: 'Sin', email: '', portalEnabled: false });
     await set(r('guardians', 'g-lucia', 'addresses', 'a1'), { ...base, street: 'Libertador 2210', locality: 'Olivos' });
     await set(r('portalAccess', 'g-lucia'), { enabled: true, patientIds: ['p-tomas'] });
+    // Lo que entra desde Make (lo crea el servidor, con su firma).
+    const make = firma('make');
+    await set(r('interesados', 'i1'), { ...make, nombre: 'Laura', email: 'laura@ejemplo.com', telefono: null, origen: 'web', estado: 'nuevo', recibidoAt: AHORA });
+    await set(r('admisiones', 'ad1'), { ...make, interesadoId: 'i1', mensaje: 'Mensaje privado', respuestas: [] });
+    await set(r('triage', 'tr1'), { ...make, appointmentId: null, respuestas: [], revisadoAt: null });
+    await set(r('transcripciones', 'pl1'), { ...make, texto: 'Transcripción', estado: 'pendiente' });
     await set(r('portalAccess', 'g-paula'), { enabled: true, patientIds: ['p-olivia'] });
     await set(r('portalAccess', 'g-diego'), { enabled: false, patientIds: ['p-tomas'] });
     await set(r('clinical', 'p-tomas', 'problems', 'pr1'), { ...base, patientId: 'p-tomas', description: 'Problema oculto', visibleToFamily: false });

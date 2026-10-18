@@ -11,7 +11,7 @@ import { fechaCorta, hoyISO } from '@/lib/fechas';
 import { estadoDosis } from '@shared/vacunas';
 import { resultadosSinRevisar } from './seguimientoClinico';
 
-export type TipoAviso = 'seguimiento' | 'fiebre' | 'estudio' | 'vacuna' | 'membresia' | 'datos';
+export type TipoAviso = 'seguimiento' | 'fiebre' | 'estudio' | 'vacuna' | 'membresia' | 'datos' | 'plaud' | 'triage' | 'interesado';
 
 export interface Aviso {
   id: string;
@@ -71,6 +71,34 @@ export function avisosDelMedico(db: Database, ahora = new Date().toISOString()):
       titulo: `Vacunas atrasadas · ${nombreCompleto(p)}`,
       detalle: `${atrasadas.length} ${atrasadas.length === 1 ? 'dosis' : 'dosis'}${db.vacunas.calendarioVerificado ? '' : ' (calendario sin verificar)'}`,
       href: { pathname: '/medico/hijo/[id]', params: { id: p.id, solapa: 'vacunas' } },
+    });
+  }
+
+  // Lo que entró desde Make y espera al Dr. (Etapa 8b). Queda hasta que lo atiende.
+  for (const t of db.transcripciones.filter((x) => x.estado === 'pendiente' && !x.archivedAt)) {
+    const sugerido = t.pacientesSugeridos.length === 1 ? db.patients.find((p) => p.id === t.pacientesSugeridos[0]) : undefined;
+    avisos.push({
+      id: `plaud-${t.id}`, tipo: 'plaud', alerta: false,
+      titulo: `Transcripción de Plaud para revisar${sugerido ? ` · ${nombreCompleto(sugerido)}` : ''}`,
+      detalle: `Grabada el ${fechaCorta(t.grabadaAt)}${t.pacientesSugeridos.length > 1 ? ` · ${t.pacientesSugeridos.length} pacientes posibles` : t.pacientesSugeridos.length === 0 ? ' · elegí el paciente' : ''}`,
+      href: { pathname: '/medico/plaud/[id]', params: { id: t.id } },
+    });
+  }
+  for (const t of db.triage.filter((x) => !x.revisadoAt && !x.archivedAt)) {
+    const familia = db.families.find((f) => f.id === t.familyId)?.name ?? (t.contacto.nombre || 'Contacto sin identificar');
+    avisos.push({
+      id: `triage-${t.id}`, tipo: 'triage', alerta: true,
+      titulo: `Triage de urgencia · ${familia}`,
+      detalle: t.appointmentId ? 'Adjunto a la solicitud de urgencia' : 'Sin solicitud de urgencia asociada',
+      href: { pathname: '/medico/triage/[id]', params: { id: t.id } },
+    });
+  }
+  for (const i of db.interesados.filter((x) => x.estado === 'nuevo' && !x.archivedAt)) {
+    avisos.push({
+      id: `int-${i.id}`, tipo: 'interesado', alerta: false,
+      titulo: `${i.origen === 'web' ? 'Consulta por la web' : 'Formulario de admisión'} · ${i.nombre || 'sin nombre'}`,
+      detalle: `Recibida el ${fechaCorta(i.recibidoAt)}${i.zona ? ` · ${i.zona}` : ''}`,
+      href: '/medico/interesados',
     });
   }
 

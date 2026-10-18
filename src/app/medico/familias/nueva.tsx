@@ -3,7 +3,7 @@
  * El adulto arranca sin acceso al portal. Los hijos se cargan después desde la ficha de la familia.
  */
 import { useState } from 'react';
-import { Stack, router } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useApp, nuevoId } from '@/data/store';
 import type { ContactPreference, Family, Guardian } from '@/data/types';
 import { normalizarTelefono } from '@shared/telefono';
@@ -19,13 +19,17 @@ const ZONAS = ['CABA', 'GBA Zona Norte', 'Otra'] as const;
 type Zona = (typeof ZONAS)[number];
 
 export default function NuevaFamilia() {
-  const { enLote } = useApp();
-  const [apellidoFamilia, setApellidoFamilia] = useState('');
+  const { db, enLote, operaciones } = useApp();
+  // Desde Interesados: se precargan nombre, email y teléfono, y al guardar queda marcado como familia.
+  const { interesado: interesadoId } = useLocalSearchParams<{ interesado?: string }>();
+  const interesado = db.interesados.find((x) => x.id === interesadoId);
+  const [nombreInicial, ...resto] = (interesado?.nombre ?? '').split(' ');
+  const [apellidoFamilia, setApellidoFamilia] = useState(resto.join(' '));
   const [zona, setZona] = useState<Zona>();
-  const [nombre, setNombre] = useState('');
-  const [apellido, setApellido] = useState('');
-  const [email, setEmail] = useState('');
-  const [telefono, setTelefono] = useState('');
+  const [nombre, setNombre] = useState(nombreInicial ?? '');
+  const [apellido, setApellido] = useState(resto.join(' '));
+  const [email, setEmail] = useState(interesado?.email ?? '');
+  const [telefono, setTelefono] = useState(interesado?.telefono ?? '');
   const [preferencia, setPreferencia] = useState<ContactPreference>('llamada');
   const [intento, setIntento] = useState(false);
 
@@ -52,6 +56,7 @@ export default function NuevaFamilia() {
       log({ action: 'adulto.crear', entity: 'guardians', entityId: g.id });
       return { ...d, families: [...d.families, f], guardians: [...d.guardians, g] };
     });
+    if (interesado) void operaciones.actualizarEntrada('interesados', interesado.id, { estado: 'familia', familyId });
     router.replace(`/medico/familia/${familyId}`);
   };
 

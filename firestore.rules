@@ -312,6 +312,29 @@ service cloud.firestore {
         allow read: if esMedico(orgId);
         allow write: if false;
       }
+
+      // ---------- Lo que entra desde Make (Etapa 8b): lo crea solo el servidor ----------
+      // Interesados (formulario web, admisión): el contacto lo ve también el asistente, que los gestiona.
+      match /interesados/{id} {
+        allow read: if esStaff(orgId);
+        allow update: if esStaff(orgId) && firmaOk(orgId) && noCambia(['nombre', 'email', 'telefono', 'origen', 'recibidoAt']);
+        allow create, delete: if false;
+      }
+      // Mensaje y respuestas de los formularios, triage de urgencia y transcripciones de Plaud: solo el médico.
+      match /admisiones/{id} {
+        allow read: if esMedico(orgId);
+        allow write: if false;
+      }
+      match /triage/{id} {
+        allow read: if esMedico(orgId);
+        allow update: if esMedico(orgId) && firmaOk(orgId) && soloCambia(['revisadoAt', 'updatedBy', 'updatedAt']);
+        allow create, delete: if false;
+      }
+      match /transcripciones/{id} {
+        allow read: if esMedico(orgId);
+        allow update: if esMedico(orgId) && firmaOk(orgId) && soloCambia(['estado', 'patientId', 'consultationId', 'medidasUsadas', 'updatedBy', 'updatedAt']);
+        allow create, delete: if false;
+      }
     }
   }
 }

@@ -12,6 +12,7 @@ export const TEXTO_ESTADO: Record<EstadoComunicacion, string> = {
 };
 export const TEXTO_TIPO: Record<Communication['kind'], string> = {
   resumen_familia: 'Resumen de la visita', recordatorio: 'Recordatorio', aviso: 'Aviso', manual: 'Registrado a mano',
+  consulta_web: 'Consulta por la web', encuesta: 'Encuesta', mensaje: 'Mensaje entrante',
 };
 
 /** Con los valores por omisión de los registros viejos. */

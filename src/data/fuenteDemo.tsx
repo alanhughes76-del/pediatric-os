@@ -185,6 +185,15 @@ export function useFuenteDemo(): AppState {
       return null;
     },
 
+    actualizarEntrada: async (coleccion, id, cambios) => {
+      enLote((d, { ahora, usuarioId: uid, log }) => {
+        log({ action: `${coleccion}.actualizar`, entity: coleccion, entityId: id });
+        const lista = d[coleccion] as { id: string }[];
+        return { ...d, [coleccion]: lista.map((x) => (x.id === id ? { ...x, ...cambios, updatedBy: uid, updatedAt: ahora } : x)) };
+      });
+      return null;
+    },
+
     guardarAjustes: async (ajuste) => {
       enLote((d, { log }) => {
         log({ action: `configuracion.${ajuste.clave}`, entity: 'settings', entityId: ajuste.clave });

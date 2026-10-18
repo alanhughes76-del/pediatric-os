@@ -11,6 +11,7 @@ import {
   type AccionTurno, type Aviso,
 } from '@shared/agenda';
 import { useApp } from '@/data/store';
+import { TriageUrgencia } from '@/components/TriageUrgencia';
 import type { PedidoAccionTurno } from '@/data/contrato';
 import type { AppointmentChange } from '@/data/types';
 import { consultaDeTurno, historialDeTurno, nombreCompleto, nombreDeTurno, pacientesDeTurno, textoDireccionTurno, TEXTO_MODALIDAD } from '@/data/selectores';
@@ -122,6 +123,7 @@ export default function Turno() {
   return (
     <Pantalla ancho>
       <Stack.Screen options={{ title: 'Turno' }} />
+      {db.triage.filter((x) => x.appointmentId === t.id).map((x) => <TriageUrgencia key={x.id} t={x} />)}
 
       <Tarjeta style={{ gap: 10 }}>
         <TextoChico>{diaYFecha(t.day)}</TextoChico>
