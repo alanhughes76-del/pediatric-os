@@ -19,6 +19,7 @@ import { Ambitos } from '@/components/configuracion/Ambitos';
 import { Certificados } from '@/components/configuracion/Certificados';
 import { Automatizaciones } from '@/components/configuracion/Automatizaciones';
 import { IA } from '@/components/configuracion/IA';
+import { Seguridad } from '@/components/configuracion/Seguridad';
 
 const SECCIONES = [
   { valor: 'profesional', texto: 'Profesional' },
@@ -30,6 +31,7 @@ const SECCIONES = [
   { valor: 'clinica', texto: 'Vacunas y biblioteca' },
   { valor: 'automatizaciones', texto: 'Automatizaciones' },
   { valor: 'mas', texto: 'IA' },
+  { valor: 'seguridad', texto: 'Seguridad' },
 ] as const;
 type Clave = (typeof SECCIONES)[number]['valor'];
 
@@ -87,6 +89,9 @@ export default function Configuracion() {
         <>
           <Caja titulo="IA Asistente" icono="sparkles-outline" color="violeta" ancha><IA /></Caja>
         </>
+      ) : null}
+      {seccion === 'seguridad' ? (
+        <Caja titulo="Segundo factor" icono="shield-checkmark-outline" color="celeste" ancha><Seguridad /></Caja>
       ) : null}
     </Pantalla>
   );

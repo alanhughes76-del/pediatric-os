@@ -33,6 +33,13 @@ async function abrirMaterialDemo(m: EducationalMaterial): Promise<string | null>
 let contador = 0;
 export const nuevoId = (prefijo: string) => `${prefijo}-${Date.now().toString(36)}-${(contador++).toString(36)}`;
 
+const SEGURIDAD_DEMO = {
+  noDisponible: 'En el modo demostración no hay ingreso con contraseña, así que tampoco segundo factor.',
+  factores: [],
+  prepararAlta: async () => ({ error: 'No disponible en la demostración.' }),
+  confirmarAlta: async () => 'No disponible en la demostración.',
+};
+
 export function useFuenteDemo(): AppState {
   const [db, setDb] = useState<Database>(datosDeEjemplo);
   const [sesion, setSesion] = useState<Sesion | null>(null);
@@ -343,6 +350,10 @@ export function useFuenteDemo(): AppState {
     error: null,
     limpiarError: () => {},
     ingresar: async () => 'En el modo demostración se entra con el selector de rol.',
+    segundoFactorPendiente: false,
+    confirmarSegundoFactor: async () => 'En el modo demostración no hay segundo factor.',
+    cancelarSegundoFactor: () => {},
+    seguridad: SEGURIDAD_DEMO,
     entrarComoMedico: () => setSesion({ rol: 'medico', usuarioId: DOCTOR_ID }),
     entrarComoAdulto: (id) => {
       const guardian = db.guardians.find((g) => g.id === id);

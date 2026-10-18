@@ -126,6 +126,26 @@ El script no crea usuarios ni contraseñas: solo le da el rol de médico al usua
 
 La base real arranca vacía: **no se cargan los datos de demostración** (`npm run sembrar` solo funciona en el emulador).
 
+### Segundo factor del médico (recomendado)
+
+Además de la contraseña, la app pide el código de 6 números de una app de autenticación (Google Authenticator, 1Password, la de Apple…). Es TOTP: no tiene costo por uso, a diferencia de los SMS. Los emuladores no lo admiten, así que se prueba directamente en el proyecto real.
+
+1. En la consola, Authentication › Configuración: pasar a **Firebase Authentication con Identity Platform** (lo pide Firebase para el segundo factor). Con email y contraseña, el nivel gratuito alcanza de sobra para el consultorio.
+2. Activar TOTP en el proyecto (una vez):
+
+```bash
+npx tsx scripts/activar-segundo-factor.ts --proyecto pediatric-os
+```
+
+3. Entrar a la app como médico: Configuración › Seguridad › "Activar el segundo factor". En la web aparece un QR para escanear con el teléfono; en el teléfono, un botón que abre la app de autenticación (o la clave para escribirla a mano). Se confirma con el primer código.
+4. Desde ahí, cada ingreso pide el código. El script del primer médico ya deja el email como verificado, que Firebase exige.
+
+Si se pierde el teléfono, quien administra el proyecto quita el segundo factor y el médico lo vuelve a activar:
+
+```bash
+npx tsx scripts/quitar-segundo-factor.ts --proyecto pediatric-os --email TU_EMAIL
+```
+
 ---
 
 ## 3. Desplegar la web

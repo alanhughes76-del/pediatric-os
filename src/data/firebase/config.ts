@@ -14,7 +14,7 @@ import { connectFunctionsEmulator, getFunctions, type Functions } from 'firebase
 import { connectStorageEmulator, getStorage, type FirebaseStorage } from 'firebase/storage';
 
 export const REGION = 'southamerica-east1';
-const EMULADORES = process.env.EXPO_PUBLIC_USE_EMULATORS !== 'false';
+export const EMULADORES = process.env.EXPO_PUBLIC_USE_EMULATORS !== 'false';
 const HOST = process.env.EXPO_PUBLIC_EMULADOR_HOST || '127.0.0.1';
 
 let conectado: { auth: Auth; db: Firestore; functions: Functions; storage: FirebaseStorage } | null = null;

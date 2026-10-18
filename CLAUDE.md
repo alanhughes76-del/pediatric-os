@@ -27,6 +27,7 @@ Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionad
 - Lo crítico va por Functions (`operaciones` del contrato): `crearPaciente`, `aprobarNota`, `corregirNota`, `emitirCertificado`, `anularCertificado`, `crearTurno`, `accionTurno` y `enviarResumen` (`enviarResumenFamilia`). En demostración hacen lo mismo en memoria.
 - En `firebase`, la familia entra con el enlace mágico y lee solo las copias del portal (ver "Portal"). El asistente todavía no tiene pantallas.
 - El servidor escribe las fechas como la app (hora de Argentina con `-03:00`, `shared/fechaHora.ts`), porque la app compara fechas como texto.
+- Segundo factor del médico (TOTP): `firebase/segundoFactor.ts` (ingreso con código y alta), `lib/segundoFactor.ts` (código, clave, QR, mensajes), Configuración › Seguridad (`components/configuracion/Seguridad.tsx`, `CodigoQR.tsx`). Los emuladores no admiten TOTP: la sección lo dice. Proyecto real: `scripts/activar-segundo-factor.ts` y `scripts/quitar-segundo-factor.ts`; `primer-medico` deja el email verificado. **Sin verificar:** un alta y un ingreso reales con TOTP.
 - En el celular la sesión de Firebase queda guardada en AsyncStorage (`firebase/persistencia.native.ts`; anda también en Expo Go). En la web, en el navegador. "Cerrar sesión" la borra.
 
 ## Familias

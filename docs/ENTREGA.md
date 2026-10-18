@@ -31,7 +31,6 @@ Funcionan en la web y en el celular (Expo Go), sobre los emuladores y con los da
 ## Pendientes (dentro del alcance)
 
 - **Asistente:** el rol existe y las reglas lo contemplan, pero todavía no tiene pantallas (al entrar, la app le dice que llega más adelante).
-- **Segundo factor (TOTP) del médico:** recomendado, pero la pantalla de ingreso todavía no lo pide. No lo actives en la consola hasta que esté.
 - **Foto del paciente:** todavía no se puede cargar.
 - **Sumar un adulto desde la pantalla de la familia:** hoy se suma desde cada hijo.
 - **Precio semestral:** sin descuento por hijo adicional, porque no lo definiste.
@@ -49,31 +48,32 @@ Recetas y órdenes legales (van en la plataforma registrada; la app abre el link
 
 1. Crear el proyecto real de Firebase en plan Blaze y seguir `docs/INSTALACION.md` (o pasárselo a quien te ayude).
 2. Crear tu usuario y correr el script del primer médico.
-3. Credenciales del mail del enlace mágico: `SMTP_USUARIO` y `SMTP_CLAVE` (contraseña de aplicación de Gmail o Workspace). Sin ellas, las familias no pueden entrar.
-4. Dominio de la web (o usar el de Firebase) y, para la app propia, el identificador de la app y la cuenta de Apple Developer.
+3. Activar el segundo factor (Identity Platform, el script de TOTP y Configuración › Seguridad). No se pudo probar en los emuladores: la primera prueba real es esa.
+4. Credenciales del mail del enlace mágico: `SMTP_USUARIO` y `SMTP_CLAVE` (contraseña de aplicación de Gmail o Workspace). Sin ellas, las familias no pueden entrar.
+5. Dominio de la web (o usar el de Firebase) y, para la app propia, el identificador de la app y la cuenta de Apple Developer.
 
 **Configuración (desde la app)**
 
-5. Links: PacienteX, Cal.com y la plataforma de recetas.
-6. Precios, horarios, zonas, duraciones y buffer (los valores de la agenda son provisorios).
-7. Datos profesionales y firma para los certificados.
+6. Links: PacienteX, Cal.com y la plataforma de recetas.
+7. Precios, horarios, zonas, duraciones y buffer (los valores de la agenda son provisorios).
+8. Datos profesionales y firma para los certificados.
 
 **Revisión clínica**
 
-8. **Calendario de vacunas:** está en borrador (`assets/data/calendario_vacunas.json`). Mientras no lo marques como verificado, la familia no ve fechas estimadas y no salen recordatorios.
-9. Plantillas de certificados y textos de la biblioteca de prevención.
+9. **Calendario de vacunas:** está en borrador (`assets/data/calendario_vacunas.json`). Mientras no lo marques como verificado, la familia no ve fechas estimadas y no salen recordatorios.
+10. Plantillas de certificados y textos de la biblioteca de prevención.
 
 **Make (`docs/AUTOMATIZACIONES.md`)**
 
-10. Crear o adaptar los escenarios, cargar `MAKE_WEBHOOK_URL` y `MAKE_WEBHOOK_SECRET`, y definir las plantillas que faltan.
-11. Cal.com: apuntar el webhook a `reservaCalcom` con `CALCOM_WEBHOOK_SECRET`.
+11. Crear o adaptar los escenarios, cargar `MAKE_WEBHOOK_URL` y `MAKE_WEBHOOK_SECRET`, y definir las plantillas que faltan.
+12. Cal.com: apuntar el webhook a `reservaCalcom` con `CALCOM_WEBHOOK_SECRET`.
 
 **Revisión legal (con tu abogado; nada de esto es una afirmación legal)**
 
-12. **Región de los datos:** `southamerica-east1` (San Pablo) implica transferencia internacional de datos de salud.
-13. **Consentimientos:** el texto para el uso de la IA con datos de salud (la IA no se enciende sin que marques que lo revisaste) y el de la foto del paciente.
-14. **IA:** cargar `ANTHROPIC_API_KEY` solo después de esa revisión.
-15. **Conservación y copias:** la propuesta de abajo.
+13. **Región de los datos:** `southamerica-east1` (San Pablo) implica transferencia internacional de datos de salud.
+14. **Consentimientos:** el texto para el uso de la IA con datos de salud (la IA no se enciende sin que marques que lo revisaste) y el de la foto del paciente.
+15. **IA:** cargar `ANTHROPIC_API_KEY` solo después de esa revisión.
+16. **Conservación y copias:** la propuesta de abajo.
 
 ---
 

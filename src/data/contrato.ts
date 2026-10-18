@@ -144,6 +144,20 @@ export type DatosMaterial = Pick<EducationalMaterial, 'title' | 'kind' | 'url' |
  * Archivos: se suben a Cloud Storage con la sesión del médico y se leen con ella.
  * Nunca hay enlaces públicos. Devuelven un mensaje de error comprensible, o null si salió bien.
  */
+/**
+ * Segundo factor del médico (TOTP, app de autenticación). Solo existe en el proyecto real de
+ * Firebase: en la demostración y en los emuladores `noDisponible` dice por qué.
+ */
+export interface Seguridad {
+  noDisponible: string | null;
+  /** Apps de autenticación que ya tiene la cuenta (vacío = solo contraseña). */
+  factores: { nombre: string; desde: string }[];
+  /** Primer paso del alta: la clave y el enlace otpauth:// para el QR. */
+  prepararAlta: () => Promise<{ clave: string; url: string } | { error: string }>;
+  /** Segundo paso: con el código que muestra la app, queda activado. Devuelve un error o null. */
+  confirmarAlta: (codigo: string) => Promise<string | null>;
+}
+
 export interface Archivos {
   subirDocumento: (datos: DatosDocumento, archivo: ArchivoElegido) => Promise<string | null>;
   abrirDocumento: (d: Document) => Promise<string | null>;
@@ -171,6 +185,11 @@ export interface AppState {
   // Ingreso
   /** Firebase: email y contraseña del equipo. Devuelve un mensaje de error o null. */
   ingresar: (email: string, clave: string) => Promise<string | null>;
+  /** El ingreso con contraseña pidió el código de la app de autenticación (segundo factor). */
+  segundoFactorPendiente: boolean;
+  confirmarSegundoFactor: (codigo: string) => Promise<string | null>;
+  cancelarSegundoFactor: () => void;
+  seguridad: Seguridad;
   /** Demostración: selector de rol. */
   entrarComoMedico: () => void;
   entrarComoAdulto: (guardianId: string) => void;

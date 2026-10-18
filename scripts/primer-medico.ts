@@ -50,6 +50,9 @@ initializeApp({ projectId: proyecto });
   }
   const ahora = new Date().toISOString();
   await auth.setCustomUserClaims(usuario.uid, { rol: 'medico', organizationId: organizacion });
+  // Firebase exige el email verificado para activar el segundo factor. Lo crea el administrador del
+  // proyecto en la consola, así que se marca como verificado acá.
+  if (!usuario.emailVerified) await auth.updateUser(usuario.uid, { emailVerified: true });
   await db.doc(`organizations/${organizacion}`).set({ name: 'Consultorio del Dr. Alan Hughes', createdAt: ahora }, { merge: true });
   await db.doc(`users/${usuario.uid}`).set({ rol: 'medico', organizationId: organizacion, updatedAt: ahora, updatedBy: 'primer-medico' }, { merge: true });
   await db.collection(`organizations/${organizacion}/auditLog`).add({

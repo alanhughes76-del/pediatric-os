@@ -9,8 +9,8 @@
  * - Escribe con la firma que exigen las reglas (organizationId, createdBy, updatedBy). La
  *   auditoría la registra el servidor. Lo crítico va por Cloud Functions.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { onAuthStateChanged, signInWithCustomToken, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { onAuthStateChanged, signInWithCustomToken, signInWithEmailAndPassword, signOut, type MultiFactorResolver, type TotpSecret } from 'firebase/auth';
 import {
   collection, collectionGroup, deleteField, doc, getDoc, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where, writeBatch,
   type Unsubscribe,
@@ -24,7 +24,9 @@ import type { AppState, ResultadoTurno, Sesion, Tabla } from '../contrato';
 import type { Address, AppNotification, Appointment, AppointmentChange, AuditLog, Communication, Database, Guardian, InteraccionIA, MaterialDelivery, PlantillasCertificado } from '../types';
 import { armarVistaFamilia, type CopiasPaciente } from './portalFamilia';
 import { CONFIG_AGENDA_INICIAL } from '@shared/agenda';
-import { firebase } from './config';
+import { EMULADORES, firebase } from './config';
+import { confirmarAlta, factoresDe, ingresarConCodigo, pideSegundoFactor, prepararAlta } from './segundoFactor';
+import { codigoValido, mensajeSegundoFactor } from '@/lib/segundoFactor';
 import { ADMINISTRATIVAS, CLINICAS, aFirestore, coleccion, desdeFirestore, diferencias, ruta } from './mapeo';
 import { ahoraISO } from '@/lib/fechas';
 import { FIRMA } from '@/lib/certificados';
@@ -48,6 +50,8 @@ const VACIA: Database = {
 /** Mensajes que se entienden, sin códigos técnicos. */
 export function mensajeDeError(e: unknown): string {
   const code = e instanceof FirebaseError ? e.code : '';
+  const segundoFactor = mensajeSegundoFactor(code);
+  if (segundoFactor) return segundoFactor;
   if (code.endsWith('permission-denied')) return 'No tenés permiso para hacer este cambio.';
   if (code.endsWith('unavailable') || code.endsWith('network-request-failed')) return 'No hay conexión con el servidor. Revisá la conexión (en desarrollo: ¿están corriendo los emuladores?).';
   if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found' || code === 'auth/invalid-email') return 'El email o la contraseña no son correctos.';
@@ -72,6 +76,12 @@ export function useFuenteFirebase(): AppState {
   const [copias, setCopias] = useState<Record<string, CopiasPaciente>>({});
   const [linksFamilia, setLinksFamilia] = useState(LINKS_INICIALES);
 
+  // Segundo factor (TOTP): el ingreso que espera el código y el alta en curso.
+  const resolver = useRef<MultiFactorResolver | null>(null);
+  const secretoAlta = useRef<TotpSecret | null>(null);
+  const [segundoFactorPendiente, setSegundoFactorPendiente] = useState(false);
+  const [factores, setFactores] = useState<{ nombre: string; desde: string }[]>([]);
+
   // Sesión: rol y organización salen de los custom claims (los asigna solo el servidor).
   useEffect(() => onAuthStateChanged(auth, async (u) => {
     setAcceso(null); setCopias({}); setDirecciones([]);
@@ -79,6 +89,7 @@ export function useFuenteFirebase(): AppState {
     const { claims } = await u.getIdTokenResult();
     const orgId = typeof claims.organizationId === 'string' ? claims.organizationId : null;
     if (claims.rol === 'medico' && orgId) {
+      setFactores(factoresDe(u));
       setSesion({ rol: 'medico', usuarioId: u.uid });
       setOrg(orgId);
     } else if (claims.rol === 'familia' && orgId) {
@@ -438,7 +449,47 @@ export function useFuenteFirebase(): AppState {
     error,
     limpiarError: () => setError(null),
     ingresar: async (email, clave) => {
-      try { await signInWithEmailAndPassword(auth, email.trim(), clave); setError(null); return null; } catch (e) { return mensajeDeError(e); }
+      try { await signInWithEmailAndPassword(auth, email.trim(), clave); setError(null); return null; } catch (e) {
+        // Con segundo factor, la contraseña era correcta: falta el código de la app de autenticación.
+        resolver.current = pideSegundoFactor(auth, e);
+        if (resolver.current) { setSegundoFactorPendiente(true); return null; }
+        return mensajeDeError(e);
+      }
+    },
+    segundoFactorPendiente,
+    confirmarSegundoFactor: async (codigo) => {
+      if (!codigoValido(codigo)) return 'Escribí los 6 números que muestra la app de autenticación.';
+      if (!resolver.current) return 'Volvé a escribir tu email y tu contraseña.';
+      try {
+        await ingresarConCodigo(resolver.current, codigo);
+        resolver.current = null;
+        setSegundoFactorPendiente(false);
+        setError(null);
+        return null;
+      } catch (e) { return mensajeDeError(e); }
+    },
+    cancelarSegundoFactor: () => { resolver.current = null; setSegundoFactorPendiente(false); },
+    seguridad: {
+      noDisponible: EMULADORES ? 'Los emuladores de Firebase no permiten probar la app de autenticación: se activa en el proyecto real.' : null,
+      factores,
+      prepararAlta: async () => {
+        if (!auth.currentUser) return { error: 'No hay sesión.' };
+        try {
+          const alta = await prepararAlta(auth.currentUser);
+          secretoAlta.current = alta.secreto;
+          return { clave: alta.clave, url: alta.url };
+        } catch (e) { return { error: mensajeDeError(e) }; }
+      },
+      confirmarAlta: async (codigo) => {
+        if (!codigoValido(codigo)) return 'Escribí los 6 números que muestra la app de autenticación.';
+        if (!auth.currentUser || !secretoAlta.current) return 'Empezá de nuevo con "Activar".';
+        try {
+          await confirmarAlta(auth.currentUser, secretoAlta.current, codigo);
+          secretoAlta.current = null;
+          setFactores(factoresDe(auth.currentUser));
+          return null;
+        } catch (e) { return mensajeDeError(e); }
+      },
     },
     entrarComoMedico: () => {},
     entrarComoAdulto: () => {},
@@ -462,5 +513,5 @@ export function useFuenteFirebase(): AppState {
     enLote,
     operaciones,
     archivos,
-  }), [archivos, listo, datos, vistaDeFamilia, sesion, uid, error, auth, functions, agregar, actualizar, enLote, operaciones, fallo]);
+  }), [archivos, listo, datos, vistaDeFamilia, sesion, uid, error, auth, functions, agregar, actualizar, enLote, operaciones, fallo, segundoFactorPendiente, factores]);
 }

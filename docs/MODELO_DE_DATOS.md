@@ -121,7 +121,7 @@ La familia descarga con un enlace firmado de pocos minutos, que genera el servid
 
 ## Primer médico en producción (cuando exista el proyecto real)
 
-1. Crear el usuario en Firebase Authentication (email y contraseña). El segundo factor (TOTP) queda para cuando la pantalla de ingreso lo pida (ver `docs/ENTREGA.md`).
+1. Crear el usuario en Firebase Authentication (email y contraseña). Después, el segundo factor (TOTP): pasos en `docs/INSTALACION.md`.
 2. Asignarle el rol una sola vez con `npm run primer-medico` (`scripts/primer-medico.ts`), desde una terminal con permisos de administrador del proyecto. Pasos en `docs/INSTALACION.md`. Desde ese momento, los demás roles se asignan con `asignarRol`.
 
 ## Pendiente de validación legal (no son afirmaciones legales)
