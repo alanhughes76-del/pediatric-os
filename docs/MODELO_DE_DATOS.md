@@ -20,7 +20,7 @@ Estado al 17/10/2026, Etapa 1a. Las reglas están en `firestore.rules` y `storag
 | --- | --- | --- | --- |
 | `users/{uid}` | el propio usuario | S | Rol y organización los fija `asignarRol` o el acceso al portal |
 | `organizations/{orgId}` | M, A | S | — |
-| `…/settings/{doc}` (`links`: PacienteX, Cal.com y recetas; `precios`: membresía y visitas sueltas; `ia`; `vacunas`; `ambitos`: nombres de los ámbitos; `certificados`: plantillas; `agenda`: horarios por día, duración por tipo, buffer y zonas) | M; A todo menos `ia`; F solo `links` | M | Firma. Los secretos no van acá: van en Secret Manager |
+| `…/settings/{doc}` (`links`: PacienteX, Cal.com y recetas; `precios`: membresía y visitas sueltas; `ia`; `vacunas`; `ambitos`: nombres de los ámbitos; `certificados`: plantillas; `automatizaciones`: eventos apagados; `agenda`: horarios por día, duración por tipo, buffer y zonas) | M; A todo menos `ia`; F solo `links` | M | Firma. Los secretos no van acá: van en Secret Manager |
 | `…/professionals/{id}` | M, A | M | Firma |
 | `…/consents/{id}` (portal, foto, grabación, IA) | M; F los suyos | M, o F los suyos | No se edita ni se borra: solo se revoca una vez (`revokedAt`) |
 
@@ -96,7 +96,7 @@ Lo que la familia hace desde el portal (Etapa 6b):
 | --- | --- | --- |
 | `…/auditLog/{id}` | M | **Solo S, solo altas** (triggers `auditarAdministrativo`, `auditarClinico`, `auditarDomicilios`). Guarda quién, tipo de actor (persona, sistema o IA), acción, ruta, y valor anterior y nuevo de cada campo |
 | `…/aiInteractions/{id}` | M | Solo S (Etapa 9) |
-| `…/outbox/{id}` (eventos para Make) | M | Solo S. Estados: `pendiente` → `enviado`, o `reintentar` (1, 2, 4… minutos, tope 6 h) → `fallido` a los 8 intentos. Sin URL configurada: `sin_destino` |
+| `…/outbox/{id}` (eventos para Make: `type`, `audiencia`, `plantilla`, `data`) | M | Solo S. Estados: `pendiente` → `enviado`, o `reintentar` (1, 2, 4… minutos, tope 6 h) → `fallido` a los 8 intentos. Sin URL configurada: `sin_destino`; apagado en Configuración: `apagado`. Los avisos programados usan id fijo (`tipo__clave`) para salir una sola vez. Detalle en `docs/AUTOMATIZACIONES.md` |
 | `…/inbound/{id}` (lo que llega de Make) | M | Solo S (Etapa 8) |
 | `…/notifications/{id}` (la campana: `recipientUid`, `kind` `datos_familia`, `guardianId`, `campos`, `readAt`) | el destinatario | S. El destinatario solo marca `readAt` |
 

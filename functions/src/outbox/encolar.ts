@@ -6,6 +6,7 @@
  * - Con `clave`, el evento sale una sola vez (por ejemplo, un recordatorio por turno).
  */
 import { ahoraISO, db } from '../config';
+import { isoArgentina } from '../../../shared/fechaHora';
 import { CATALOGO } from './catalogo';
 import { contactosDelEvento } from './destinatarios';
 import type { TipoEvento } from './eventos';
@@ -33,11 +34,12 @@ export async function encolarEvento(orgId: string, type: TipoEvento, data: Recor
     // Lo que trae el evento manda (por ejemplo, el resumen ya trae sus destinatarios con email).
     data: { ...contactos, ...data },
     organizationId: orgId,
-    occurredAt: ahora,
+    // Hora de Argentina, como el resto de la app. `nextAttemptAt` queda en UTC: lo compara el reintento.
+    occurredAt: isoArgentina(),
     status: apagado ? 'apagado' : 'pendiente',
     attempts: 0,
     nextAttemptAt: ahora,
-    createdAt: ahora,
+    createdAt: isoArgentina(),
   };
   if (!opciones.clave) return (await coleccion.add(evento)).id;
   const ref = coleccion.doc(idUnico(type, opciones.clave));
