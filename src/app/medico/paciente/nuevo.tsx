@@ -4,23 +4,25 @@
  * semanas; vacía = de término) y grupo sanguíneo. La foto todavía no se puede cargar.
  * Control de duplicados (regla 8, shared/duplicados.ts): el mismo DNI no deja guardar; el mismo
  * apellido y fecha de nacimiento pide confirmar (pueden ser mellizos).
- * Si se abre desde la ficha de una familia (?familia=…), el paciente queda en esa familia.
+ * Si se abre desde la ficha de una familia (?familia=…), el paciente queda en esa familia y se vincula
+ * con sus adultos (pedido del Dr., 18/10/2026): la relación se copia de lo que cada adulto es para los
+ * hermanos y, si no hay de dónde copiarla, la elige el Dr. Se puede destildar a quien no corresponda.
  */
 import { CampoFecha } from '@/components/CampoFecha';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useApp } from '@/data/store';
-import { GRUPOS_SANGUINEOS, type BloodType, type CoverageKind, type Scope, type Sex } from '@/data/types';
+import { GRUPOS_SANGUINEOS, type BloodType, type CoverageKind, type Guardian, type RelationshipType, type Scope, type Sex } from '@/data/types';
 import { buscarDuplicados } from '@/lib/busqueda';
 import { TEXTO_COBERTURA } from '@/data/selectores';
 import { deFecha, diasEntre, hoyISO, fechaCorta } from '@/lib/fechas';
 import { Pantalla } from '@/components/Pantalla';
-import { Campo, Opciones, Aviso } from '@/components/Formulario';
+import { Campo, Opciones, Aviso, Casilla } from '@/components/Formulario';
 import { Boton } from '@/components/Boton';
 import { ErrorComprensible } from '@/components/Estados';
 import { Tarjeta } from '@/components/Tarjeta';
-import { TextoFuerte } from '@/components/Texto';
+import { TextoFuerte, TextoChico } from '@/components/Texto';
 
 const SEXOS: { valor: Sex; texto: string }[] = [
   { valor: 'M', texto: 'M' },
@@ -28,11 +30,19 @@ const SEXOS: { valor: Sex; texto: string }[] = [
   { valor: 'X', texto: 'X' },
 ];
 
+const RELACIONES: { valor: RelationshipType; texto: string }[] = [
+  { valor: 'madre', texto: 'Madre' },
+  { valor: 'padre', texto: 'Padre' },
+  { valor: 'otro', texto: 'Otro' },
+];
+
+interface Vinculo { incluir: boolean; tipo?: RelationshipType; detalle: string }
+
 const COBERTURAS = (Object.keys(TEXTO_COBERTURA) as CoverageKind[]).map((v) => ({ valor: v, texto: TEXTO_COBERTURA[v] }));
 
 export default function NuevoPaciente() {
   const { familia: familiaId } = useLocalSearchParams<{ familia?: string }>();
-  const { db, operaciones } = useApp();
+  const { db, operaciones, agregar } = useApp();
   const [guardando, setGuardando] = useState(false);
   const [errorServidor, setErrorServidor] = useState<string | null>(null);
   const familia = db.families.find((f) => f.id === familiaId);
@@ -50,6 +60,18 @@ export default function NuevoPaciente() {
   const [intento, setIntento] = useState(false);
   const [duplicadoVisto, setDuplicadoVisto] = useState(false);
 
+  // Adultos de la familia y lo que son para los hermanos (para proponer la misma relación).
+  const adultos: Guardian[] = familia ? db.guardians.filter((g) => g.familyId === familia.id && !g.archivedAt) : [];
+  const hermanos = new Set(familia ? db.patients.filter((x) => x.familyId === familia.id && !x.archivedAt).map((x) => x.id) : []);
+  const delHermano = (gid: string) => db.relationships.find((r) => r.guardianId === gid && hermanos.has(r.patientId) && !r.archivedAt && !r.validTo);
+  const principalHermanos = adultos.find((g) => delHermano(g.id)?.isPrimary)?.id;
+  // Solo se guarda lo que tocó el Dr.; el resto sale de lo propuesto (los datos pueden llegar después de abrir el formulario).
+  const [cambios, setCambios] = useState<Record<string, Vinculo>>({});
+  const vinculo = (g: Guardian): Vinculo => cambios[g.id] ?? { incluir: true, tipo: delHermano(g.id)?.type, detalle: delHermano(g.id)?.typeDetail ?? '' };
+  const cambiar = (g: Guardian, v: Partial<Vinculo>) => setCambios((c) => ({ ...c, [g.id]: { ...vinculo(g), ...v } }));
+  const incluidos = adultos.filter((g) => vinculo(g).incluir);
+  const faltaRelacion = incluidos.some((g) => !vinculo(g).tipo || (vinculo(g).tipo === 'otro' && !vinculo(g).detalle.trim()));
+
   const nacimiento = deFecha(fecha);
   const sem = semanas.trim() ? Number(semanas.trim()) : undefined;
 
@@ -58,6 +80,7 @@ export default function NuevoPaciente() {
     apellido: !apellido.trim() ? 'Escribí el apellido.' : undefined,
     fecha: !nacimiento ? 'Elegí la fecha de nacimiento.' : diasEntre(nacimiento, hoyISO()) < 0 ? 'La fecha de nacimiento no puede ser futura.' : undefined,
     sexo: !sexo ? 'Elegí el sexo.' : undefined,
+    vinculos: faltaRelacion ? 'Elegí la relación de cada adulto que vas a vincular (o destildalo).' : undefined,
     semanas: sem !== undefined && !(Number.isInteger(sem) && sem >= 22 && sem <= 44) ? 'Tiene que ser un número entero entre 22 y 44.' : undefined,
   };
   const valido = !Object.values(errores).some(Boolean);
@@ -79,7 +102,17 @@ export default function NuevoPaciente() {
       bloodType: grupo,
     }, aunqueExista);
     setGuardando(false);
-    if (r.estado === 'creado') return router.replace(`/medico/hijo/${r.id}`);
+    if (r.estado === 'creado') {
+      const principal = incluidos.some((g) => g.id === principalHermanos) ? principalHermanos : incluidos[0]?.id;
+      for (const g of incluidos) {
+        const v = vinculo(g);
+        agregar('relationships', {
+          patientId: r.id, guardianId: g.id, type: v.tipo!, typeDetail: v.tipo === 'otro' ? v.detalle.trim() : undefined,
+          isPrimary: g.id === principal, validFrom: hoyISO(),
+        }, 'vinculo.crear');
+      }
+      return router.replace(`/medico/hijo/${r.id}`);
+    }
     if (r.estado === 'posible-duplicado') return setDuplicadoVisto(true);
     setErrorServidor(r.mensaje);
   };
@@ -133,6 +166,28 @@ export default function NuevoPaciente() {
         </>
       ) : null}
       <Opciones etiqueta="Grupo sanguíneo (opcional)" opciones={GRUPOS_SANGUINEOS.map((g) => ({ valor: g, texto: g }))} valor={grupo} onCambio={setGrupo} />
+
+      {adultos.length > 0 ? (
+        <Tarjeta style={{ gap: 12 }}>
+          <TextoFuerte>Adultos de la familia</TextoFuerte>
+          <TextoChico>Quedan vinculados a este paciente. Confirmá la relación de cada uno.</TextoChico>
+          {adultos.map((g) => {
+            const v = vinculo(g);
+            return (
+              <View key={g.id} style={{ gap: 8 }}>
+                <Casilla marcada={v.incluir} onCambio={(incluir) => cambiar(g, { incluir })} texto={`Vincular a ${g.firstName} ${g.lastName}`} />
+                {v.incluir ? (
+                  <>
+                    <Opciones etiqueta={`¿Qué es ${g.firstName} para este paciente?`} opciones={RELACIONES} valor={v.tipo} onCambio={(tipo) => cambiar(g, { tipo })} />
+                    {v.tipo === 'otro' ? <Campo etiqueta="Aclará la relación" value={v.detalle} onChangeText={(detalle) => cambiar(g, { detalle })} placeholder="Ej.: abuela" /> : null}
+                  </>
+                ) : null}
+              </View>
+            );
+          })}
+          {intento && errores.vinculos ? <Aviso tono="alerta" texto={errores.vinculos} /> : null}
+        </Tarjeta>
+      ) : null}
 
       {errorServidor ? <ErrorComprensible texto={errorServidor} /> : null}
       {duplicadoVisto && duplicados.length > 0 ? (

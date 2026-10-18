@@ -29,6 +29,10 @@ Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionad
 - El servidor escribe las fechas como la app (hora de Argentina con `-03:00`, `shared/fechaHora.ts`), porque la app compara fechas como texto.
 - En el celular la sesión de Firebase no queda guardada: se vuelve a ingresar al abrir la app. La sesión persistente llega con la versión propia de la app (EAS).
 
+## Familias
+
+- Alta de un hijo desde la familia (`paciente/nuevo?familia=`): se vincula con los adultos de esa familia (relación copiada de los hermanos o elegida por el Dr.; se puede destildar). Los vínculos se escriben después de que el servidor crea al paciente.
+
 ## Agenda (desde la Etapa 3)
 
 - Los turnos (`Appointment`) están separados de las consultas: el turno organiza la visita; la consulta (`appointmentId` opcional) es lo clínico. Ya no existen consultas "programadas".

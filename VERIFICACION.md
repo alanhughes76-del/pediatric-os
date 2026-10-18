@@ -216,7 +216,7 @@ Corridas el 18/10/2026 sobre los emuladores de Firebase con los datos de demostr
 - **Arreglado:** cuatro pantallas volvían atrás sin fijarse si había adónde (vincular adulto, fiebre del médico, fiebre de la familia y resolver seguimiento). Abiertas desde un enlace directo, quedaban trabadas con un error. Ahora vuelven a la ficha, a Inicio o al portal.
 - **Arreglado:** las casillas (hitos, bandera clínica) y los interruptores no tenían nombre para los lectores de pantalla.
 - **Arreglado:** el texto de la foto del paciente decía que llegaba "con el almacenamiento de archivos", que ya existe. Ahora dice que todavía no se puede cargar.
-- **Para decidir (Dr.):** al cargar un hijo dentro de una familia, no se vincula solo a los adultos de esa familia: hay que hacerlo uno por uno en "Datos y familia" (y hasta entonces ese hijo no aparece en el portal de ellos). Tampoco hay "Sumar un adulto" en la pantalla de la familia: los adultos se suman desde cada hijo.
+- **Resuelto con el Dr.:** al cargar un hijo dentro de una familia no se vinculaba solo a los adultos de esa familia. Ahora el alta los muestra tildados, con la relación copiada de los hermanos (si no hay de dónde copiarla, la elige el Dr.), y el contacto principal de los hermanos. Probado en el navegador: Nina quedó con Lucía (Madre, principal) y Martín (Padre). Sigue sin haber "Sumar un adulto" en la pantalla de la familia: los adultos nuevos se suman desde cada hijo.
 
 ## No verificado
 
