@@ -13,7 +13,7 @@ export default function NuevoRegistroMedico() {
   return (
     <Pantalla>
       <Stack.Screen options={{ title: `Registro a mano · ${p.firstName}` }} />
-      <FormularioFiebre patientId={p.id} tipo={tipo === 'antitermico' ? 'antitermico' : 'toma'} porMedico onListo={() => router.back()} />
+      <FormularioFiebre patientId={p.id} tipo={tipo === 'antitermico' ? 'antitermico' : 'toma'} porMedico onListo={() => (router.canGoBack() ? router.back() : router.replace(`/medico/hijo/${p.id}`))} />
     </Pantalla>
   );
 }

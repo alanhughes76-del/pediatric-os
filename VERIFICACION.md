@@ -184,3 +184,41 @@ Recorrido hecho el 17/10/2026 con los datos de ejemplo, en el navegador en dos t
 ## Después de la verificación
 
 - El botón de contacto pasó a decir "Escribime por PacienteX" (elegido por el Dr.): entra en un renglón en el teléfono.
+
+# Etapa 10a · Pruebas de aceptación (sección 11 del prompt maestro)
+
+Corridas el 18/10/2026 sobre los emuladores de Firebase con los datos de demostración (todos ficticios). Cada prueba dice cómo se corrió: con un test automático (que vuelve a correr en cada etapa) o recorriendo la app en el navegador, conectada a los emuladores. La familia de prueba que se creó en el recorrido es "Acepta Prueba", con datos inventados.
+
+**Suites:** chequeo de tipos ✅ · linter ✅ · app 373 tests ✅ · Functions 72 ✅ · reglas 83 ✅ · integración en el emulador 55 ✅.
+
+| # | Prueba | Estado | Cómo se verificó |
+| --- | --- | --- | --- |
+| 1 | Familia con dos adultos en domicilios distintos | ✅ | Navegador: familia nueva con Carla (Olivos) y Martín (Tigre). Ver la salvedad en "Hallazgos" |
+| 2 | Dos hijos en la misma familia, sin duplicar | ✅ | Navegador: Bruno y Lola en la familia; el mismo DNI escrito con puntos se rechaza ("Ya hay un paciente con ese DNI… Abrir el existente"). Test `integracion/pacientes` |
+| 3 | Turno confirmado y otro superpuesto rechazado por el servidor | ✅ | Test `integracion/turnos` ("otro confirmado que se pisa: el servidor lo rechaza"; dos confirmaciones a la vez: solo una gana) |
+| 4 | Reprogramar y cancelar, con historial | ✅ | Test `integracion/turnos`. Navegador: reprogramación de 23/10 a 26/10 con el calendario nuevo; el historial muestra "De 23/10 10:00 a 26/10 10:00" |
+| 5 | Reserva simulada de Cal.com como "solicitado" | ✅ | Test `integracion/turnos` (con DNI conocido, desconocido, cancelada, firma inválida) |
+| 6 | Consulta completa: percentilos, hitos, nota sin IA, aprobar y corregir | ✅ | Navegador (Lola): peso P53, talla P44 (de pie), IMC P59 mientras se escribe; un hito marcado; con la IA apagada el botón explica por qué y se escribe a mano; aprobada v1, corregida y aprobada v2 ("Historial de versiones (2)"). Test `integracion/clinica` |
+| 7 | Modificar una nota aprobada escribiendo en la base: lo impiden las reglas | ✅ | Test `reglas/firestore` ("una nota aprobada no se puede modificar escribiendo directo en la base") |
+| 8 | Nota con bandera en Seguimientos pendientes, con el vencimiento correcto | ✅ | Navegador: Lola aparece en Inicio con "Control · Vence en 48 h". Test `integracion/clinica`: urgencia a las 24 h |
+| 9 | Tests de percentilos de la sección 7.6 | ✅ | `src/lib/percentiles.test.ts`: los seis casos de la tabla (±0,02 en Z), L = 0, fuera de rango, prematuro y corrección de 0,7 cm |
+| 10 | Esquema de un recién nacido con el calendario sin verificar | ✅ | Navegador: Bruno (nacido hoy) muestra "Calendario sin verificar: fechas estimadas". Tests `funciones/programados` e `integracion/eventos`: sin recordatorios de vacunas mientras no esté verificado |
+| 11 | Emitir un certificado, anularlo y emitir otro | ✅ | Test `integracion/clinica` (sumé el paso "emitir otro": el anulado queda anulado y el nuevo, emitido) |
+| 12 | Portal como cada adulto: solo lo habilitado; problema oculto y alergia referida ausentes | ✅ | Navegador: Lucía ve a Tomás y a Emma, sin el soplo (oculto) ni la alergia referida; Paula ve solo a Olivia; Diego (sin acceso) recibe la respuesta neutra y ningún enlace. Tests `integracion/portal` (leyendo la base directo) y `reglas/firestore` |
+| 13 | Fiebre cargada desde el portal, "sin revisar" del lado médico | ✅ | Navegador: Lucía anotó 38,2 °C axilar de Tomás; en el Registro de fiebre del médico figura como último valor, con 7 sin revisar |
+| 14 | El botón de PacienteX abre el link configurado fuera de la app | ✅ | Navegador: abre `familias.somospacientex.com/…` en una pestaña nueva y la app queda donde estaba |
+| 15 | Sin rol o con rol asistente no se leen datos clínicos | ✅ | Test `reglas/firestore` (asistente, familia, sin rol, otro consultorio y sin sesión) |
+| 16 | Evento que sale firmado hacia un webhook de prueba, con reintento | ✅ | Test `funciones/outbox`, contra un servidor HTTP local: firma `sha256=…` verificable, reintento ante error y ante falta de respuesta, tope de intentos |
+| 17 | Recorrido en computadora y celular, con errores de validación y estados vacíos | ⚠️ | Navegador a 1024 px y a 375 px: 31 pantallas del médico sin desborde horizontal ni errores; validaciones vistas ("Escribí tu email y tu contraseña", "Escribí el apellido de la familia", "Elegí el sexo"); estados vacíos en la familia nueva y en la ficha. Salvedad: el portal a 375 px no se recorrió de nuevo en esta pasada (se hizo en la Etapa 6b), y nada de esto es un iPhone real |
+
+## Hallazgos y arreglos (10a)
+
+- **Arreglado:** cuatro pantallas volvían atrás sin fijarse si había adónde (vincular adulto, fiebre del médico, fiebre de la familia y resolver seguimiento). Abiertas desde un enlace directo, quedaban trabadas con un error. Ahora vuelven a la ficha, a Inicio o al portal.
+- **Arreglado:** las casillas (hitos, bandera clínica) y los interruptores no tenían nombre para los lectores de pantalla.
+- **Arreglado:** el texto de la foto del paciente decía que llegaba "con el almacenamiento de archivos", que ya existe. Ahora dice que todavía no se puede cargar.
+- **Para decidir (Dr.):** al cargar un hijo dentro de una familia, no se vincula solo a los adultos de esa familia: hay que hacerlo uno por uno en "Datos y familia" (y hasta entonces ese hijo no aparece en el portal de ellos). Tampoco hay "Sumar un adulto" en la pantalla de la familia: los adultos se suman desde cada hijo.
+
+## No verificado
+
+- La app en un iPhone real con Expo Go (en esta etapa y en las anteriores).
+- Mails reales (faltan `SMTP_USUARIO` y `SMTP_CLAVE`), envío real a Make (falta `MAKE_WEBHOOK_URL`), reservas reales de Cal.com y una respuesta real de la IA (falta `ANTHROPIC_API_KEY` y la revisión legal del consentimiento).

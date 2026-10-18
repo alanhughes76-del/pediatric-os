@@ -71,6 +71,7 @@ export function Casilla({ marcada, onCambio, texto, detalle }: { marcada: boolea
     <Pressable
       onPress={() => onCambio(!marcada)}
       accessibilityRole="checkbox"
+      accessibilityLabel={detalle ? `${texto}. ${detalle}` : texto}
       accessibilityState={{ checked: marcada }}
       style={({ pressed }) => [s.casilla, pressed && { backgroundColor: colors.bgSoft }]}
     >
@@ -87,7 +88,7 @@ export function Casilla({ marcada, onCambio, texto, detalle }: { marcada: boolea
 
 export function Interruptor({ activo, onCambio, texto }: { activo: boolean; onCambio: (v: boolean) => void; texto: string }) {
   return (
-    <Pressable onPress={() => onCambio(!activo)} accessibilityRole="switch" accessibilityState={{ checked: activo }} style={s.interruptor}>
+    <Pressable onPress={() => onCambio(!activo)} accessibilityRole="switch" accessibilityLabel={texto} accessibilityState={{ checked: activo }} style={s.interruptor}>
       <Text style={s.interruptorTexto}>{texto}</Text>
       <View style={[s.pista, activo && { backgroundColor: colors.primary2 }]}>
         <View style={[s.perilla, activo && { alignSelf: 'flex-end' }]} />

@@ -1,7 +1,7 @@
 /**
  * Nuevo paciente (prompt maestro 7.4). Obligatorios: nombre, apellido, fecha de nacimiento y sexo.
  * Opcionales: DNI, ámbito (por defecto "Sin asignar"), cobertura, edad gestacional (22 a 44
- * semanas; vacía = de término) y grupo sanguíneo. La foto llega con el almacenamiento de archivos.
+ * semanas; vacía = de término) y grupo sanguíneo. La foto todavía no se puede cargar.
  * Control de duplicados (regla 8, shared/duplicados.ts): el mismo DNI no deja guardar; el mismo
  * apellido y fecha de nacimiento pide confirmar (pueden ser mellizos).
  * Si se abre desde la ficha de una familia (?familia=…), el paciente queda en esa familia.

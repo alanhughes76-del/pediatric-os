@@ -148,7 +148,7 @@ export function BloqueDatos({ paciente: p }: { paciente: Patient }) {
           </View>
           {familia ? <BotonTexto texto="Ver familia" onPress={() => router.push(`/medico/familia/${familia.id}`)} /> : null}
         </View>
-        <TextoChico>La foto (con consentimiento de la familia) llega con el almacenamiento de archivos.</TextoChico>
+        <TextoChico>La foto del paciente (con consentimiento de la familia) todavía no se puede cargar.</TextoChico>
       </Tarjeta>
     </Seccion>
   );

@@ -54,7 +54,7 @@ export default function Seguimiento() {
         <Boton
           titulo="Marcar resuelto"
           icono="checkmark-done-outline"
-          onPress={() => { actualizar('followUps', f.id, { status: 'resuelto', resolvedAt: ahoraISO() }, 'seguimiento.resolver'); router.back(); }}
+          onPress={() => { actualizar('followUps', f.id, { status: 'resuelto', resolvedAt: ahoraISO() }, 'seguimiento.resolver'); if (router.canGoBack()) router.back(); else router.replace('/medico'); }}
         />
       ) : null}
       <Aviso texto="Marcar resuelto es la única forma de que salga de la cola de seguimientos." />

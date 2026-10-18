@@ -111,6 +111,12 @@ test('certificado: se emite con su documento, se anula con motivo y no dos veces
   await llamar(medico, 'anularCertificado', { patientId: P, certificateId: r.data.id, reason: 'Fecha equivocada' });
   expect((await fs.doc(`${raiz}/certificates/${r.data.id}`).get()).data()).toMatchObject({ status: 'anulado', voidReason: 'Fecha equivocada' });
   await expect(llamar(medico, 'anularCertificado', { patientId: P, certificateId: r.data.id, reason: 'Otra vez' })).rejects.toMatchObject({ code: 'functions/failed-precondition' });
+
+  // Se emite otro: el anulado queda como estaba.
+  const otro = await llamar<{ id: string }>(medico, 'emitirCertificado', { ...datos, date: '2026-10-18' });
+  expect(otro.data.id).not.toBe(r.data.id);
+  expect((await fs.doc(`${raiz}/certificates/${otro.data.id}`).get()).data()).toMatchObject({ status: 'emitido', date: '2026-10-18' });
+  expect((await fs.doc(`${raiz}/certificates/${r.data.id}`).get()).data()!.status).toBe('anulado');
 });
 
 test('enviar material: solo el médico, registra el envío y emite el aviso sin datos clínicos', async () => {

@@ -97,7 +97,7 @@ export default function VincularAdulto() {
       const relaciones = principal ? d.relationships.map((r) => (r.patientId === p.id ? { ...r, isPrimary: false } : r)) : d.relationships;
       return { ...d, guardians, addresses, relationships: [...relaciones, rel] };
     });
-    router.back();
+    if (router.canGoBack()) router.back(); else router.replace(`/medico/hijo/${p.id}`);
   };
 
   return (

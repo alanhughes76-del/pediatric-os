@@ -14,7 +14,7 @@ export default function NuevoRegistroFamilia() {
   return (
     <Pantalla>
       <Stack.Screen options={{ title: tipo === 'antitermico' ? `Antitérmico · ${p.firstName}` : `Temperatura · ${p.firstName}` }} />
-      <FormularioFiebre patientId={p.id} tipo={tipo === 'antitermico' ? 'antitermico' : 'toma'} onListo={() => router.back()} />
+      <FormularioFiebre patientId={p.id} tipo={tipo === 'antitermico' ? 'antitermico' : 'toma'} onListo={() => (router.canGoBack() ? router.back() : router.replace('/familia'))} />
     </Pantalla>
   );
 }
