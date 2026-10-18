@@ -9,7 +9,7 @@ Este documento es para el Dr. Hughes. Explica qué manda Pediatric OS a Make, qu
 
 **Estado:**
 - **Etapa 8a, eventos salientes:** hecha. Es este documento.
-- **Etapa 8b, endpoints entrantes:** se suma acá. Son Cal.com, el formulario web, Tally, Plaud, el pago por Telegram y la mensajería.
+- **Etapa 8b, endpoints entrantes:** hecha. Son Cal.com, el formulario web, Tally, Plaud, el pago por Telegram y la mensajería (sección 7).
 
 ---
 
@@ -307,3 +307,170 @@ Sirve para ir conectando los escenarios de a uno.
 3. En la interfaz de los emuladores (http://127.0.0.1:4000 › Firestore › `organizations/…/outbox`), mirá el evento: tipo, audiencia, plantilla y `data`.
 4. Como no hay URL configurada, queda `sin_destino`: no se simula ningún envío.
 5. Las pruebas automáticas están en `tests/integracion/eventos.test.ts` y `tests/funciones/programados.test.ts`.
+
+---
+
+## 7. Lo que entra desde Make (endpoints)
+
+### 7.1 Cómo se manda
+
+Todo, menos Cal.com, entra por **un solo endpoint**: `POST https://southamerica-east1-<proyecto>.cloudfunctions.net/entradaMake`.
+
+**Firma:** encabezado `X-PediatricOS-Signature: sha256=<HMAC-SHA256 del cuerpo>`, con **el mismo secreto compartido** de los eventos (`MAKE_WEBHOOK_SECRET`). En Make, con un módulo HTTP: armá el cuerpo como texto, calculá `sha256(cuerpo; ; secreto)` y mandalo en el encabezado.
+
+**Cuerpo:**
+
+```json
+{ "tipo": "telegram.pago", "id": "<id único del envío>", "datos": { "…": "lo propio de cada tipo" } }
+```
+
+**El `id` hace que nada se duplique.** Usá el id de la ejecución o del mensaje original (por ejemplo, el `message_id` de Telegram). Si Make reintenta con el mismo `tipo` + `id`, Pediatric OS responde `{"ok": true, "repetido": true}` y no hace nada.
+
+**Respuestas:**
+
+| Código | Qué significa |
+| --- | --- |
+| `200` | Procesado. El JSON trae `resultado` y los ids creados |
+| `401` | Firma inválida |
+| `400` | Tipo desconocido o falta el `id` |
+| `422` | Faltan datos. El JSON trae un `error` en palabras, para responderte por Telegram |
+| `503` | Falta configurar el endpoint (secreto u organización) |
+
+**Nada se aprueba solo.** Lo que necesita criterio te deja un aviso en Pediatric OS (Avisos).
+
+**Privacidad:**
+- Lo que puede ser de salud lo ve **solo el médico**: el mensaje y las respuestas de los formularios, el triage y las transcripciones.
+- El asistente ve el contacto de los interesados.
+- Nada de esto va a los registros técnicos.
+
+### 7.2 Cal.com → Notion — Nueva visita (4734293) · endpoint propio de Cal.com
+
+**Ya funciona desde la Etapa 3:** `POST …/reservaCalcom`, con la firma de Cal.com (`X-Cal-Signature-256` y el secreto `CALCOM_WEBHOOK_SECRET`). Cubre:
+
+- **Reserva** (`BOOKING_CREATED`): crea un turno "solicitado" que confirmás vos. Si el DNI coincide con un paciente, queda vinculado; si no, queda "familia por identificar".
+- **Reprogramación** (`BOOKING_RESCHEDULED`): cancela la reserva anterior y crea la nueva.
+- **Cancelación** (`BOOKING_CANCELLED`): cancela el turno.
+
+**Qué cambiar:**
+1. En Cal.com, agregá el webhook apuntando a `reservaCalcom`, con los tres eventos.
+2. En Make, el escenario deja de crear la visita en Notion. La confirmación a la familia sale del evento `turno.confirmado` (sección 3).
+
+**Cómo probar:** hacé una reserva de prueba en Cal.com y fijate que aparezca en la Agenda como "Solicitado".
+
+### 7.3 Integration Webhooks (4405193) · `formulario.web`
+
+```json
+"datos": { "nombre": "Laura Pérez", "email": "laura@…", "telefono": "11 5555-0000", "mensaje": "…", "zona": "Olivos" }
+```
+
+**Qué pasa:**
+- Si el email o el teléfono es de un adulto ya cargado: no se crea nada nuevo. Te llega un aviso y queda registrado en Comunicaciones (`resultado: familia_existente`).
+- Si es un contacto nuevo: se crea un **interesado** (en Familias › Interesados) y te llega un aviso. El mensaje se guarda aparte y lo ves solo vos. Con "Crear la familia", los datos pasan precargados.
+- Hace falta un email o un teléfono válido; si no, la respuesta es `422`.
+
+**Qué cambiar:** el escenario manda el formulario a `entradaMake` con `tipo: formulario.web`, en lugar de crear la familia en Notion. La respuesta automática a la familia puede seguir en Make.
+
+**Cómo probar:** completá el formulario de la landing con datos ficticios. Tiene que aparecer en Interesados.
+
+### 7.4 Tally — admisión · `tally.admision`
+
+Igual que el formulario web. Además, las respuestas van como lista:
+
+```json
+"datos": { "nombre": "…", "email": "…", "telefono": "…", "respuestas": [{ "pregunta": "¿Edad del bebé?", "respuesta": "2 meses" }] }
+```
+
+### 7.5 Tally — Triage de urgencia (6281894) · `tally.triage_urgencia`
+
+```json
+"datos": { "email": "…", "telefono": "…", "nombre": "…", "respuestas": [{ "pregunta": "¿Cuánta fiebre?", "respuesta": "39" }] }
+```
+
+**Qué pasa:**
+- Se adjunta a la **solicitud de urgencia** de esa familia, o de ese contacto si todavía no está cargado, que esté dentro de las 24 horas.
+- Lo ves **solo vos**, en el turno y en Avisos.
+- Si no hay una solicitud de urgencia, queda igual en Avisos (`resultado: sin_solicitud`).
+
+**Qué cambiar:** además del aviso por Telegram que ya tenés, el escenario manda las respuestas a `entradaMake`.
+
+### 7.6 Tally — Feedback del servicio (6281896) · `tally.feedback` (opcional)
+
+```json
+"datos": { "email": "…", "puntaje": 9 }
+```
+
+Queda registrado en Comunicaciones, sin el texto. El aviso a vos sigue en Make.
+
+### 7.7 Plaud → Notion — Resumen de visita (5859789) · `plaud.transcripcion`
+
+```json
+"datos": { "texto": "<transcripción completa>", "fecha": "2026-10-16T10:00:00-03:00" }
+```
+
+**Qué pasa:** se crea un **borrador** que ves en Avisos ("Transcripción de Plaud para revisar"). Nada se aprueba solo.
+
+**El paciente:**
+- Se **sugiere** por la fecha de nacimiento que dictes ("nació el 12/05/2023" o "12 de mayo de 2023").
+- Si coinciden varios o ninguno, lo elegís vos.
+
+**La consulta:** elegís la de ese día o una nueva.
+
+**Lo que hace "Pasar a la consulta":**
+- deja la transcripción como **texto original de la consulta**;
+- abre la consulta, donde escribís y aprobás la nota como siempre.
+
+**Las medidas dictadas:**
+- Ejemplos que reconoce: "peso 12,5 kg", "talla 88 cm", "PC 47".
+- Aparecen con **"Usar estos valores"** o **"Descartar"**; tenés que elegir una antes de pasar.
+- Solo se proponen valores posibles para un chico. Si algo no se entiende, no se propone.
+
+**Qué cambiar:** el escenario deja de crear la nota en Notion y manda la transcripción a `entradaMake`. Como `id`, usá el id de la grabación de Plaud.
+
+**Cómo probar:** dictá en una grabación de prueba "nació el …, peso …, talla …" con datos ficticios.
+
+### 7.8 Bot de pagos en Telegram · `telegram.pago`
+
+```json
+"datos": { "texto": "pago 150.000 transferencia Ruiz" }
+```
+
+**Qué pasa:** el pago queda **"a confirmar"** en Membresías y pagos, con un aviso. Lo confirmás o lo archivás.
+
+**Cómo lee el mensaje:**
+- **Monto:** el primer número ("150.000", "150000" o "2.000,50").
+- **Moneda:** "usd", "dólares" o "u$s" es dólares; "pesos", "ars" o "$" es pesos. Si no lo dijiste, se propone pesos.
+- **Medio:** "efectivo", "transferencia" o "mp"/"mercado pago". Si no lo dijiste, se propone transferencia.
+- **Familia:** por el apellido, solo si coincide **una sola** familia. Si no, la elegís al confirmar.
+
+**Si Make ya separó los datos,** podés mandarlos así: `"monto": 150000, "moneda": "ARS", "medio": "efectivo"`.
+
+**La respuesta para tu Telegram:**
+- Si salió bien: `{"resultado": "a_confirmar", "familia": "Familia Ruiz" | null, "monto": 150000, "moneda": "ARS"}`.
+- Sin monto: `422`, con el error "No entendí el monto…".
+
+**Qué cambiar:** el bot deja de escribir en Notion y manda el texto a `entradaMake`. Como `id`, usá el `message_id` de Telegram.
+
+### 7.9 Estado de entrega · `mensajeria.estado`
+
+```json
+"datos": { "eventId": "<el X-PediatricOS-Delivery del evento>", "estado": "entregado", "canal": "email" }
+```
+
+**Estados que entiende:** `entregado`/`delivered`/`read`, `fallido`/`failed`/`undelivered` y `enviado`/`sent`.
+
+**Qué pasa:** queda registrado en **Comunicaciones**. En el resumen de la visita, se actualiza su propio registro.
+
+**Qué cambiar:** al final de cada escenario que envía algo, sumá un paso que informe el resultado.
+
+### 7.10 Número de avisos (6269526) · `mensajeria.entrante` (opcional)
+
+```json
+"datos": { "telefono": "+549…", "canal": "…" }
+```
+
+**Qué pasa:**
+- Queda en **Comunicaciones** como entrante, **sin el texto** del mensaje.
+- Si el número es de un adulto cargado, queda vinculado a su familia.
+
+El bot de preguntas frecuentes sigue en Make.
+

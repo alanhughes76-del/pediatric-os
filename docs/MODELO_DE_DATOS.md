@@ -46,7 +46,7 @@ Estado al 17/10/2026, Etapa 1a. Las reglas están en `firestore.rules` y `storag
 | `…/appointments/{id}/history/{h}` (cada cambio, con antes y después) | M, A (también por grupo de colecciones) | Solo S |
 | `…/agendaDays/{AAAA-MM-DD}` (bloques de los turnos confirmados que empiezan ese día) | M, A | Solo S |
 | `…/blocks/{id}` (períodos bloqueados) | M, A | M, A |
-| `…/inbound/{id}` (registro de lo que entra por el endpoint de Cal.com, sin datos personales) | M | Solo S |
+| `…/inbound/{id}` (registro de lo que entra por los endpoints de Cal.com y de Make, sin datos personales) | M | Solo S |
 
 Turno (`appointments`): `start` (hora de Argentina con `-03:00`), `day`, `durationMin`, `type` (control, urgencia-dia, urgencia-noche, seguimiento, rn, prenatal), `modality`, `familyId` (null mientras está "por identificar"), `patientIds` (hermanos en la misma visita; vacío en un prenatal), `address` (copia de la dirección: cambiarla no toca la guardada), `zone`, `reason`, `opsNotes` (no las ve la familia), `status` (solicitado, pendiente, confirmado, realizado, cancelado, ausente), `origin` (medico, portal, calcom, formulario), `cancelReason`, `onTheWayAt`, `calBookingUid`, `porIdentificar` (contacto de quien reservó por Cal.com sin DNI conocido).
 
@@ -97,7 +97,8 @@ Lo que la familia hace desde el portal (Etapa 6b):
 | `…/auditLog/{id}` | M | **Solo S, solo altas** (triggers `auditarAdministrativo`, `auditarClinico`, `auditarDomicilios`). Guarda quién, tipo de actor (persona, sistema o IA), acción, ruta, y valor anterior y nuevo de cada campo |
 | `…/aiInteractions/{id}` | M | Solo S (Etapa 9) |
 | `…/outbox/{id}` (eventos para Make: `type`, `audiencia`, `plantilla`, `data`) | M | Solo S. Estados: `pendiente` → `enviado`, o `reintentar` (1, 2, 4… minutos, tope 6 h) → `fallido` a los 8 intentos. Sin URL configurada: `sin_destino`; apagado en Configuración: `apagado`. Los avisos programados usan id fijo (`tipo__clave`) para salir una sola vez. Detalle en `docs/AUTOMATIZACIONES.md` |
-| `…/inbound/{id}` (lo que llega de Make) | M | Solo S (Etapa 8) |
+| `…/interesados/{id}` (web o admisión: nombre, email, teléfono, zona, estado) | M, A | S crea; M, A cambian el estado |
+| `…/admisiones/{id}` (mensaje y respuestas de los formularios), `…/triage/{id}` (triage de urgencia), `…/transcripciones/{id}` (Plaud) | M | S crea; M marca triage leído o transcripción usada/descartada |
 | `…/notifications/{id}` (la campana: `recipientUid`, `kind` `datos_familia`, `guardianId`, `campos`, `readAt`) | el destinatario | S. El destinatario solo marca `readAt` |
 
 ## Storage
