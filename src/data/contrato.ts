@@ -2,7 +2,7 @@
  * Lo que la app pide a la capa de datos, sea la demostración en memoria o Firebase.
  * Las pantallas solo usan `useApp()` (store.tsx): no saben de dónde vienen los datos.
  */
-import type { Appointment, AuditLog, Certificate, ClinicalNote, Consultation, Database, Doctor, Document, DocumentKind, EducationalMaterial, Guardian, Links, Patient, Precios } from './types';
+import type { Appointment, AuditLog, Certificate, Communication, ClinicalNote, Consultation, Database, Doctor, Document, DocumentKind, EducationalMaterial, Guardian, Links, Patient, Precios } from './types';
 import type { ArchivoElegido } from '@/lib/archivos';
 import type { AccionTurno, Aviso, ConfigAgenda } from '@shared/agenda';
 import type { Fuente } from './fuente';
@@ -84,9 +84,13 @@ export interface Operaciones {
   marcarAvisoVisto: (id: string) => Promise<void>;
   /** El Dr. marca el calendario de vacunas como verificado (o lo vuelve a borrador). */
   verificarCalendario: (verificado: boolean) => Promise<string | null>;
+  /** Registro a mano de una comunicación (una llamada, algo que se habló en persona…). */
+  registrarComunicacion: (datos: DatosComunicacion) => Promise<string | null>;
   /** Configuración (solo el médico): agenda, links, precios o sus datos profesionales. */
   guardarAjustes: (p: Ajuste) => Promise<string | null>;
 }
+
+export type DatosComunicacion = Pick<Communication, 'patientId' | 'familyId' | 'channel' | 'direction' | 'classification' | 'at'> & { subject: string };
 
 export type DatosProfesional = Pick<Doctor, 'name' | 'signature' | 'mn' | 'mp'>;
 export type Ajuste =

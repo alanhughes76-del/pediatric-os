@@ -36,7 +36,8 @@ export const enviarResumenFamilia = onCall<Record<string, unknown>>(async (req) 
   const paciente = (await db().doc(`${base}/patients/${patientId}`).get()).data();
   const ahora = isoArgentina();
   const ref = await db().collection(`${base}/communications`).add({
-    organizationId: org, patientId, noteId, kind: 'resumen_familia', channel: 'email', status: 'enviado_a_make',
+    organizationId: org, patientId, noteId, familyId: paciente?.familyId ?? null, kind: 'resumen_familia', channel: 'email', status: 'enviado_a_make',
+    direction: 'saliente', classification: 'clinico', at: ahora, subject: 'Resumen de la visita',
     recipientIds: destinatarios.map((x) => x.guardianId), createdBy: uid, createdAt: ahora, updatedBy: uid, updatedAt: ahora,
   });
   await encolarEvento(org, 'resumen.envio_aprobado', {

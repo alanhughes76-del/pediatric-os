@@ -175,6 +175,16 @@ export function useFuenteDemo(): AppState {
       return null;
     },
 
+    registrarComunicacion: async (datos) => {
+      if (!datos.subject.trim()) return 'Escribí el asunto (breve, sin datos clínicos).';
+      enLote((d, { ahora, usuarioId: uid, log }) => {
+        const c: Communication = { ...datos, subject: datos.subject.trim(), id: nuevoId('com'), createdAt: ahora, createdBy: uid, kind: 'manual', status: 'registrado' };
+        log({ action: 'comunicacion.registrar', entity: 'communications', entityId: c.id });
+        return { ...d, communications: [...d.communications, c] };
+      });
+      return null;
+    },
+
     guardarAjustes: async (ajuste) => {
       enLote((d, { log }) => {
         log({ action: `configuracion.${ajuste.clave}`, entity: 'settings', entityId: ajuste.clave });
@@ -198,7 +208,8 @@ export function useFuenteDemo(): AppState {
       enLote((d, { ahora, usuarioId: uid, log }) => {
         const c: Communication = {
           id: nuevoId('com'), createdAt: ahora, createdBy: uid, patientId: nota.patientId, noteId: nota.id,
-          kind: 'resumen_familia', channel: 'email', status: 'enviado_a_make', recipientIds: adultos.map((g) => g.id),
+          familyId: d.patients.find((x) => x.id === nota.patientId)?.familyId, at: ahora, direction: 'saliente', classification: 'clinico',
+          subject: 'Resumen de la visita', kind: 'resumen_familia', channel: 'email', status: 'enviado_a_make', recipientIds: adultos.map((g) => g.id),
         };
         log({ action: 'resumen.enviar', entity: 'communications', entityId: c.id });
         return { ...d, communications: [...d.communications, c] };

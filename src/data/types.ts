@@ -552,13 +552,32 @@ export interface AgendaBlock extends Base, Bloqueo {}
  * Registro de algo que salió hacia la familia (por ahora, el resumen aprobado que manda Make).
  * No guarda el texto: lo lee también el asistente.
  */
+/**
+ * Registro de comunicaciones (prompt maestro 7.14). No es un chat: las conversaciones van por PacienteX.
+ * Lo que sale por las automatizaciones, lo que entra por los canales conectados (Etapa 8) y lo que el Dr.
+ * registra a mano. El asunto es breve y sin datos clínicos (lo clínico va en la historia).
+ */
+export type CanalComunicacion = 'email' | 'pacientex' | 'telefono' | 'presencial' | 'telegram' | 'otro';
+export type DireccionComunicacion = 'saliente' | 'entrante';
+export type ClaseComunicacion = 'administrativo' | 'clinico' | 'urgente';
+/** "Enviado a Make" hasta que Make informe la entrega (Etapa 8). Lo manual queda "registrado". */
+export type EstadoComunicacion = 'registrado' | 'enviado_a_make' | 'entregado' | 'fallido';
+
 export interface Communication extends Base {
   patientId?: ID;
+  familyId?: ID;
   noteId?: ID;
-  kind: 'resumen_familia';
-  channel: 'email';
-  status: 'enviado_a_make';
-  recipientIds: ID[];
+  kind: 'resumen_familia' | 'recordatorio' | 'aviso' | 'manual';
+  channel: CanalComunicacion;
+  /** Sin dato = saliente (los registros viejos). */
+  direction?: DireccionComunicacion;
+  /** Sin dato: el resumen es clínico; lo demás, administrativo. */
+  classification?: ClaseComunicacion;
+  /** Cuándo fue (sin dato = cuando se registró). */
+  at?: ISODateTime;
+  subject?: string;
+  status: EstadoComunicacion;
+  recipientIds?: ID[];
 }
 
 // ---------- Avisos de la campana (Etapa 6) ----------

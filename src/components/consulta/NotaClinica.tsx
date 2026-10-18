@@ -253,7 +253,7 @@ function ResumenParaFamilia({ nota, consulta, paciente }: { nota: ClinicalNote; 
   return (
     <View style={s.mail}>
       <TextoFuerte>Resumen para la familia por mail</TextoFuerte>
-      {enviados.map((c) => <TextoChico key={c.id}>Enviado a Make el {fechaHora(c.createdAt)} ({c.recipientIds.length} {c.recipientIds.length === 1 ? 'destinatario' : 'destinatarios'}).</TextoChico>)}
+      {enviados.map((c) => <TextoChico key={c.id}>Enviado a Make el {fechaHora(c.createdAt)} ({(c.recipientIds ?? []).length} {(c.recipientIds ?? []).length === 1 ? 'destinatario' : 'destinatarios'}).</TextoChico>)}
       {!abierto ? (
         <Boton titulo={enviados.length > 0 ? 'Preparar otro mail' : 'Preparar el mail'} icono="mail-outline" variante="secundario" onPress={preparar} />
       ) : (

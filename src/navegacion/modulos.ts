@@ -52,7 +52,7 @@ export const MODULOS: Modulo[] = [
   { clave: 'crecimiento', titulo: 'Crecimiento', icono: 'trending-up-outline', href: '/medico/crecimiento', rutas: ['/medico/crecimiento'] },
   { clave: 'certificados', titulo: 'Certificados', icono: 'ribbon-outline', href: '/medico/certificados', rutas: ['/medico/certificados'] },
   { clave: 'prevencion', titulo: 'Prevención', icono: 'leaf-outline', href: '/medico/prevencion', rutas: ['/medico/prevencion'] },
-  mod('comunicaciones', 'Comunicaciones', 'chatbubbles-outline', 'Etapa 7', 'Registro de lo que sale por las automatizaciones y lo que registres a mano. No es un chat: las conversaciones siguen por PacienteX.'),
+  { clave: 'comunicaciones', titulo: 'Comunicaciones', icono: 'chatbubbles-outline', href: '/medico/comunicaciones', rutas: ['/medico/comunicaciones'] },
   { clave: 'documentos', titulo: 'Documentos', icono: 'folder-open-outline', href: '/medico/documentos', rutas: ['/medico/documentos'] },
   mod('reportes', 'Reportes', 'bar-chart-outline', 'Etapa 7', 'Reporte mensual con datos reales del sistema, exportable a CSV y PDF.'),
   mod('ia', 'IA Asistente', 'sparkles-outline', 'Etapa 9', 'Propuestas que revisás vos. Arranca apagada hasta que revises el consentimiento para usar IA con datos de salud.'),

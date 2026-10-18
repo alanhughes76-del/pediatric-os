@@ -323,7 +323,12 @@ const base: Database = {
   blocks: [
     { ...b('bl-1', enDias(-5, '10:00')), desde: enDias(3, '13:00'), hasta: enDias(3, '20:00'), motivo: 'Curso de actualización' },
   ],
-  communications: [],
+  // Registro de comunicaciones (ficticio). Sin texto clínico: solo de qué se trató.
+  communications: [
+    { ...b('com-1', enDias(-3, '12:00')), patientId: 'p-mateo', familyId: 'f-sosa', kind: 'resumen_familia', channel: 'email', direction: 'saliente', classification: 'clinico', at: enDias(-3, '12:00'), subject: 'Resumen de la visita', status: 'enviado_a_make', recipientIds: ['g-diego'] },
+    { ...b('com-2', enDias(-1, '15:00')), familyId: 'f-ferreyra', kind: 'recordatorio', channel: 'email', direction: 'saliente', classification: 'administrativo', at: enDias(-1, '15:00'), subject: 'Recordatorio de la visita de mañana', status: 'entregado' },
+    { ...b('com-3', enDias(-1, '13:00')), patientId: 'p-tomas', familyId: 'f-ferreyra', kind: 'manual', channel: 'telefono', direction: 'entrante', classification: 'urgente', at: enDias(-1, '12:55'), subject: 'Llamó la mamá por fiebre', status: 'registrado' },
+  ],
   // La biblioteca de prevención arranca vacía: los materiales los carga el Dr.
   educationalMaterials: [],
   materialDeliveries: [],

@@ -281,6 +281,14 @@ export function useFuenteFirebase(): AppState {
           } catch (e2) { return mensajeDeError(e2); }
         }
       },
+      registrarComunicacion: async (datos) => {
+        if (!datos.subject.trim()) return 'Escribí el asunto (breve, sin datos clínicos).';
+        try {
+          const limpio = Object.fromEntries(Object.entries({ ...datos, subject: datos.subject.trim() }).filter(([, v]) => v !== undefined));
+          await setDoc(doc(collection(fs, `organizations/${org}/communications`)), { ...limpio, kind: 'manual', status: 'registrado', ...firmaNueva() });
+          return null;
+        } catch (e) { return mensajeDeError(e); }
+      },
       guardarAjustes: async (ajuste) => {
         // settings/* y professionals/{uid}: solo el médico, con su firma (reglas). Se actualiza o se crea.
         const ref = ajuste.clave === 'profesional' ? doc(fs, `organizations/${org}/professionals/${uid}`) : doc(fs, `organizations/${org}/settings/${ajuste.clave}`);
