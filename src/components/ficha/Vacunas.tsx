@@ -3,6 +3,7 @@
  * con el estado de cada dosis (aplicada, atrasada o pendiente), y las vacunas no obligatorias
  * cargadas a mano. Mientras el calendario no esté verificado se ve el aviso.
  */
+import { CampoFecha } from '@/components/CampoFecha';
 import { useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -93,7 +94,7 @@ export function BloqueVacunas({ paciente: p }: { paciente: Patient }) {
           guardar={() => {
             const f = deFecha(fecha);
             if (!vacuna.trim()) { setError('Escribí la vacuna.'); return false; }
-            if (!f || f > hoy) { setError('Revisá la fecha de aplicación (dd/mm/aaaa, no puede ser futura).'); return false; }
+            if (!f || f > hoy) { setError('Revisá la fecha de aplicación (no puede ser futura).'); return false; }
             agregar('vaccineDoses', {
               patientId: p.id, vaccine: vacuna.trim(), dose: detalle.trim(), status: 'aplicada', appliedDate: f,
               place: lugar.trim() || undefined, lot: lote.trim() || undefined, source: 'manual', updatedAt: ahoraISO(),
@@ -104,7 +105,7 @@ export function BloqueVacunas({ paciente: p }: { paciente: Patient }) {
         >
           <Campo etiqueta="Vacuna" value={vacuna} onChangeText={setVacuna} placeholder="Antigripal" />
           <Campo etiqueta="Dosis o detalle (opcional)" value={detalle} onChangeText={setDetalle} placeholder="2026" />
-          <Campo etiqueta="Fecha de aplicación" value={fecha} onChangeText={setFecha} placeholder="dd/mm/aaaa" keyboardType="numbers-and-punctuation" />
+          <CampoFecha etiqueta="Fecha de aplicación" value={fecha} onChangeText={setFecha} maximo={hoyISO()} />
           <Campo etiqueta="Lugar (opcional)" value={lugar} onChangeText={setLugar} />
           <Campo etiqueta="Lote (opcional)" value={lote} onChangeText={setLote} />
           {error ? <TextoChico color={colors.alert}>{error}</TextoChico> : null}
@@ -125,7 +126,7 @@ function FilaDosis({ dosis: d, hoy, primera }: { dosis: VaccineDose; hoy: string
 
   const guardar = () => {
     const f = deFecha(fecha);
-    if (!f || f > hoy) return setError('Revisá la fecha de aplicación (dd/mm/aaaa, no puede ser futura).');
+    if (!f || f > hoy) return setError('Revisá la fecha de aplicación (no puede ser futura).');
     actualizar('vaccineDoses', d.id, { status: 'aplicada', appliedDate: f, place: lugar.trim() || undefined, lot: lote.trim() || undefined, updatedAt: ahoraISO() }, 'vacuna.aplicar');
     setAbierta(false);
     setError(undefined);
@@ -152,7 +153,7 @@ function FilaDosis({ dosis: d, hoy, primera }: { dosis: VaccineDose; hoy: string
       </Pressable>
       {abierta ? (
         <View style={s.form}>
-          <Campo etiqueta="Fecha de aplicación" value={fecha} onChangeText={setFecha} placeholder="dd/mm/aaaa" keyboardType="numbers-and-punctuation" />
+          <CampoFecha etiqueta="Fecha de aplicación" value={fecha} onChangeText={setFecha} maximo={hoyISO()} />
           <Campo etiqueta="Lugar (opcional)" value={lugar} onChangeText={setLugar} />
           <Campo etiqueta="Lote (opcional)" value={lote} onChangeText={setLote} />
           {error ? <TextoChico color={colors.alert}>{error}</TextoChico> : null}

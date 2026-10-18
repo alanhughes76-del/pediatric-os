@@ -2,6 +2,7 @@
  * La consulta: datos, antropometría con percentilos, hitos del desarrollo y nota clínica.
  * Todo se guarda solo (salvo la nota, que tiene sus propios botones).
  */
+import { CampoFecha } from '@/components/CampoFecha';
 import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
@@ -95,13 +96,13 @@ function DatosConsulta({ consulta }: { consulta: Consultation }) {
     <View style={{ gap: 16 }}>
       <View style={s.fila}>
         <View style={{ flex: 3 }}>
-          <Campo etiqueta="Fecha" value={fecha} onChangeText={setFecha} placeholder="dd/mm/aaaa" keyboardType="numbers-and-punctuation" />
+          <CampoFecha etiqueta="Fecha" value={fecha} onChangeText={setFecha} />
         </View>
         <View style={{ flex: 2 }}>
           <Campo etiqueta="Hora" value={horaTxt} onChangeText={setHora} placeholder="hh:mm" keyboardType="numbers-and-punctuation" />
         </View>
       </View>
-      {!iso ? <TextoChico color={colors.alert}>Revisá la fecha (dd/mm/aaaa) y la hora (hh:mm).</TextoChico> : null}
+      {!iso ? <TextoChico color={colors.alert}>Revisá la fecha y la hora (hh:mm).</TextoChico> : null}
       <Opciones<Modality>
         etiqueta="Modalidad"
         opciones={(Object.keys(TEXTO_MODALIDAD) as Modality[]).map((v) => ({ valor: v, texto: TEXTO_MODALIDAD[v] }))}

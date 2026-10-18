@@ -3,6 +3,7 @@
  * por los canales conectados (Etapa 8) y lo que el Dr. registra a mano. No es un chat: las conversaciones
  * con las familias van por PacienteX. Nada clínico en el asunto: lo clínico va en la historia.
  */
+import { CampoFecha } from '@/components/CampoFecha';
 import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -91,7 +92,7 @@ function Registrar({ onListo }: { onListo: () => void }) {
 
   const guardar = async () => {
     const at = deCampos(fecha, hora);
-    if (!at) return setError('Revisá la fecha (dd/mm/aaaa) y la hora (hh:mm).');
+    if (!at) return setError('Revisá la fecha y la hora (hh:mm).');
     const e = await operaciones.registrarComunicacion({ familyId, patientId, channel: canal, direction: direccion, classification: clase, at, subject: asunto });
     if (e) return setError(e);
     onListo();
@@ -119,7 +120,7 @@ function Registrar({ onListo }: { onListo: () => void }) {
       <Opciones etiqueta="Canal" valor={canal} onCambio={setCanal} opciones={CANALES} />
       <Opciones etiqueta="Clasificación" valor={clase} onCambio={setClase} opciones={CLASES} />
       <View style={s.fila}>
-        <View style={{ flex: 3 }}><Campo etiqueta="Fecha" value={fecha} onChangeText={setFecha} placeholder="dd/mm/aaaa" /></View>
+        <View style={{ flex: 3 }}><CampoFecha etiqueta="Fecha" value={fecha} onChangeText={setFecha} /></View>
         <View style={{ flex: 2 }}><Campo etiqueta="Hora" value={hora} onChangeText={setHora} placeholder="hh:mm" /></View>
       </View>
       <Campo etiqueta="Asunto" value={asunto} onChangeText={setAsunto} maxLength={120} placeholder="Ej.: Llamó para reprogramar el control"

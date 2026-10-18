@@ -3,6 +3,7 @@
  * confirmación). Control: día y hora que prefieren. Urgencia: se pide para ahora, después de ver
  * los signos de alarma. Mientras exista Cal.com, también se puede reservar ahí.
  */
+import { CampoFecha } from '@/components/CampoFecha';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -41,7 +42,7 @@ export default function PedirVisitaFormulario() {
     let dia: string | undefined;
     if (tipo === 'control') {
       dia = deFecha(fecha) ?? undefined;
-      if (!dia || !/^\d{1,2}[:.]\d{2}$/.test(hora.trim())) return setError('Elegí el día (dd/mm/aaaa) y la hora (hh:mm) que prefieren.');
+      if (!dia || !/^\d{1,2}[:.]\d{2}$/.test(hora.trim())) return setError('Elegí el día y escribí la hora (hh:mm) que prefieren.');
       if (dia < hoyISO()) return setError('Elegí un día de hoy en adelante.');
     }
     setEnviando(true);
@@ -81,7 +82,7 @@ export default function PedirVisitaFormulario() {
 
       {tipo === 'control' ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-          <View style={{ flex: 3, minWidth: 150 }}><Campo etiqueta="Día que prefieren" value={fecha} onChangeText={setFecha} placeholder="dd/mm/aaaa" keyboardType="numbers-and-punctuation" /></View>
+          <View style={{ flex: 3, minWidth: 150 }}><CampoFecha etiqueta="Día que prefieren" value={fecha} onChangeText={setFecha} minimo={hoyISO()} /></View>
           <View style={{ flex: 2, minWidth: 110 }}><Campo etiqueta="Hora" value={hora} onChangeText={setHora} placeholder="hh:mm" keyboardType="numbers-and-punctuation" /></View>
         </View>
       ) : (

@@ -1,11 +1,12 @@
 /** Anotar una toma de temperatura o un antitérmico. La app nunca sugiere dosis. */
+import { CampoFecha } from '@/components/CampoFecha';
 import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useApp } from '@/data/store';
 import { antitermicoPrevio } from '@/data/selectores';
 import type { Antipyretic, AntipyreticForm, ChildState, FeverSite, Improvement } from '@/data/types';
 import { ACLARACION_DOSIS, PRESENTACIONES, TEXTO_DROGA, TEXTO_ESTADO, TEXTO_MEJORIA, TEXTO_SITIO, leerTemperatura, nombreAntitermico } from '@/lib/fiebre';
-import { aCampos, ahoraISO, deCampos, hora } from '@/lib/fechas';
+import { aCampos, ahoraISO, deCampos, hora, hoyISO } from '@/lib/fechas';
 import { Campo, Opciones, Aviso } from '../Formulario';
 import { Boton } from '../Boton';
 
@@ -38,7 +39,7 @@ export function FormularioFiebre({ patientId, tipo, porMedico = false, onListo }
   const previo = at && tipo === 'toma' ? antitermicoPrevio(db, patientId, at) : undefined;
 
   const errores = {
-    fecha: !at ? 'Revisá la fecha (dd/mm/aaaa) y la hora (hh:mm).' : undefined,
+    fecha: !at ? 'Revisá la fecha y la hora (hh:mm).' : undefined,
     temp: tipo === 'toma' && temperatura == null ? 'Escribí la temperatura, por ejemplo 38,5.' : undefined,
     estado: tipo === 'toma' && !estado ? 'Elegí cómo está.' : undefined,
     droga: tipo === 'antitermico' && !droga ? 'Elegí el medicamento.' : undefined,
@@ -69,7 +70,7 @@ export function FormularioFiebre({ patientId, tipo, porMedico = false, onListo }
   return (
     <View style={{ gap: 18 }}>
       <View style={s.fila}>
-        <View style={{ flex: 3 }}><Campo etiqueta="Fecha" value={fecha} onChangeText={setFecha} placeholder="dd/mm/aaaa" keyboardType="numbers-and-punctuation" /></View>
+        <View style={{ flex: 3 }}><CampoFecha etiqueta="Fecha" value={fecha} onChangeText={setFecha} maximo={hoyISO()} /></View>
         <View style={{ flex: 2 }}><Campo etiqueta="Hora" value={horaTxt} onChangeText={setHora} placeholder="hh:mm" keyboardType="numbers-and-punctuation" /></View>
       </View>
       {intento && errores.fecha ? <Aviso tono="alerta" texto={errores.fecha} /> : null}

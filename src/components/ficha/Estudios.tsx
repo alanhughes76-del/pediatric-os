@@ -3,6 +3,7 @@
  * solicitado → realizado → resultado recibido → revisado. La orden legal se emite en la plataforma
  * registrada, igual que las recetas. El resultado (PDF o imagen) se adjunta al estudio.
  */
+import { CampoFecha } from '@/components/CampoFecha';
 import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useApp } from '@/data/store';
@@ -41,7 +42,7 @@ export function BloqueEstudios({ paciente: p }: { paciente: Patient }) {
           const pedido = deFecha(e.fecha);
           const revisar = e.revisar.trim() ? deFecha(e.revisar) : undefined;
           if (!e.study.trim()) { setError('Escribí el estudio.'); return false; }
-          if (!pedido) { setError('Revisá la fecha del pedido (dd/mm/aaaa).'); return false; }
+          if (!pedido) { setError('Revisá la fecha del pedido.'); return false; }
           if (revisar === null || (revisar && revisar < pedido)) { setError('Revisá "Revisar resultado el": tiene que ser posterior al pedido.'); return false; }
           agregar('studies', { patientId: p.id, study: e.study.trim(), reason: e.reason.trim() || undefined, orderedDate: pedido, reviewDate: revisar, status: 'solicitado', updatedAt: ahoraISO() }, 'estudio.pedir');
           limpiar();
@@ -51,8 +52,8 @@ export function BloqueEstudios({ paciente: p }: { paciente: Patient }) {
         <Campo etiqueta="Estudio" value={e.study} onChangeText={poner('study')} placeholder="Hemograma, ecografía…" />
         <Campo etiqueta="Motivo (opcional)" value={e.reason} onChangeText={poner('reason')} />
         <View style={s.fila}>
-          <View style={s.mitad}><Campo etiqueta="Fecha del pedido" value={e.fecha} onChangeText={poner('fecha')} placeholder="dd/mm/aaaa" keyboardType="numbers-and-punctuation" /></View>
-          <View style={s.mitad}><Campo etiqueta="Revisar resultado el (opcional)" value={e.revisar} onChangeText={poner('revisar')} placeholder="dd/mm/aaaa" keyboardType="numbers-and-punctuation" /></View>
+          <View style={s.mitad}><CampoFecha etiqueta="Fecha del pedido" value={e.fecha} onChangeText={poner('fecha')} /></View>
+          <View style={s.mitad}><CampoFecha opcional etiqueta="Revisar resultado el (opcional)" value={e.revisar} onChangeText={poner('revisar')} /></View>
         </View>
         {error ? <TextoChico color={colors.alert}>{error}</TextoChico> : null}
       </Agregar>

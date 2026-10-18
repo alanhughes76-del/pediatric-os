@@ -4,6 +4,7 @@
  * - Prescripciones: registro de lo indicado. La receta con validez legal se emite en la plataforma
  *   registrada (ReNaPDiS): el botón la abre. Se puede adjuntar el PDF de la receta emitida.
  */
+import { CampoFecha } from '@/components/CampoFecha';
 import { useState } from 'react';
 import { View, Linking, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
@@ -66,7 +67,7 @@ export function BloqueMedicacion({ paciente: p }: { paciente: Patient }) {
           const desde = deFecha(m.desde);
           const hasta = fechaOpcional(m.hasta);
           if (!m.drug.trim() || !m.dose.trim()) { setError('Escribí el fármaco y la dosis.'); return false; }
-          if (!desde) { setError('Revisá la fecha de inicio (dd/mm/aaaa).'); return false; }
+          if (!desde) { setError('Revisá la fecha de inicio.'); return false; }
           if (hasta === null || (hasta && hasta < desde)) { setError('Revisá la fecha de fin: tiene que ser posterior al inicio.'); return false; }
           agregar('medications', {
             patientId: p.id, drug: m.drug.trim(), presentation: m.presentation.trim() || undefined, dose: m.dose.trim(),
@@ -82,8 +83,8 @@ export function BloqueMedicacion({ paciente: p }: { paciente: Patient }) {
         <Campo etiqueta="Dosis" value={m.dose} onChangeText={poner('dose')} ayuda="La escribís vos, tal como la indicás." />
         <Campo etiqueta="Frecuencia (opcional)" value={m.frequency} onChangeText={poner('frequency')} />
         <View style={s.fila}>
-          <View style={s.mitad}><Campo etiqueta="Desde" value={m.desde} onChangeText={poner('desde')} placeholder="dd/mm/aaaa" keyboardType="numbers-and-punctuation" /></View>
-          <View style={s.mitad}><Campo etiqueta="Hasta (opcional)" value={m.hasta} onChangeText={poner('hasta')} placeholder="dd/mm/aaaa" keyboardType="numbers-and-punctuation" /></View>
+          <View style={s.mitad}><CampoFecha etiqueta="Desde" value={m.desde} onChangeText={poner('desde')} /></View>
+          <View style={s.mitad}><CampoFecha opcional etiqueta="Hasta (opcional)" value={m.hasta} onChangeText={poner('hasta')} /></View>
         </View>
         <Campo etiqueta="Indicación (opcional)" value={m.indication} onChangeText={poner('indication')} />
         {error ? <TextoChico color={colors.alert}>{error}</TextoChico> : null}
@@ -141,14 +142,14 @@ export function BloquePrescripciones({ paciente: p }: { paciente: Patient }) {
         alCancelar={() => { setDetalle(''); setConsulta('ninguna'); setError(undefined); }}
         guardar={() => {
           const f = deFecha(fecha);
-          if (!f) { setError('Revisá la fecha (dd/mm/aaaa).'); return false; }
+          if (!f) { setError('Revisá la fecha.'); return false; }
           if (!detalle.trim()) { setError('Escribí lo que indicaste.'); return false; }
           agregar('prescriptions', { patientId: p.id, date: f, detail: detalle.trim(), consultationId: consulta === 'ninguna' ? undefined : consulta }, 'prescripcion.crear');
           setDetalle(''); setConsulta('ninguna'); setError(undefined);
           return true;
         }}
       >
-        <Campo etiqueta="Fecha" value={fecha} onChangeText={setFecha} placeholder="dd/mm/aaaa" keyboardType="numbers-and-punctuation" />
+        <CampoFecha etiqueta="Fecha" value={fecha} onChangeText={setFecha} />
         <Campo etiqueta="Lo indicado" value={detalle} onChangeText={setDetalle} multiline ayuda="Tal como lo indicaste. No se calcula nada." />
         {consultas.length > 0 ? (
           <Opciones

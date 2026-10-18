@@ -4,7 +4,6 @@
  */
 import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { router } from 'expo-router';
 import { useApp } from '@/data/store';
 import { TEXTO_TIPO_TURNO, TIPOS_TURNO, type Franja, type TipoTurno } from '@shared/agenda';
 import { armarAgenda, DIAS, ORDEN_DIAS as ORDEN } from '@/data/configuracion';
@@ -76,8 +75,6 @@ export function Agenda() {
       ))}
       <BotonTexto texto="+ Agregar una zona" onPress={() => setZonas((xs) => [...xs, { nombre: '', localidades: '' }])} />
 
-      <TextoChico>Las vacaciones y los bloqueos se cargan en la Agenda.</TextoChico>
-      <BotonTexto texto="Ir a la Agenda" onPress={() => router.navigate('/medico/agenda')} />
       <PieGuardar guardando={guardando} mensaje={mensaje} onGuardar={enviar} />
     </>
   );

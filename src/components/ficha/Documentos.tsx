@@ -3,6 +3,7 @@
  * Storage y se leen con la sesión del médico: nunca hay enlaces públicos. Cada documento dice
  * su tipo, su fecha y quién lo cargó. La familia no los ve en el portal (decisión del Dr., 17/10/2026).
  */
+import { CampoFecha } from '@/components/CampoFecha';
 import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
@@ -45,7 +46,7 @@ export function BloqueDocumentos({ patientId }: { patientId: string }) {
   const elegirYSubir = async () => {
     const f = deFecha(fecha);
     if (!titulo.trim()) return setProblema('Escribí un título.');
-    if (!f) return setProblema('Revisá la fecha (dd/mm/aaaa).');
+    if (!f) return setProblema('Revisá la fecha.');
     setProblema(null);
     const ok = await subir({ patientId, title: titulo.trim(), kind: tipo, date: f, visibleToFamily: false });
     if (ok) { setAbierto(false); setTitulo(''); }
@@ -79,7 +80,7 @@ export function BloqueDocumentos({ patientId }: { patientId: string }) {
           <Tarjeta style={{ gap: 14, borderColor: colors.primary3 }}>
             <Campo etiqueta="Título" value={titulo} onChangeText={setTitulo} placeholder="Informe de ecografía, epicrisis…" />
             <Opciones etiqueta="Tipo" opciones={TIPOS} valor={tipo} onCambio={setTipo} />
-            <Campo etiqueta="Fecha" value={fecha} onChangeText={setFecha} placeholder="dd/mm/aaaa" keyboardType="numbers-and-punctuation" />
+            <CampoFecha etiqueta="Fecha" value={fecha} onChangeText={setFecha} />
             {problema ? <TextoChico color={colors.alert}>{problema}</TextoChico> : null}
             <Boton titulo={subiendo ? 'Subiendo…' : 'Elegir el archivo y subir'} icono="cloud-upload-outline" deshabilitado={subiendo} onPress={() => void elegirYSubir()} />
             <Boton titulo="Cancelar" variante="contorno" onPress={() => { setAbierto(false); setProblema(null); }} />

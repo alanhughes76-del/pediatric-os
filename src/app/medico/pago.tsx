@@ -3,6 +3,7 @@
  * Los que llegan "a confirmar" (bot de Telegram, Etapa 8) se confirman acá. Un pago no se borra: se archiva.
  * `?familia=` para uno nuevo; `?id=` para uno existente.
  */
+import { CampoFecha } from '@/components/CampoFecha';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
@@ -55,7 +56,7 @@ export default function Pago() {
     if (!familia) return setError('Elegí la familia del pago.');
     const date = deFecha(fecha);
     const amount = aNumero(monto);
-    if (!date) return setError('Revisá la fecha (dd/mm/aaaa).');
+    if (!date) return setError('Revisá la fecha.');
     if (!Number.isFinite(amount) || amount <= 0) return setError('Revisá el monto: un número mayor que cero.');
     if (!concepto.trim()) return setError('Escribí el concepto (por ejemplo, "Membresía anual" o "Visita del 12/10").');
     const datos = {
@@ -94,7 +95,7 @@ export default function Pago() {
       )}
       {aConfirmar ? <Aviso texto="Este pago llegó por una automatización y falta que lo confirmes. Revisá los datos y tocá Confirmar." /> : null}
       <Tarjeta style={{ gap: 14 }}>
-        <Campo etiqueta="Fecha" value={fecha} onChangeText={setFecha} placeholder="dd/mm/aaaa" keyboardType="numbers-and-punctuation" />
+        <CampoFecha etiqueta="Fecha" value={fecha} onChangeText={setFecha} />
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'flex-end' }}>
           <View style={{ flex: 1, minWidth: 150 }}><Campo etiqueta="Monto" value={monto} onChangeText={setMonto} keyboardType="numeric" placeholder="150.000" /></View>
           <Opciones opciones={MONEDAS} valor={moneda} onCambio={setMoneda} />

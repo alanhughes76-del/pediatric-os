@@ -6,6 +6,7 @@
  * apellido y fecha de nacimiento pide confirmar (pueden ser mellizos).
  * Si se abre desde la ficha de una familia (?familia=…), el paciente queda en esa familia.
  */
+import { CampoFecha } from '@/components/CampoFecha';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
@@ -55,7 +56,7 @@ export default function NuevoPaciente() {
   const errores = {
     nombre: !nombre.trim() ? 'Escribí el nombre.' : undefined,
     apellido: !apellido.trim() ? 'Escribí el apellido.' : undefined,
-    fecha: !nacimiento ? 'Escribí la fecha como dd/mm/aaaa.' : diasEntre(nacimiento, hoyISO()) < 0 ? 'La fecha de nacimiento no puede ser futura.' : undefined,
+    fecha: !nacimiento ? 'Elegí la fecha de nacimiento.' : diasEntre(nacimiento, hoyISO()) < 0 ? 'La fecha de nacimiento no puede ser futura.' : undefined,
     sexo: !sexo ? 'Elegí el sexo.' : undefined,
     semanas: sem !== undefined && !(Number.isInteger(sem) && sem >= 22 && sem <= 44) ? 'Tiene que ser un número entero entre 22 y 44.' : undefined,
   };
@@ -90,12 +91,12 @@ export default function NuevoPaciente() {
 
       <Campo etiqueta="Nombre" value={nombre} onChangeText={setNombre} autoCapitalize="words" error={intento ? errores.nombre : undefined} />
       <Campo etiqueta="Apellido" value={apellido} onChangeText={(v) => { setApellido(v); setDuplicadoVisto(false); }} autoCapitalize="words" error={intento ? errores.apellido : undefined} />
-      <Campo
+      <CampoFecha
         etiqueta="Fecha de nacimiento"
         value={fecha}
         onChangeText={(v) => { setFecha(v); setDuplicadoVisto(false); }}
-        placeholder="dd/mm/aaaa"
-        keyboardType="numbers-and-punctuation"
+        maximo={hoyISO()}
+        minimo="1995-01-01"
         error={intento ? errores.fecha : undefined}
       />
       <Opciones etiqueta="Sexo" opciones={SEXOS} valor={sexo} onCambio={setSexo} />

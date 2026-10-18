@@ -3,6 +3,7 @@
  * observaciones. Muestra el precio de lista según Configuración (es una referencia, no un cobro).
  * Una renovación es una membresía nueva: la anterior queda en el historial.
  */
+import { CampoFecha } from '@/components/CampoFecha';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
@@ -60,7 +61,7 @@ export default function MembresiaFamilia() {
   const guardar = () => {
     const startDate = deFecha(desde);
     const renewalDate = deFecha(renueva);
-    if (!startDate || !renewalDate) return setError('Revisá las fechas (dd/mm/aaaa).');
+    if (!startDate || !renewalDate) return setError('Elegí las dos fechas.');
     if (renewalDate <= startDate) return setError('La renovación tiene que ser después del alta.');
     if (incluidos.length === 0) return setError('Elegí al menos un hijo incluido.');
     const datos = { familyId, plan, startDate, renewalDate, status: estado, patientIds: incluidos, notes: notas.trim() || undefined };
@@ -79,10 +80,10 @@ export default function MembresiaFamilia() {
           onCambio={(v) => { setPlan(v); sugerir(v, desde); }} />
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
           <View style={{ flex: 1, minWidth: 150 }}>
-            <Campo etiqueta="Alta" value={desde} placeholder="dd/mm/aaaa" keyboardType="numbers-and-punctuation" onChangeText={(v) => { setDesde(v); sugerir(plan, v); }} />
+            <CampoFecha etiqueta="Alta" value={desde} onChangeText={(v) => { setDesde(v); sugerir(plan, v); }} />
           </View>
           <View style={{ flex: 1, minWidth: 150 }}>
-            <Campo etiqueta="Próxima renovación" value={renueva} placeholder="dd/mm/aaaa" keyboardType="numbers-and-punctuation" onChangeText={(v) => { setRenueva(v); setRenuevaTocada(true); }} />
+            <CampoFecha etiqueta="Próxima renovación" value={renueva} onChangeText={(v) => { setRenueva(v); setRenuevaTocada(true); }} />
           </View>
         </View>
         <View style={{ gap: 4 }}>

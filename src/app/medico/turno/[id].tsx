@@ -2,6 +2,7 @@
  * Un turno: datos, acciones según su estado e historial de cambios (prompt maestro 7.2).
  * Todas las acciones pasan por el servidor (en Firebase) o por la misma lógica en la demostración.
  */
+import { CampoFecha } from '@/components/CampoFecha';
 import { useState, type ReactNode } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
@@ -112,7 +113,7 @@ export default function Turno() {
     const dia = deFecha(fecha);
     const inicio = dia && /^\d{1,2}[:.]\d{2}$/.test(horaTxt.trim()) ? inicioDe(dia, horaTxt.trim().replace('.', ':').padStart(5, '0')) : null;
     const min = Number(duracion);
-    if (!inicio) return setError('Revisá la fecha (dd/mm/aaaa) y la hora (hh:mm).');
+    if (!inicio) return setError('Revisá la fecha y la hora (hh:mm).');
     if (!Number.isInteger(min) || min < 10 || min > 480) return setError('La duración tiene que estar entre 10 y 480 minutos.');
     ejecutar({ accion: 'reprogramar', start: inicio, durationMin: min }, 'Turno reprogramado. El cambio queda en el historial.');
   };
@@ -158,7 +159,7 @@ export default function Turno() {
         <Seccion titulo="Reprogramar">
           <Tarjeta style={{ gap: 12 }}>
             <View style={s.fila}>
-              <View style={{ flex: 3, minWidth: 150 }}><Campo etiqueta="Fecha" value={fecha} onChangeText={setFecha} placeholder="dd/mm/aaaa" /></View>
+              <View style={{ flex: 3, minWidth: 150 }}><CampoFecha etiqueta="Fecha" value={fecha} onChangeText={setFecha} /></View>
               <View style={{ flex: 2, minWidth: 100 }}><Campo etiqueta="Hora" value={horaTxt} onChangeText={setHoraTxt} placeholder="hh:mm" /></View>
               <View style={{ flex: 2, minWidth: 100 }}><Campo etiqueta="Minutos" value={duracion} onChangeText={(v) => setDuracion(v.replace(/\D/g, ''))} keyboardType="number-pad" /></View>
             </View>

@@ -12,6 +12,7 @@ import { Etiqueta } from '@/components/Etiqueta';
 import { Titulo, Texto, TextoChico } from '@/components/Texto';
 import { Profesional } from '@/components/configuracion/Profesional';
 import { Agenda } from '@/components/configuracion/Agenda';
+import { Bloqueos } from '@/components/configuracion/Bloqueos';
 import { Precios } from '@/components/configuracion/Precios';
 import { Links } from '@/components/configuracion/Links';
 import { Ambitos } from '@/components/configuracion/Ambitos';
@@ -49,7 +50,10 @@ export default function Configuracion() {
         <Caja key="profesional" titulo="Datos del profesional" icono="person-circle-outline" color="celeste" ancha><Profesional /></Caja>
       ) : null}
       {seccion === 'agenda' ? (
-        <Caja key="agenda" titulo="Agenda" icono="calendar-outline" color="celeste" ancha><Agenda /></Caja>
+        <>
+          <Caja key="agenda" titulo="Agenda" icono="calendar-outline" color="celeste" ancha><Agenda /></Caja>
+          <Caja key="bloqueos" titulo="Bloqueos" icono="lock-closed-outline" color="celeste" ancha><Bloqueos /></Caja>
+        </>
       ) : null}
       {seccion === 'precios' ? (
         <Caja key="precios" titulo="Membresía y precios" icono="wallet-outline" color="verde" ancha><Precios /></Caja>

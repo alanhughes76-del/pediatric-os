@@ -2,6 +2,7 @@
  * Bloques clínicos de la ficha del médico: Problemas de salud, Alergias y Plan de cuidado.
  * Nada se borra: los cambios de estado quedan en el registro de auditoría.
  */
+import { CampoFecha } from '@/components/CampoFecha';
 import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -62,14 +63,14 @@ export function BloqueProblemas({ patientId }: { patientId: string }) {
         guardar={() => {
           const inicio = fechaOpcional(desde);
           if (!descripcion.trim()) { setError('Escribí la descripción.'); return false; }
-          if (inicio === null) { setError('Revisá la fecha de inicio (dd/mm/aaaa).'); return false; }
+          if (inicio === null) { setError('Revisá la fecha de inicio.'); return false; }
           agregar('problems', { patientId, description: descripcion.trim(), since: inicio, status: 'activo', visibleToFamily: false }, 'problema.crear');
           setDescripcion(''); setDesde(''); setError(undefined);
           return true;
         }}
       >
         <Campo etiqueta="Descripción" value={descripcion} onChangeText={setDescripcion} placeholder="Ej.: Asma leve intermitente" />
-        <Campo etiqueta="Fecha de inicio (opcional)" value={desde} onChangeText={setDesde} placeholder="dd/mm/aaaa" keyboardType="numbers-and-punctuation" error={error} />
+        <CampoFecha opcional etiqueta="Fecha de inicio (opcional)" value={desde} onChangeText={setDesde} error={error} />
         <TextoChico>Arranca oculto para la familia.</TextoChico>
       </Agregar>
     </Seccion>
@@ -205,7 +206,7 @@ export function BloquePlan({ patientId }: { patientId: string }) {
           guardar={() => {
             const objetivo = fechaOpcional(fecha);
             if (!categoria || !descripcion.trim()) { setError('Elegí la categoría y escribí la descripción.'); return false; }
-            if (objetivo === null) { setError('Revisá la fecha objetivo (dd/mm/aaaa).'); return false; }
+            if (objetivo === null) { setError('Revisá la fecha objetivo.'); return false; }
             agregar('carePlan', { patientId, category: categoria, description: descripcion.trim(), targetDate: objetivo, done: false }, 'plan.crear');
             setCategoria(undefined); setDescripcion(''); setFecha(''); setError(undefined);
             return true;
@@ -213,7 +214,7 @@ export function BloquePlan({ patientId }: { patientId: string }) {
         >
           <Opciones etiqueta="Categoría" opciones={CATEGORIAS} valor={categoria} onCambio={setCategoria} />
           <Campo etiqueta="Descripción" value={descripcion} onChangeText={setDescripcion} placeholder="Ej.: Triple viral, 2.ª dosis" />
-          <Campo etiqueta="Fecha objetivo (opcional)" value={fecha} onChangeText={setFecha} placeholder="dd/mm/aaaa" keyboardType="numbers-and-punctuation" />
+          <CampoFecha opcional etiqueta="Fecha objetivo (opcional)" value={fecha} onChangeText={setFecha} />
           {error ? <TextoChico color={colors.alert}>{error}</TextoChico> : null}
         </Agregar>
       </Seccion>

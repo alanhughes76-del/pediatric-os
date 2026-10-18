@@ -2,6 +2,7 @@
  * Emitir un certificado: elegir tipo, revisar y editar el texto, previsualizar y "Emitir".
  * Al emitir queda guardado en Documentos del paciente y no se puede editar (solo anular).
  */
+import { CampoFecha } from '@/components/CampoFecha';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
@@ -59,7 +60,7 @@ export default function NuevoCertificado() {
 
   const emitir = () => {
     if (!texto.trim()) return setError('Escribí el texto del certificado.');
-    if (!fechaISO) return setError('Revisá la fecha (dd/mm/aaaa).');
+    if (!fechaISO) return setError('Revisá la fecha.');
     setError(null);
     if (!confirmar) return setConfirmar(true);
     // Emitir lo hace el servidor: un certificado emitido no se edita, se anula y se emite otro.
@@ -101,7 +102,7 @@ export default function NuevoCertificado() {
       <Campo etiqueta="Para ser presentado ante" value={destino} onChangeText={setDestino} placeholder="el colegio" />
       <View style={{ flexDirection: 'row', gap: 12 }}>
         <View style={{ flex: 3 }}><Campo etiqueta="Lugar" value={lugar} onChangeText={setLugar} /></View>
-        <View style={{ flex: 2 }}><Campo etiqueta="Fecha" value={fecha} onChangeText={setFecha} placeholder="dd/mm/aaaa" keyboardType="numbers-and-punctuation" /></View>
+        <View style={{ flex: 2 }}><CampoFecha etiqueta="Fecha" value={fecha} onChangeText={setFecha} /></View>
       </View>
       {!p.dni ? <TextoChico>Sin DNI cargado: el certificado sale sin DNI. Podés cargarlo en la ficha.</TextoChico> : null}
 

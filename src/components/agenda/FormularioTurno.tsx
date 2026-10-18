@@ -4,6 +4,7 @@
  * - Dirección: se elige una de los adultos o se escribe otra. Es una copia: no cambia la guardada.
  * - La duración se completa sola según el tipo (Configuración), y se puede cambiar.
  */
+import { CampoFecha } from '@/components/CampoFecha';
 import { useMemo, useState, type ReactNode } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { MODALIDADES, TIPOS_TURNO, TEXTO_TIPO_TURNO, inicioDe, zonaDe, diaDe, horaDe, type ModalidadTurno, type TipoTurno } from '@shared/agenda';
@@ -105,7 +106,7 @@ export function FormularioTurno({ inicial, conHorario, conConfirmar, textoGuarda
     if (conHorario) {
       const dia = deFecha(fecha);
       const inicio = dia && /^\d{1,2}[:.]\d{2}$/.test(horaTxt.trim()) ? inicioDe(dia, horaTxt.trim().replace('.', ':').padStart(5, '0')) : null;
-      if (!inicio) return setError('Revisá la fecha (dd/mm/aaaa) y la hora (hh:mm).');
+      if (!inicio) return setError('Revisá la fecha y la hora (hh:mm).');
       start = inicio;
       durationMin = Number(duracion);
       if (!Number.isInteger(durationMin) || durationMin < 10 || durationMin > 480) return setError('La duración tiene que estar entre 10 y 480 minutos.');
@@ -166,7 +167,7 @@ export function FormularioTurno({ inicial, conHorario, conConfirmar, textoGuarda
 
       {conHorario ? (
         <View style={s.fila}>
-          <View style={{ flex: 3, minWidth: 150 }}><Campo etiqueta="Fecha" value={fecha} onChangeText={setFecha} placeholder="dd/mm/aaaa" keyboardType="numbers-and-punctuation" /></View>
+          <View style={{ flex: 3, minWidth: 150 }}><CampoFecha etiqueta="Fecha" value={fecha} onChangeText={setFecha} /></View>
           <View style={{ flex: 2, minWidth: 100 }}><Campo etiqueta="Hora" value={horaTxt} onChangeText={setHoraTxt} placeholder="hh:mm" keyboardType="numbers-and-punctuation" /></View>
           <View style={{ flex: 2, minWidth: 100 }}>
             <Campo etiqueta="Minutos" value={duracion} onChangeText={(v) => { setDuracion(v.replace(/\D/g, '')); setDuracionTocada(true); }} keyboardType="number-pad" />
