@@ -13,6 +13,7 @@ export { pedirEnlace, entrarConEnlace } from './portal/enlace';
 export { pedirVisita, avisoDatosFamilia, avisoDireccionFamilia } from './portal/familia';
 export { reservaCalcom } from './turnos/endpoint';
 export { entradaMake } from './entrada/endpoint';
+export { iaAsistente, iaDecision } from './ia/callables';
 export { auditarAdministrativo, auditarClinico, auditarDomicilios } from './auditoria/triggers';
 export { accesoPorAdulto, accesoPorVinculo } from './acceso/triggers';
 export { despacharEvento, reintentarEventos } from './outbox/triggers';
