@@ -16,6 +16,7 @@ import { Precios } from '@/components/configuracion/Precios';
 import { Links } from '@/components/configuracion/Links';
 import { Ambitos } from '@/components/configuracion/Ambitos';
 import { Certificados } from '@/components/configuracion/Certificados';
+import { Automatizaciones } from '@/components/configuracion/Automatizaciones';
 
 const SECCIONES = [
   { valor: 'profesional', texto: 'Profesional' },
@@ -25,6 +26,7 @@ const SECCIONES = [
   { valor: 'ambitos', texto: 'Ámbitos' },
   { valor: 'certificados', texto: 'Certificados' },
   { valor: 'clinica', texto: 'Vacunas y biblioteca' },
+  { valor: 'automatizaciones', texto: 'Automatizaciones' },
   { valor: 'mas', texto: 'IA y más' },
 ] as const;
 type Clave = (typeof SECCIONES)[number]['valor'];
@@ -60,6 +62,9 @@ export default function Configuracion() {
       {seccion === 'certificados' ? (
         <Caja key="certificados" titulo="Plantillas de certificados" icono="ribbon-outline" color="celeste" ancha><Certificados /></Caja>
       ) : null}
+      {seccion === 'automatizaciones' ? (
+        <Caja key="automatizaciones" titulo="Automatizaciones (Make)" icono="git-network-outline" color="violeta" ancha><Automatizaciones /></Caja>
+      ) : null}
       {seccion === 'clinica' ? (
         <>
           <Caja titulo="Calendario de vacunas" icono="shield-checkmark-outline" color="rosado" ancha>
@@ -78,9 +83,6 @@ export default function Configuracion() {
           <Caja titulo="IA Asistente" icono="sparkles-outline" color="violeta" ancha>
             <Etiqueta texto={db.ia.enabled ? 'Encendida' : 'Apagada'} tono={db.ia.enabled ? 'violeta' : 'neutro'} />
             <Texto>La IA todavía no está conectada: se conecta en la Etapa 9, después de que revises el consentimiento para usar IA con datos de salud. Hasta entonces queda apagada.</Texto>
-          </Caja>
-          <Caja titulo="Todavía no se configuran acá" icono="construct-outline" color="celeste" ancha>
-            <TextoChico>Automatizaciones (webhook de Make, secreto de firma y eventos): Etapa 8. El secreto se guarda en el servidor, nunca en la app.</TextoChico>
           </Caja>
         </>
       ) : null}

@@ -165,6 +165,18 @@ export interface Payment extends Base {
   updatedBy?: ID;
 }
 
+// ---------- Automatizaciones (Etapa 8) ----------
+
+/** Un evento de la outbox, tal como lo ve el Dr. en Configuración (sin abrir los datos). */
+export interface EventoOutbox {
+  id: ID;
+  type: string;
+  status: 'pendiente' | 'reintentar' | 'enviado' | 'fallido' | 'sin_destino' | 'apagado';
+  createdAt: ISODateTime;
+  attempts?: number;
+  lastError?: string | null;
+}
+
 // ---------- Configuración (Etapa 7) ----------
 
 /** Links que usa la app (settings/links). La familia también los lee (PacienteX y Cal.com). */
@@ -658,5 +670,9 @@ export interface Database {
   ambitos: Record<Scope, string>;
   /** settings/certificados: lo que el Dr. cambió de los textos prearmados. */
   plantillas: PlantillasCertificado;
+  /** settings/automatizaciones: eventos que el Dr. apagó. */
+  automatizaciones: { apagados: string[] };
+  /** Los últimos eventos para Make (solo el médico; en la demostración, vacío). */
+  outbox: EventoOutbox[];
   auditLog: AuditLog[];
 }

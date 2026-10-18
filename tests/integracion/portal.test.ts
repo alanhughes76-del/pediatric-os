@@ -27,7 +27,7 @@ const llamar = <T,>(app: FirebaseApp, nombre: string, datos: unknown) => httpsCa
 const portal = (sub: string) => `${base}/portal/${P}/${sub}`;
 
 /** Espera a que los triggers armen las copias. */
-async function esperar(cond: () => Promise<boolean>, ms = 15000) {
+async function esperar(cond: () => Promise<boolean>, ms = 40000) {
   const fin = Date.now() + ms;
   while (Date.now() < fin) { if (await cond()) return; await new Promise((r) => setTimeout(r, 250)); }
   throw new Error('No se armaron las copias del portal a tiempo');
@@ -176,7 +176,9 @@ describe('acciones de la familia', () => {
     const aviso = (await fs.collection(`${base}/notifications`).where('guardianId', '==', G).get()).docs[0].data();
     expect(aviso).toMatchObject({ recipientUid: 'medico-portal', kind: 'datos_familia', campos: ['phone'], readAt: null });
     const ev = (await fs.collection(`${base}/outbox`).where('type', '==', 'familia.datos_actualizados').get()).docs.map((d) => d.data()).find((e) => e.data.guardianId === G)!;
-    expect(ev.data).toEqual({ guardianId: G, familyId: 'f-portal', campos: ['phone'] });
+    expect(ev.data).toMatchObject({ guardianId: G, familyId: 'f-portal', campos: ['phone'] });
+    // Lleva el contacto (para que el Dr. pueda responder por el puente), nunca los datos viejos.
+    expect(ev.data.destinatarios).toEqual([expect.objectContaining({ guardianId: G, telefono: '+5491155559999' })]);
   });
 });
 

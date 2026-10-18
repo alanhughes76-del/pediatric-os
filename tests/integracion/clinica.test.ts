@@ -120,5 +120,5 @@ test('enviar material: solo el médico, registra el envío y emite el aviso sin 
   const r = await llamar<{ id: string }>(medico, 'enviarMaterial', { materialId: 'mat-1', patientId: P });
   expect((await fs.doc(`organizations/${ORG}/materialDeliveries/${r.data.id}`).get()).data()).toMatchObject({ patientId: P, materialId: 'mat-1' });
   const ev = (await fs.collection(`organizations/${ORG}/outbox`).where('type', '==', 'material.enviado').get()).docs[0].data();
-  expect(Object.keys(ev.data).sort()).toEqual(['deliveryId', 'familyId', 'materialId', 'patientId', 'titulo']);
+  expect(Object.keys(ev.data).sort()).toEqual(['deliveryId', 'destinatarios', 'familyId', 'materialId', 'pacientes', 'patientId', 'titulo']);
 });

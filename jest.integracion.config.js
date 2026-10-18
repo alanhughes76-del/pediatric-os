@@ -7,4 +7,6 @@ module.exports = {
   testMatch: ['<rootDir>/tests/integracion/**/*.test.ts'],
   testTimeout: 60000,
   maxWorkers: 1,
+  // Algunas pruebas llaman directo a funciones del servidor (por ejemplo, los avisos programados).
+  moduleDirectories: ['node_modules', '<rootDir>/functions/node_modules'],
 };

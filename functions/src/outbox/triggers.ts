@@ -26,7 +26,7 @@ async function intentar(ref: DocumentReference) {
     return;
   }
   const resultado = await enviarEvento(
-    { id: ref.id, type: ev.type, occurredAt: ev.occurredAt, organizationId: ev.organizationId, data: ev.data ?? {} },
+    { id: ref.id, type: ev.type, occurredAt: ev.occurredAt, organizationId: ev.organizationId, audiencia: ev.audiencia, plantilla: ev.plantilla, data: ev.data ?? {} },
     { url, secreto: MAKE_WEBHOOK_SECRET.value() },
   );
   await ref.update({ ...despuesDelIntento(resultado, ev.attempts ?? 0, new Date()), updatedAt: ahoraISO() });

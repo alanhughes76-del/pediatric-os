@@ -193,6 +193,7 @@ export function useFuenteDemo(): AppState {
         if (ajuste.clave === 'links') return { ...d, links: ajuste.datos };
         if (ajuste.clave === 'ambitos') return { ...d, ambitos: ajuste.datos };
         if (ajuste.clave === 'certificados') return { ...d, plantillas: ajuste.datos };
+        if (ajuste.clave === 'automatizaciones') return { ...d, automatizaciones: ajuste.datos };
         return { ...d, precios: ajuste.datos };
       });
       return null;

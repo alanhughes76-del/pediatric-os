@@ -153,6 +153,8 @@ export async function guardarTurno(p: {
     await encolarEvento(org, ev.tipo, {
       appointmentId: ref.id,
       familyId: ev.turno.familyId,
+      patientIds: ev.turno.patientIds,
+      tipoVisita: ev.turno.type,
       start: ev.turno.start,
       durationMin: ev.turno.durationMin,
       modality: ev.turno.modality,

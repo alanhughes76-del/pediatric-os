@@ -15,7 +15,7 @@ export type Sesion =
  * Tablas que la app escribe fila por fila (todas menos `doctor`, la configuración de la agenda,
  * la auditoría y los turnos con su historial, que pasan por `operaciones`).
  */
-export type Tabla = Exclude<keyof Database, 'doctor' | 'agenda' | 'ia' | 'vacunas' | 'links' | 'precios' | 'ambitos' | 'plantillas' | 'auditLog' | 'communications' | 'materialDeliveries' | 'notifications' | 'appointments' | 'appointmentHistory'>;
+export type Tabla = Exclude<keyof Database, 'doctor' | 'agenda' | 'ia' | 'vacunas' | 'links' | 'precios' | 'ambitos' | 'plantillas' | 'automatizaciones' | 'outbox' | 'auditLog' | 'communications' | 'materialDeliveries' | 'notifications' | 'appointments' | 'appointmentHistory'>;
 export type Fila<T extends Tabla> = Database[T][number];
 
 export interface CamposNota {
@@ -99,7 +99,8 @@ export type Ajuste =
   | { clave: 'precios'; datos: Precios }
   | { clave: 'profesional'; datos: DatosProfesional }
   | { clave: 'ambitos'; datos: Record<Scope, string> }
-  | { clave: 'certificados'; datos: PlantillasCertificado };
+  | { clave: 'certificados'; datos: PlantillasCertificado }
+  | { clave: 'automatizaciones'; datos: { apagados: string[] } };
 
 export interface PedidoVisita {
   patientIds: string[];

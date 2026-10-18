@@ -116,7 +116,9 @@ describe('superposición de turnos confirmados', () => {
   test('avisos a Make: confirmado, cancelado y reprogramado, sin datos clínicos ni dirección', async () => {
     const eventos = (await fs.collection(`organizations/${ORG}/outbox`).get()).docs.map((d) => d.data()).filter((e) => e.data.appointmentId === segundo);
     expect(eventos.map((e) => e.type).sort()).toEqual(['turno.confirmado', 'turno.reprogramado']);
-    expect(Object.keys(eventos[0].data).sort()).toEqual(['appointmentId', 'durationMin', 'familyId', 'modality', 'start']);
+    // Identificadores, horario, modalidad, tipo de visita y a quién avisar: ni la dirección ni nada clínico.
+    expect(Object.keys(eventos[0].data).sort()).toEqual(['appointmentId', 'destinatarios', 'durationMin', 'familyId', 'modality', 'pacientes', 'patientIds', 'start', 'tipoVisita']);
+    expect(eventos.find((e) => e.type === 'turno.confirmado')?.plantilla).toBe('confirmacion_turno');
   });
 });
 

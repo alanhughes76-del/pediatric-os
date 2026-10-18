@@ -12,7 +12,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { onAuthStateChanged, signInWithCustomToken, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import {
-  collection, collectionGroup, deleteField, doc, getDoc, onSnapshot, orderBy, query, setDoc, updateDoc, where, writeBatch,
+  collection, collectionGroup, deleteField, doc, getDoc, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where, writeBatch,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
@@ -42,7 +42,7 @@ const VACIA: Database = {
   families: [], guardians: [], relationships: [], addresses: [], patients: [], memberships: [], payments: [],
   backgrounds: [], problems: [], allergies: [], consultations: [], measurements: [], milestoneChecks: [], notes: [], followUps: [],
   carePlan: [], vaccineDoses: [], medications: [], prescriptions: [], studies: [], fever: [], certificates: [], documents: [], appointments: [], appointmentHistory: [], blocks: [], communications: [], educationalMaterials: [], materialDeliveries: [], notifications: [],
-  agenda: CONFIG_AGENDA_INICIAL, ia: { enabled: false }, vacunas: { calendarioVerificado: false }, links: LINKS_INICIALES, precios: PRECIOS_INICIALES, ambitos: TEXTO_AMBITO, plantillas: {}, auditLog: [],
+  agenda: CONFIG_AGENDA_INICIAL, ia: { enabled: false }, vacunas: { calendarioVerificado: false }, links: LINKS_INICIALES, precios: PRECIOS_INICIALES, ambitos: TEXTO_AMBITO, plantillas: {}, automatizaciones: { apagados: [] }, outbox: [], auditLog: [],
 };
 
 /** Mensajes que se entienden, sin códigos técnicos. */
@@ -178,6 +178,13 @@ export function useFuenteFirebase(): AppState {
     subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/certificados`), (snap) => {
       setDatos((d) => ({ ...d, plantillas: (snap.data()?.plantillas ?? {}) as PlantillasCertificado }));
     }, fallo));
+    subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/automatizaciones`), (snap) => {
+      const a = snap.data()?.apagados;
+      setDatos((d) => ({ ...d, automatizaciones: { apagados: Array.isArray(a) ? a.filter((x): x is string => typeof x === 'string') : [] } }));
+    }, fallo));
+    subs.push(onSnapshot(query(collection(fs, `organizations/${org}/outbox`), orderBy('createdAt', 'desc'), limit(100)), (snap) => {
+      setDatos((d) => ({ ...d, outbox: snap.docs.map((x) => ({ id: x.id, type: String(x.data().type), status: x.data().status, createdAt: String(x.data().createdAt ?? ''), attempts: x.data().attempts, lastError: x.data().lastError ?? null })) }));
+    }, fallo));
     subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/precios`), (snap) => {
       setDatos((d) => ({ ...d, precios: conPrecios(snap.data()) }));
     }, fallo));
@@ -299,6 +306,7 @@ export function useFuenteFirebase(): AppState {
           ? { name: ajuste.datos.name, signature: ajuste.datos.signature, mn: ajuste.datos.mn ?? '', mp: ajuste.datos.mp ?? '' }
           : ajuste.clave === 'ambitos' ? { nombres: ajuste.datos }
             : ajuste.clave === 'certificados' ? { plantillas: ajuste.datos }
+              : ajuste.clave === 'automatizaciones' ? { apagados: ajuste.datos.apagados }
               : { ...ajuste.datos };
         const ahora = ahoraISO();
         try {

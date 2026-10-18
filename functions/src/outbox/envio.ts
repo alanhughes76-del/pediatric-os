@@ -34,13 +34,20 @@ export interface EventoSaliente {
   type: string;
   occurredAt: string;
   organizationId: string;
+  /** familia, medico o sistema (outbox/catalogo.ts). */
+  audiencia?: string;
+  /** Plantilla de mensaje que corresponde, si la hay. */
+  plantilla?: string | null;
   data: Record<string, unknown>;
 }
 
 export interface Resultado { ok: boolean; status?: number; error?: string }
 
 export function cuerpoDe(ev: EventoSaliente): string {
-  return JSON.stringify({ id: ev.id, type: ev.type, occurredAt: ev.occurredAt, organizationId: ev.organizationId, data: ev.data });
+  return JSON.stringify({
+    id: ev.id, type: ev.type, occurredAt: ev.occurredAt, organizationId: ev.organizationId,
+    audiencia: ev.audiencia ?? null, plantilla: ev.plantilla ?? null, data: ev.data,
+  });
 }
 
 export async function enviarEvento(

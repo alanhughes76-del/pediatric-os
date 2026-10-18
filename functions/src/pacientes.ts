@@ -12,6 +12,7 @@ import { esquemaPara } from '../../shared/vacunas';
 import { db } from './config';
 import { buscarDuplicados, normalizar, soloDigitos } from '../../shared/duplicados';
 import { isoArgentina } from '../../shared/fechaHora';
+import { encolarEvento } from './outbox/encolar';
 
 const SEXOS = ['M', 'F', 'X'];
 const AMBITOS = ['membresia', 'cardales', 'hepta', 'esporadico', 'sin-asignar'];
@@ -100,5 +101,7 @@ export const crearPaciente = onCall<PedidoAlta>(async (req) => {
     });
   }
   await lote.commit();
+  // Para Make (sincronización): solo identificadores y ámbito.
+  await encolarEvento(t.organizationId, 'paciente.creado', { patientId: ref.id, familyId: d.familyId ?? null, scope });
   return { estado: 'creado' as const, id: ref.id };
 });

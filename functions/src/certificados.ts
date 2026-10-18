@@ -58,7 +58,12 @@ export const emitirCertificado = onCall<Record<string, unknown>>(async (req) => 
   });
   batch.set(docRef, { ...firma, title: TITULOS[type], date, file: archivo, certificateId: certRef.id, kind: 'certificado', origin: 'sistema', mimeType: 'application/pdf', visibleToFamily: true });
   await batch.commit();
-  await encolarEvento(org, 'certificado.emitido', { patientId, certificateId: certRef.id });
+  // El PDF va como adjunto de mail, nunca por mensaje: Make lo baja con un enlace firmado de 3 días.
+  // En el emulador no se pueden firmar enlaces: queda null.
+  const pdfUrl = process.env.FUNCTIONS_EMULATOR === 'true'
+    ? null
+    : (await getStorage().bucket().file(archivo).getSignedUrl({ version: 'v4', action: 'read', expires: Date.now() + 3 * 24 * 3_600_000 }))[0];
+  await encolarEvento(org, 'certificado.emitido', { patientId, certificateId: certRef.id, documentId: docRef.id, titulo: TITULOS[type], pdfUrl });
   return { ok: true, id: certRef.id };
 });
 

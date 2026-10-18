@@ -341,6 +341,8 @@ const base: Database = {
   precios: PRECIOS_INICIALES,
   ambitos: TEXTO_AMBITO,
   plantillas: {},
+  automatizaciones: { apagados: [] },
+  outbox: [],
 
   auditLog: [
     { id: 'au-1', at: enDias(-2, '20:40'), actorId: 'g-lucia', action: 'login' },
