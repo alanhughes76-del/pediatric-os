@@ -4,14 +4,32 @@
     {
       "name": "app-web",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["expo", "start", "--web", "--port", "8082"],
+      "runtimeArgs": [
+        "expo",
+        "start",
+        "--web",
+        "--port",
+        "8082"
+      ],
       "port": 8082
     },
     {
       "name": "app-web-firebase",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "EXPO_PUBLIC_DATOS=firebase npx expo start --web --port 8083"],
+      "runtimeArgs": [
+        "-c",
+        "EXPO_PUBLIC_DATOS=firebase npx expo start --web --port 8083"
+      ],
       "port": 8083
+    },
+    {
+      "name": "web-exportada",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "-e",
+        "const h=require('http'),f=require('fs'),p=require('path');const r=p.resolve('dist');const t={'.js':'text/javascript','.html':'text/html','.css':'text/css','.json':'application/json','.png':'image/png','.ttf':'font/ttf','.ico':'image/x-icon'};h.createServer((q,s)=>{let u=decodeURIComponent(q.url.split('?')[0]);let a=p.join(r,u);if(!a.startsWith(r)||!f.existsSync(a)||f.statSync(a).isDirectory())a=p.join(r,'index.html');s.setHeader('Content-Type',t[p.extname(a)]||'application/octet-stream');f.createReadStream(a).pipe(s)}).listen(process.env.PORT||8092,'127.0.0.1')"
+      ],
+      "port": 8092
     }
   ]
 }

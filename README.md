@@ -1,10 +1,8 @@
 # Dr. Alan Hughes · Pediatría a domicilio
 
-App móvil (iOS y Android, con Expo) que reúne la historia clínica y el portal de las familias.
+Pediatric OS: la historia clínica de la práctica del Dr. Hughes y el portal de las familias. Web y celular (Expo), con backend en Firebase.
 
-**Versión de Expo:** SDK 57, a propósito: es la versión que corre el Expo Go del iPhone del Dr. Hughes. Antes de actualizar, revisá qué SDK pide Expo Go (aparece en el error de incompatibilidad).
-
-**Etapa 1:** datos de ejemplo ficticios en memoria, sin backend. Al abrir la app se elige el rol (modo prueba).
+**Versión de Expo:** SDK 57, a propósito: es la versión que corre el Expo Go del iPhone del Dr. Hughes. No se actualiza sin preguntarle.
 
 ## Cómo probarla
 
@@ -13,29 +11,32 @@ npm install
 npx expo start
 ```
 
-- En el celular: instalá **Expo Go** y escaneá el código QR.
+- En el celular: abrí **Expo Go** y escaneá el código QR.
 - En la compu: apretá `w` para abrirla en el navegador.
+
+Así arranca con datos de ejemplo ficticios en memoria y un selector de rol. Para usarla con Firebase (emuladores en esta computadora o el proyecto real), seguí `docs/INSTALACION.md`.
+
+## Documentación
+
+| Qué | Dónde |
+| --- | --- |
+| Instalación, Firebase, web y app (EAS) | `docs/INSTALACION.md` |
+| Estado, pendientes y lo que necesita una acción del Dr. | `docs/ENTREGA.md` |
+| Resultados de las pruebas | `VERIFICACION.md` |
+| Modelo de datos y permisos | `docs/MODELO_DE_DATOS.md` |
+| Eventos y endpoints para Make | `docs/AUTOMATIZACIONES.md` |
+| Pedido completo (manda sobre todo lo demás) | `docs/PROMPT_MAESTRO.md` |
+| Guía para trabajar en el código | `CLAUDE.md` |
 
 ## Dónde está cada cosa
 
 | Qué | Dónde |
 | --- | --- |
-| Links de PacienteX y Cal.com | `src/config.ts` |
+| Pantallas | `src/app/` (`medico/` y `familia/`) |
+| Componentes | `src/components/` |
+| Acceso a datos (demostración y Firebase, mismo contrato) | `src/data/` |
+| Lógica pura con tests (percentilos, fechas, certificados…) | `src/lib/` |
+| Lógica compartida con el servidor | `shared/` |
+| Cloud Functions | `functions/src/` |
 | Colores, tipografías y tamaños | `src/theme.ts` |
-| Modelo de datos (tablas para Vibecode Cloud) | `src/data/types.ts` |
-| Reglas de qué ve la familia | `src/data/selectores.ts` |
-| Datos de ejemplo (ficticios) | `src/data/mock.ts` |
 | Tablas OMS, SAP/Lejarraga e hitos | `src/data/referencias/` |
-| Cálculo de percentilos (LMS) | `src/lib/percentiles.ts` |
-| Hitos del desarrollo | `src/lib/hitos.ts` |
-| Borrador de nota "con IA" (de ejemplo, sin IA real) | `src/lib/notaIA.ts` |
-| Pantallas | `src/app/` (`familia/` y `medico/`) |
-
-## Etapa del backend (Vibecode Cloud)
-
-- Cada interfaz de `types.ts` es una tabla. Nada clínico se borra: se archiva (`archivedAt`).
-- Las notas aprobadas son inmutables: corregir crea una versión nueva y la anterior queda "Reemplazada".
-- AuditLog solo suma filas (incluye el registro de accesos).
-- Las reglas de `selectores.ts` (resumen de notas aprobadas, alergias confirmadas, problemas visibles) tienen que replicarse como reglas de acceso en el servidor.
-- `store.tsx` es el único lugar que hay que reemplazar para conectar la base de datos y el enlace mágico por email.
-- Para conectar la IA real, reemplazar `borradorDeEjemplo` en `notaIA.ts` respetando sus reglas.

@@ -1,7 +1,6 @@
 /**
- * Ingreso del equipo con Firebase (email y contraseña). El segundo factor (TOTP) se activa
- * cuando exista el proyecto real; en los emuladores no aplica.
- * El portal de las familias (enlace por email) se conecta en la Etapa 6.
+ * Ingreso del equipo con Firebase (email y contraseña). El segundo factor (TOTP) todavía no se pide
+ * (pendiente, docs/ENTREGA.md). Las familias entran con el enlace por email (ingresar.tsx).
  */
 import { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';

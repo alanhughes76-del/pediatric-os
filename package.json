@@ -54,7 +54,9 @@
     "test:integracion": "npm --prefix functions run build && firebase emulators:exec --only auth,firestore,functions,storage --project demo-pediatric-os \"jest -c jest.integracion.config.js\"",
     "emuladores": "npm --prefix functions run build && firebase emulators:start --project demo-pediatric-os",
     "sembrar": "tsx scripts/sembrar.ts",
-    "web:firebase": "EXPO_PUBLIC_DATOS=firebase expo start --web --port 8083"
+    "web:firebase": "EXPO_PUBLIC_DATOS=firebase expo start --web --port 8083",
+    "primer-medico": "tsx scripts/primer-medico.ts",
+    "web:exportar": "expo export -p web"
   },
   "private": true,
   "jest": {
