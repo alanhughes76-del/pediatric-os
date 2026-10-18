@@ -31,7 +31,6 @@ Funcionan en la web y en el celular (Expo Go), sobre los emuladores y con los da
 ## Pendientes (dentro del alcance)
 
 - **Asistente:** el rol existe y las reglas lo contemplan, pero todavía no tiene pantallas (al entrar, la app le dice que llega más adelante).
-- **Sesión en el celular:** con Expo Go hay que volver a ingresar cada vez que se abre la app. Se resuelve con la app propia (EAS).
 - **Segundo factor (TOTP) del médico:** recomendado, pero la pantalla de ingreso todavía no lo pide. No lo actives en la consola hasta que esté.
 - **Foto del paciente:** todavía no se puede cargar.
 - **Sumar un adulto desde la pantalla de la familia:** hoy se suma desde cada hijo.

@@ -160,7 +160,7 @@ npx firebase deploy --only hosting
 
 ## 4. App para el celular (EAS)
 
-Hasta ahora la app se prueba con Expo Go. Para tenerla instalada como app propia (y para que la sesión quede guardada en el teléfono) hace falta compilarla con EAS, el servicio de Expo.
+Hasta ahora la app se prueba con Expo Go. Para tenerla instalada como app propia hace falta compilarla con EAS, el servicio de Expo.
 
 Antes, definí con el Dr.:
 

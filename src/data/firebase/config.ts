@@ -8,6 +8,7 @@
 import { Platform } from 'react-native';
 import { getApp, getApps, initializeApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth, initializeAuth, inMemoryPersistence, type Auth } from 'firebase/auth';
+import { persistenciaDelTelefono } from './persistencia';
 import { connectFirestoreEmulator, getFirestore, type Firestore } from 'firebase/firestore';
 import { connectFunctionsEmulator, getFunctions, type Functions } from 'firebase/functions';
 import { connectStorageEmulator, getStorage, type FirebaseStorage } from 'firebase/storage';
@@ -28,9 +29,9 @@ export function firebase() {
     storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || 'demo-pediatric-os.appspot.com',
     appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
   });
-  // Web: la sesión queda guardada en el navegador. Celular: por ahora en memoria (se vuelve a
-  // ingresar al abrir la app); la sesión persistente llega con la versión propia de la app.
-  const auth = Platform.OS === 'web' || yaEstaba ? getAuth(app) : initializeAuth(app, { persistence: inMemoryPersistence });
+  // Web: la sesión queda guardada en el navegador. Celular: en el almacenamiento de la app
+  // (persistencia.native.ts); si no estuviera disponible, en memoria (se vuelve a ingresar).
+  const auth = Platform.OS === 'web' || yaEstaba ? getAuth(app) : initializeAuth(app, { persistence: persistenciaDelTelefono() ?? inMemoryPersistence });
   const db = getFirestore(app);
   const functions = getFunctions(app, REGION);
   const storage = getStorage(app);
