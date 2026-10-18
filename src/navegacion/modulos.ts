@@ -54,7 +54,7 @@ export const MODULOS: Modulo[] = [
   { clave: 'prevencion', titulo: 'Prevención', icono: 'leaf-outline', href: '/medico/prevencion', rutas: ['/medico/prevencion'] },
   { clave: 'comunicaciones', titulo: 'Comunicaciones', icono: 'chatbubbles-outline', href: '/medico/comunicaciones', rutas: ['/medico/comunicaciones'] },
   { clave: 'documentos', titulo: 'Documentos', icono: 'folder-open-outline', href: '/medico/documentos', rutas: ['/medico/documentos'] },
-  mod('reportes', 'Reportes', 'bar-chart-outline', 'Etapa 7', 'Reporte mensual con datos reales del sistema, exportable a CSV y PDF.'),
+  { clave: 'reportes', titulo: 'Reportes', icono: 'bar-chart-outline', href: '/medico/reportes', rutas: ['/medico/reportes'] },
   mod('ia', 'IA Asistente', 'sparkles-outline', 'Etapa 9', 'Propuestas que revisás vos. Arranca apagada hasta que revises el consentimiento para usar IA con datos de salud.'),
 ];
 
