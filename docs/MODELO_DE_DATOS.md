@@ -20,7 +20,7 @@ Estado al 17/10/2026, Etapa 1a. Las reglas están en `firestore.rules` y `storag
 | --- | --- | --- | --- |
 | `users/{uid}` | el propio usuario | S | Rol y organización los fija `asignarRol` o el acceso al portal |
 | `organizations/{orgId}` | M, A | S | — |
-| `…/settings/{doc}` (`links`: PacienteX, Cal.com y recetas; `precios`: membresía y visitas sueltas; `ia`; `vacunas`; `ambitos`: nombres de los ámbitos; `certificados`: plantillas; `automatizaciones`: eventos apagados; `agenda`: horarios por día, duración por tipo, buffer y zonas) | M; A todo menos `ia`; F solo `links` | M | Firma. Los secretos no van acá: van en Secret Manager |
+| `…/settings/{doc}` (`links`: PacienteX, Cal.com y recetas; `precios`: membresía y visitas sueltas; `ia`: encendida y fecha de revisión del consentimiento; `vacunas`; `ambitos`: nombres de los ámbitos; `certificados`: plantillas; `automatizaciones`: eventos apagados; `agenda`: horarios por día, duración por tipo, buffer y zonas) | M; A todo menos `ia`; F solo `links` | M | Firma. Los secretos no van acá: van en Secret Manager |
 | `…/professionals/{id}` | M, A | M | Firma |
 | `…/consents/{id}` (portal, foto, grabación, IA) | M; F los suyos | M, o F los suyos | No se edita ni se borra: solo se revoca una vez (`revokedAt`) |
 
@@ -95,7 +95,7 @@ Lo que la familia hace desde el portal (Etapa 6b):
 | Ruta | Lee | Escribe |
 | --- | --- | --- |
 | `…/auditLog/{id}` | M | **Solo S, solo altas** (triggers `auditarAdministrativo`, `auditarClinico`, `auditarDomicilios`). Guarda quién, tipo de actor (persona, sistema o IA), acción, ruta, y valor anterior y nuevo de cada campo |
-| `…/aiInteractions/{id}` | M | Solo S (Etapa 9) |
+| `…/aiInteractions/{id}` (acción, paciente, consulta, fecha, modelo, estado, propuesta, `aceptado`, `decididoAt`) | M | Solo S (`iaAsistente`, `iaDecision`) |
 | `…/outbox/{id}` (eventos para Make: `type`, `audiencia`, `plantilla`, `data`) | M | Solo S. Estados: `pendiente` → `enviado`, o `reintentar` (1, 2, 4… minutos, tope 6 h) → `fallido` a los 8 intentos. Sin URL configurada: `sin_destino`; apagado en Configuración: `apagado`. Los avisos programados usan id fijo (`tipo__clave`) para salir una sola vez. Detalle en `docs/AUTOMATIZACIONES.md` |
 | `…/interesados/{id}` (web o admisión: nombre, email, teléfono, zona, estado) | M, A | S crea; M, A cambian el estado |
 | `…/admisiones/{id}` (mensaje y respuestas de los formularios), `…/triage/{id}` (triage de urgencia), `…/transcripciones/{id}` (Plaud) | M | S crea; M marca triage leído o transcripción usada/descartada |

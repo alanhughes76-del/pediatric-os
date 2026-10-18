@@ -343,6 +343,7 @@ const base: Database = {
   plantillas: {},
   automatizaciones: { apagados: [] },
   outbox: [],
+  aiInteractions: [],
   // Lo que entra desde Make (ficticio): una consulta por la web y una transcripción de Plaud.
   interesados: [
     { ...b('int-1', enDias(-1, '21:10'), 'make'), origen: 'web', nombre: 'Carla Méndez', email: 'carla@ejemplo.com', telefono: '+5491155550909', zona: 'Martínez', estado: 'nuevo', recibidoAt: enDias(-1, '21:10') },

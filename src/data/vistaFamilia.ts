@@ -86,6 +86,7 @@ export function vistaFamilia(db: Database, guardianId: ID): Database {
     plantillas: {},
     automatizaciones: { apagados: [] },
     outbox: [],
+    aiInteractions: [],
     interesados: [],
     admisiones: [],
     triage: [],

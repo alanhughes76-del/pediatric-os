@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { useApp } from '@/data/store';
 import type { Triage } from '@/data/types';
-import { fechaHoraCorta } from '@/lib/fechas';
+import { ahoraISO, fechaHoraCorta } from '@/lib/fechas';
 import { Caja } from './Caja';
 import { Boton } from './Boton';
 import { Aviso } from './Formulario';
@@ -27,7 +27,7 @@ export function TriageUrgencia({ t }: { t: Triage }) {
       {error ? <Aviso tono="alerta" texto={error} /> : null}
       {t.revisadoAt ? <TextoChico>Revisado el {fechaHoraCorta(t.revisadoAt)}.</TextoChico> : (
         <Boton titulo="Ya lo leí" icono="checkmark" compacto variante="secundario"
-          onPress={async () => setError(await operaciones.actualizarEntrada('triage', t.id, { revisadoAt: new Date().toISOString() }))} />
+          onPress={async () => setError(await operaciones.actualizarEntrada('triage', t.id, { revisadoAt: ahoraISO() }))} />
       )}
     </Caja>
   );

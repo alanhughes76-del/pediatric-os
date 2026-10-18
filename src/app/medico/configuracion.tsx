@@ -17,6 +17,7 @@ import { Links } from '@/components/configuracion/Links';
 import { Ambitos } from '@/components/configuracion/Ambitos';
 import { Certificados } from '@/components/configuracion/Certificados';
 import { Automatizaciones } from '@/components/configuracion/Automatizaciones';
+import { IA } from '@/components/configuracion/IA';
 
 const SECCIONES = [
   { valor: 'profesional', texto: 'Profesional' },
@@ -27,7 +28,7 @@ const SECCIONES = [
   { valor: 'certificados', texto: 'Certificados' },
   { valor: 'clinica', texto: 'Vacunas y biblioteca' },
   { valor: 'automatizaciones', texto: 'Automatizaciones' },
-  { valor: 'mas', texto: 'IA y más' },
+  { valor: 'mas', texto: 'IA' },
 ] as const;
 type Clave = (typeof SECCIONES)[number]['valor'];
 
@@ -80,10 +81,7 @@ export default function Configuracion() {
       ) : null}
       {seccion === 'mas' ? (
         <>
-          <Caja titulo="IA Asistente" icono="sparkles-outline" color="violeta" ancha>
-            <Etiqueta texto={db.ia.enabled ? 'Encendida' : 'Apagada'} tono={db.ia.enabled ? 'violeta' : 'neutro'} />
-            <Texto>La IA todavía no está conectada: se conecta en la Etapa 9, después de que revises el consentimiento para usar IA con datos de salud. Hasta entonces queda apagada.</Texto>
-          </Caja>
+          <Caja titulo="IA Asistente" icono="sparkles-outline" color="violeta" ancha><IA /></Caja>
         </>
       ) : null}
     </Pantalla>

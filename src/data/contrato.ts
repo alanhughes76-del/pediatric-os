@@ -2,7 +2,7 @@
  * Lo que la app pide a la capa de datos, sea la demostración en memoria o Firebase.
  * Las pantallas solo usan `useApp()` (store.tsx): no saben de dónde vienen los datos.
  */
-import type { Appointment, AuditLog, Certificate, Communication, ClinicalNote, Consultation, Database, Doctor, Document, DocumentKind, EducationalMaterial, Guardian, Links, Patient, PlantillasCertificado, Precios, Scope } from './types';
+import type { AccionIA, Appointment, AuditLog, Certificate, Communication, ClinicalNote, Consultation, Database, Doctor, Document, DocumentKind, EducationalMaterial, Guardian, Links, Patient, PlantillasCertificado, Precios, Scope } from './types';
 import type { ArchivoElegido } from '@/lib/archivos';
 import type { AccionTurno, Aviso, ConfigAgenda } from '@shared/agenda';
 import type { Fuente } from './fuente';
@@ -15,7 +15,7 @@ export type Sesion =
  * Tablas que la app escribe fila por fila (todas menos `doctor`, la configuración de la agenda,
  * la auditoría y los turnos con su historial, que pasan por `operaciones`).
  */
-export type Tabla = Exclude<keyof Database, 'doctor' | 'agenda' | 'ia' | 'vacunas' | 'links' | 'precios' | 'ambitos' | 'plantillas' | 'automatizaciones' | 'outbox' | 'interesados' | 'admisiones' | 'triage' | 'transcripciones' | 'auditLog' | 'communications' | 'materialDeliveries' | 'notifications' | 'appointments' | 'appointmentHistory'>;
+export type Tabla = Exclude<keyof Database, 'doctor' | 'agenda' | 'ia' | 'vacunas' | 'links' | 'precios' | 'ambitos' | 'plantillas' | 'automatizaciones' | 'outbox' | 'aiInteractions' | 'interesados' | 'admisiones' | 'triage' | 'transcripciones' | 'auditLog' | 'communications' | 'materialDeliveries' | 'notifications' | 'appointments' | 'appointmentHistory'>;
 export type Fila<T extends Tabla> = Database[T][number];
 
 export interface CamposNota {
@@ -88,11 +88,24 @@ export interface Operaciones {
   registrarComunicacion: (datos: DatosComunicacion) => Promise<string | null>;
   /** Lo que entró desde Make: el Dr. marca un interesado, un triage revisado o una transcripción usada. */
   actualizarEntrada: <C extends 'interesados' | 'triage' | 'transcripciones'>(coleccion: C, id: string, cambios: Partial<Database[C][number]>) => Promise<string | null>;
+  /** IA Asistente: pide una propuesta (la respuesta nunca entra sola a la historia). */
+  pedirIA: (p: PedidoIA) => Promise<RespuestaIA>;
+  /** El Dr. acepta o descarta una propuesta de la IA (queda en la auditoría). */
+  decidirIA: (interaccionId: string, aceptado: boolean) => Promise<string | null>;
   /** Configuración (solo el médico): agenda, links, precios o sus datos profesionales. */
   guardarAjustes: (p: Ajuste) => Promise<string | null>;
 }
 
 export type DatosComunicacion = Pick<Communication, 'patientId' | 'familyId' | 'channel' | 'direction' | 'classification' | 'at'> & { subject: string };
+
+export interface PedidoIA { accion: AccionIA; patientId: string; consultationId?: string; pregunta?: string; /** Evolución: el texto de la consulta que está en pantalla. */ texto?: string }
+export interface RespuestaIA {
+  error?: string;
+  interaccionId?: string;
+  resultado?: Record<string, unknown>;
+  /** En la demostración: borrador armado sin IA, para mostrar el flujo. */
+  ejemplo?: boolean;
+}
 
 export type DatosProfesional = Pick<Doctor, 'name' | 'signature' | 'mn' | 'mp'>;
 export type Ajuste =
@@ -102,7 +115,8 @@ export type Ajuste =
   | { clave: 'profesional'; datos: DatosProfesional }
   | { clave: 'ambitos'; datos: Record<Scope, string> }
   | { clave: 'certificados'; datos: PlantillasCertificado }
-  | { clave: 'automatizaciones'; datos: { apagados: string[] } };
+  | { clave: 'automatizaciones'; datos: { apagados: string[] } }
+  | { clave: 'ia'; datos: { enabled: boolean; consentimientoRevisadoAt?: string } };
 
 export interface PedidoVisita {
   patientIds: string[];

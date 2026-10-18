@@ -307,6 +307,14 @@ describe('trazabilidad', () => {
     await assertFails(updateDoc(doc(db('medico'), r('transcripciones', 'pl1')), { texto: 'otro', updatedBy: uid('medico'), updatedAt: AHORA }));
     await assertFails(updateDoc(doc(db('asistente'), r('transcripciones', 'pl1')), { estado: 'descartada', updatedBy: uid('asistente'), updatedAt: AHORA }));
   });
+  test('los usos de la IA: los lee solo el médico y los escribe solo el servidor', async () => {
+    await assertSucceeds(leer('medico', r('aiInteractions', 'ai1')));
+    await assertFails(leer('asistente', r('aiInteractions', 'ai1')));
+    await assertFails(leer('lucia', r('aiInteractions', 'ai1')));
+    await assertFails(updateDoc(doc(db('medico'), r('aiInteractions', 'ai1')), { aceptado: true }));
+    await assertFails(leer('asistente', r('settings', 'ia')));
+    await assertFails(setDoc(doc(db('asistente'), r('settings', 'ia')), firma(uid('asistente'), { enabled: true })));
+  });
   test('los eventos para Make los escribe solo el servidor', async () => {
     await assertFails(setDoc(doc(db('medico'), r('outbox', 'ev2')), { type: 'falso' }));
   });

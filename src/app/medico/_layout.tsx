@@ -46,6 +46,7 @@ export default function MedicoLayout() {
         <Stack.Screen name="comunicaciones" options={{ title: 'Comunicaciones' }} />
         <Stack.Screen name="reportes" options={{ title: 'Reportes' }} />
         <Stack.Screen name="interesados" options={{ title: 'Interesados' }} />
+        <Stack.Screen name="ia" options={{ title: 'IA Asistente' }} />
         <Stack.Screen name="triage/[id]" options={{ title: 'Triage de urgencia' }} />
         <Stack.Screen name="plaud/[id]" options={{ title: 'Transcripción de Plaud' }} />
       </Stack>

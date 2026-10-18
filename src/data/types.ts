@@ -165,6 +165,24 @@ export interface Payment extends Base {
   updatedBy?: ID;
 }
 
+// ---------- IA Asistente (Etapa 9) ----------
+
+export type AccionIA = 'resumir_historia' | 'preparar_evolucion' | 'sugerir_material' | 'revisar_estudios' | 'consulta_libre';
+
+/** Un uso de la IA: qué acción, de qué paciente, cuándo, qué propuso y si el Dr. la aceptó. */
+export interface InteraccionIA {
+  id: ID;
+  action: AccionIA;
+  patientId: ID;
+  consultationId?: ID | null;
+  createdAt: ISODateTime;
+  model?: string;
+  status: 'ok' | 'rechazo' | 'incompleta' | 'error';
+  resultado?: Record<string, unknown> | null;
+  aceptado: boolean | null;
+  decididoAt?: ISODateTime | null;
+}
+
 // ---------- Lo que entra desde Make (Etapa 8b) ----------
 
 /** Alguien que escribió por la web o completó la admisión y todavía no es una familia cargada. */
@@ -712,8 +730,10 @@ export interface Database {
   notifications: AppNotification[];
   /** Horarios, duraciones, buffer y zonas (en Firebase: settings/agenda). */
   agenda: ConfigAgenda;
-  /** IA encendida o apagada (settings/ia). Arranca apagada; se enciende en la Etapa 9. */
-  ia: { enabled: boolean };
+  /** IA encendida o apagada (settings/ia). Arranca apagada; el Dr. la enciende después de revisar el consentimiento. */
+  ia: { enabled: boolean; consentimientoRevisadoAt?: ISODateTime };
+  /** Usos de la IA Asistente (solo el médico). */
+  aiInteractions: InteraccionIA[];
   /** settings/vacunas: el calendario es un borrador hasta que el Dr. lo verifique. */
   vacunas: { calendarioVerificado: boolean };
   /** settings/links. */

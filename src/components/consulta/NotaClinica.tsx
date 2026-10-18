@@ -13,7 +13,7 @@ import { useApp } from '@/data/store';
 import { versionesDeNota, notaVigente, adultosDe } from '@/data/selectores';
 import { mailDelResumen } from '@shared/resumen';
 import type { ClinicalNote, Consultation, Patient } from '@/data/types';
-import { borradorDeEjemplo, type CamposNota } from '@/lib/notaIA';
+import type { CamposNota } from '@/lib/notaIA';
 import { ahoraISO, fechaCorta, hora } from '@/lib/fechas';
 import { useAutoguardado } from '@/lib/useAutoguardado';
 import { Campo, Casilla, Aviso, EstadoGuardado } from '../Formulario';
@@ -77,30 +77,82 @@ export function NotaClinica({ consulta, paciente }: { consulta: Consultation; pa
 // ---------- Sin nota todavía ----------
 
 /** Explicación cuando la IA está apagada (prompt maestro 7.18: arranca apagada). */
-const IA_APAGADA = 'La IA está apagada. Se enciende en Configuración cuando se conecte (Etapa 9), después de revisar el consentimiento.';
+const IA_APAGADA = 'La IA está apagada. Se enciende en Configuración, después de revisar el consentimiento informado para usar IA con datos de salud.';
+
+interface Propuesta { id?: string; campos: CamposNota; motivoBandera: string; faltantes: string[]; ejemplo: boolean }
+
+/** Pide a la IA el borrador de la evolución (la respuesta es una propuesta, nunca se guarda sola). */
+function usePropuestaIA(consulta: Consultation, paciente: Patient, texto: string) {
+  const { operaciones } = useApp();
+  const [propuesta, setPropuesta] = useState<Propuesta | null>(null);
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const pedir = async () => {
+    if (!texto.trim()) return setError('Primero escribí, pegá o dictá el texto de la consulta.');
+    setError(null); setPropuesta(null); setCargando(true);
+    const r = await operaciones.pedirIA({ accion: 'preparar_evolucion', patientId: paciente.id, consultationId: consulta.id, texto });
+    setCargando(false);
+    if (r.error || !r.resultado) return setError(r.error ?? 'La IA no respondió.');
+    const x = r.resultado;
+    const t = (v: unknown) => (typeof v === 'string' ? v : '');
+    setPropuesta({
+      id: r.interaccionId, ejemplo: !!r.ejemplo,
+      campos: { findings: t(x.hallazgos), plan: t(x.conducta), familySummary: t(x.resumenFamilia), allergiesMedication: t(x.alergiasMedicacion), clinicalFlag: x.banderaClinica === true },
+      motivoBandera: t(x.motivoBandera),
+      faltantes: Array.isArray(x.datosFaltantes) ? x.datosFaltantes.filter((y): y is string => typeof y === 'string') : [],
+    });
+  };
+  const decidir = (aceptado: boolean) => {
+    if (propuesta?.id) void operaciones.decidirIA(propuesta.id, aceptado);
+    setPropuesta(null);
+  };
+  return { propuesta, cargando, error, pedir, decidir };
+}
+
+/** Vista previa de lo que propuso la IA: se usa o se descarta (queda registrado). */
+function VistaPropuesta({ p, textoUsar, onUsar, onDescartar }: { p: Propuesta; textoUsar: string; onUsar: () => void; onDescartar: () => void }) {
+  return (
+    <View style={[s.tarjeta, { borderColor: colors.primary3 }]}>
+      <Etiqueta texto={p.ejemplo ? 'Borrador de ejemplo (sin IA real)' : 'Propuesta de la IA'} tono="violeta" />
+      {CAMPOS.map((c) => (
+        <View key={c.clave} style={{ gap: 2 }}>
+          <TextoFuerte>{c.titulo}</TextoFuerte>
+          <Texto color={p.campos[c.clave] ? colors.text : colors.textMuted}>{p.campos[c.clave] || 'Sin datos en el texto.'}</Texto>
+        </View>
+      ))}
+      {p.campos.clinicalFlag ? <Aviso tono="alerta" texto={`Propone bandera clínica${p.motivoBandera ? `: ${p.motivoBandera}` : '.'}`} /> : null}
+      {p.faltantes.length ? <TextoChico>Faltan datos: {p.faltantes.join('; ')}.</TextoChico> : null}
+      <TextoChico color={colors.textMuted}>Revisala: puede equivocarse. Nada se guarda en la historia hasta que lo apruebes.</TextoChico>
+      <Boton titulo={textoUsar} icono="checkmark" onPress={onUsar} />
+      <Boton titulo="Descartar" variante="contorno" onPress={onDescartar} />
+    </View>
+  );
+}
 
 function SinNota({ consulta, paciente, texto }: { consulta: Consultation; paciente: Patient; texto: string }) {
   const { agregar, db } = useApp();
-  const [sinTexto, setSinTexto] = useState(false);
+  const ia = usePropuestaIA(consulta, paciente, texto);
   const crear = (campos: CamposNota, origin: ClinicalNote['origin']) =>
     agregar('notes', { consultationId: consulta.id, patientId: paciente.id, version: 1, status: 'borrador', origin, updatedAt: ahoraISO(), ...campos }, 'nota.crear');
 
+  if (ia.propuesta) {
+    return (
+      <VistaPropuesta p={ia.propuesta} textoUsar="Usar como borrador"
+        onUsar={() => { crear(ia.propuesta!.campos, 'ia'); ia.decidir(true); }} onDescartar={() => ia.decidir(false)} />
+    );
+  }
   return (
     <View style={{ gap: 10 }}>
       <Boton
-        titulo="Generar borrador con IA"
+        titulo={ia.cargando ? 'Preparando la evolución…' : 'Generar borrador con IA'}
         icono="sparkles-outline"
         variante={db.ia.enabled ? 'principal' : 'contorno'}
-        deshabilitado={!db.ia.enabled}
+        deshabilitado={!db.ia.enabled || ia.cargando}
         detalle={db.ia.enabled ? undefined : IA_APAGADA}
-        onPress={() => {
-          const b = borradorDeEjemplo(texto, consulta.visitType, paciente.firstName);
-          if (!b) return setSinTexto(true);
-          crear(b, 'ia');
-        }}
+        onPress={() => void ia.pedir()}
       />
       <Boton titulo="Escribir manualmente" icono="create-outline" variante={db.ia.enabled ? 'contorno' : 'principal'} onPress={() => crear(VACIA, 'humano')} />
-      {sinTexto ? <Aviso tono="alerta" texto="Primero escribí, pegá o dictá el texto de la consulta." /> : null}
+      {ia.error ? <Aviso tono="alerta" texto={ia.error} /> : null}
     </View>
   );
 }
@@ -122,16 +174,21 @@ function Borrador({ nota, consulta, paciente, texto }: { nota: ClinicalNote; con
     return () => clearTimeout(t);
   }, [confirmarRegenerar]);
 
+  const ia = usePropuestaIA(consulta, paciente, texto);
   const regenerar = () => {
+    // Si ya hay contenido, se pide confirmación antes de pedir otra propuesta.
     const tieneContenido = CAMPOS.some((c) => campos[c.clave].trim());
     if (tieneContenido && !confirmarRegenerar) return setConfirmarRegenerar(true);
-    const b = borradorDeEjemplo(texto, consulta.visitType, paciente.firstName);
     setConfirmarRegenerar(false);
-    if (!b) return setAviso('Primero escribí, pegá o dictá el texto de la consulta.');
+    setAviso(null);
+    void ia.pedir();
+  };
+  const usarPropuesta = () => {
+    const b = ia.propuesta!.campos;
     // Reemplaza los cuatro campos; la bandera que marcó el médico no se apaga.
     setCampos((x) => ({ ...b, clinicalFlag: x.clinicalFlag || b.clinicalFlag }));
     setOrigen('ia');
-    setAviso(null);
+    ia.decidir(true);
   };
 
   const guardar = () => {
@@ -154,8 +211,10 @@ function Borrador({ nota, consulta, paciente, texto }: { nota: ClinicalNote; con
         {sinGuardar ? <TextoChico color={colors.primary2}>Cambios sin guardar</TextoChico> : null}
       </View>
       {origen === 'ia' ? (
-        <Aviso icono="sparkles-outline" texto="Borrador de ejemplo: todavía no hay IA conectada (llega con el backend). Revisá y corregí antes de aprobar." />
+        <Aviso icono="sparkles-outline" texto="Borrador propuesto por la IA. Revisá y corregí antes de aprobar." />
       ) : null}
+      {ia.propuesta ? <VistaPropuesta p={ia.propuesta} textoUsar="Reemplazar los 4 campos" onUsar={usarPropuesta} onDescartar={() => ia.decidir(false)} /> : null}
+      {ia.error ? <Aviso tono="alerta" texto={ia.error} /> : null}
 
       {CAMPOS.map((c) => (
         <Campo
@@ -172,9 +231,10 @@ function Borrador({ nota, consulta, paciente, texto }: { nota: ClinicalNote; con
 
       {db.ia.enabled ? (
         <Boton
-          titulo={confirmarRegenerar ? 'Tocá de nuevo para reemplazar los 4 campos' : 'Volver a generar con IA'}
+          titulo={ia.cargando ? 'Preparando la evolución…' : confirmarRegenerar ? 'Tocá de nuevo para pedir otra propuesta' : 'Volver a generar con IA'}
           icono="refresh-outline"
           variante={confirmarRegenerar ? 'alerta' : 'contorno'}
+          deshabilitado={ia.cargando}
           onPress={regenerar}
         />
       ) : null}

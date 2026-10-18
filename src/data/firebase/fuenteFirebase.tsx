@@ -21,7 +21,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { mostrarBytes, nombreSeguro, problemaDelArchivo, tipoPorNombre } from '@/lib/archivos';
 import { FirebaseError } from 'firebase/app';
 import type { AppState, ResultadoTurno, Sesion, Tabla } from '../contrato';
-import type { Address, AppNotification, Appointment, AppointmentChange, AuditLog, Communication, Database, Guardian, MaterialDelivery, PlantillasCertificado } from '../types';
+import type { Address, AppNotification, Appointment, AppointmentChange, AuditLog, Communication, Database, Guardian, InteraccionIA, MaterialDelivery, PlantillasCertificado } from '../types';
 import { armarVistaFamilia, type CopiasPaciente } from './portalFamilia';
 import { CONFIG_AGENDA_INICIAL } from '@shared/agenda';
 import { firebase } from './config';
@@ -42,7 +42,7 @@ const VACIA: Database = {
   families: [], guardians: [], relationships: [], addresses: [], patients: [], memberships: [], payments: [],
   backgrounds: [], problems: [], allergies: [], consultations: [], measurements: [], milestoneChecks: [], notes: [], followUps: [],
   carePlan: [], vaccineDoses: [], medications: [], prescriptions: [], studies: [], fever: [], certificates: [], documents: [], appointments: [], appointmentHistory: [], blocks: [], communications: [], educationalMaterials: [], materialDeliveries: [], notifications: [],
-  agenda: CONFIG_AGENDA_INICIAL, ia: { enabled: false }, vacunas: { calendarioVerificado: false }, links: LINKS_INICIALES, precios: PRECIOS_INICIALES, ambitos: TEXTO_AMBITO, plantillas: {}, automatizaciones: { apagados: [] }, outbox: [], interesados: [], admisiones: [], triage: [], transcripciones: [], auditLog: [],
+  agenda: CONFIG_AGENDA_INICIAL, ia: { enabled: false }, vacunas: { calendarioVerificado: false }, links: LINKS_INICIALES, precios: PRECIOS_INICIALES, ambitos: TEXTO_AMBITO, plantillas: {}, automatizaciones: { apagados: [] }, outbox: [], aiInteractions: [], interesados: [], admisiones: [], triage: [], transcripciones: [], auditLog: [],
 };
 
 /** Mensajes que se entienden, sin códigos técnicos. */
@@ -195,7 +195,11 @@ export function useFuenteFirebase(): AppState {
       setDatos((d) => ({ ...d, precios: conPrecios(snap.data()) }));
     }, fallo));
     subs.push(onSnapshot(doc(fs, `organizations/${org}/settings/ia`), (snap) => {
-      setDatos((d) => ({ ...d, ia: { enabled: snap.data()?.enabled === true } }));
+      const ia = snap.data();
+      setDatos((d) => ({ ...d, ia: { enabled: ia?.enabled === true, consentimientoRevisadoAt: typeof ia?.consentimientoRevisadoAt === 'string' ? ia.consentimientoRevisadoAt : undefined } }));
+    }, fallo));
+    subs.push(onSnapshot(query(collection(fs, `organizations/${org}/aiInteractions`), orderBy('createdAt', 'desc'), limit(50)), (snap) => {
+      setDatos((d) => ({ ...d, aiInteractions: snap.docs.map((x) => ({ id: x.id, ...x.data() }) as InteraccionIA) }));
     }, fallo));
     // Avisos de la campana para el Dr. (por ejemplo, una familia cambió su contacto) y registro de accesos.
     subs.push(onSnapshot(query(collection(fs, `organizations/${org}/notifications`), where('recipientUid', '==', uid), where('readAt', '==', null)), (snap) => {
@@ -297,6 +301,13 @@ export function useFuenteFirebase(): AppState {
           return null;
         } catch (e) { return mensajeDeError(e); }
       },
+      pedirIA: async (pedido) => {
+        try {
+          const r = await httpsCallable<unknown, { interaccionId: string; resultado: Record<string, unknown> }>(functions, 'iaAsistente')(pedido);
+          return r.data;
+        } catch (e) { return { error: mensajeDeError(e) }; }
+      },
+      decidirIA: (interaccionId, aceptado) => llamar('iaDecision', { interaccionId, aceptado }),
       registrarComunicacion: async (datos) => {
         if (!datos.subject.trim()) return 'Escribí el asunto (breve, sin datos clínicos).';
         try {
@@ -320,6 +331,7 @@ export function useFuenteFirebase(): AppState {
           : ajuste.clave === 'ambitos' ? { nombres: ajuste.datos }
             : ajuste.clave === 'certificados' ? { plantillas: ajuste.datos }
               : ajuste.clave === 'automatizaciones' ? { apagados: ajuste.datos.apagados }
+                : ajuste.clave === 'ia' ? { enabled: ajuste.datos.enabled, ...(ajuste.datos.consentimientoRevisadoAt ? { consentimientoRevisadoAt: ajuste.datos.consentimientoRevisadoAt } : {}) }
               : { ...ajuste.datos };
         const ahora = ahoraISO();
         try {

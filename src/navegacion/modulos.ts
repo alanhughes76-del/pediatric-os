@@ -1,8 +1,7 @@
 /**
  * Los módulos de Pediatric OS (prompt maestro 5.2), en el orden de la barra lateral.
  * Es la única lista: la usan la barra lateral (web y tablet), la barra inferior y "Más" (celular).
- * Los que todavía no existen abren una pantalla que dice en qué etapa llegan, con atajos
- * a lo que hoy ya funciona (nada queda escondido).
+ * Todos los módulos existen desde la Etapa 9; `pendiente` queda para lo que se sume más adelante.
  */
 import type { Href } from 'expo-router';
 import type { Ionicons } from '@expo/vector-icons';
@@ -21,17 +20,6 @@ export interface Modulo {
   /** Atajos a lo que ya funciona hoy. */
   atajos?: { titulo: string; href: Href; icono: NombreIcono }[];
 }
-
-const mod = (clave: string, titulo: string, icono: NombreIcono, etapa: string, texto: string, atajos?: Modulo['atajos']): Modulo => ({
-  clave,
-  titulo,
-  icono,
-  href: { pathname: '/medico/modulo/[clave]', params: { clave } },
-  rutas: [`/medico/modulo/${clave}`],
-  pendiente: { etapa, texto },
-  atajos,
-});
-
 
 export const MODULOS: Modulo[] = [
   { clave: 'inicio', titulo: 'Inicio', icono: 'home-outline', href: '/medico', rutas: ['/medico', '/medico/seguimiento', '/medico/fiebre', '/medico/accesos'] },
@@ -55,7 +43,7 @@ export const MODULOS: Modulo[] = [
   { clave: 'comunicaciones', titulo: 'Comunicaciones', icono: 'chatbubbles-outline', href: '/medico/comunicaciones', rutas: ['/medico/comunicaciones'] },
   { clave: 'documentos', titulo: 'Documentos', icono: 'folder-open-outline', href: '/medico/documentos', rutas: ['/medico/documentos'] },
   { clave: 'reportes', titulo: 'Reportes', icono: 'bar-chart-outline', href: '/medico/reportes', rutas: ['/medico/reportes'] },
-  mod('ia', 'IA Asistente', 'sparkles-outline', 'Etapa 9', 'Propuestas que revisás vos. Arranca apagada hasta que revises el consentimiento para usar IA con datos de salud.'),
+  { clave: 'ia', titulo: 'IA Asistente', icono: 'sparkles-outline', href: '/medico/ia', rutas: ['/medico/ia'] },
 ];
 
 /** Abajo en la barra lateral (y al final de "Más"). */

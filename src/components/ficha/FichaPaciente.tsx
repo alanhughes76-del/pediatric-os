@@ -7,11 +7,15 @@
  * (El portal de la familia usa su propia vista: components/FichaHijo.tsx.)
  */
 import { useState } from 'react';
-import { View, ScrollView, Pressable, Text, StyleSheet } from 'react-native';
+import { View, ScrollView, Pressable, Text, Modal, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useApp } from '@/data/store';
 import { paciente as buscarPaciente } from '@/data/selectores';
-import { Texto } from '../Texto';
+import { Texto, TextoFuerte } from '../Texto';
+import { Seccion } from '../Seccion';
+import { PanelIA } from '../ia/PanelIA';
+import { ComunicacionesPaciente } from './ComunicacionesPaciente';
 import { Boton } from '../Boton';
 import { BotonTexto } from './piezas';
 import { Encabezado, BloqueDatos } from './Encabezado';
@@ -20,13 +24,12 @@ import { BloqueAlergias, BloquePlan, BloqueProblemas } from './Clinica';
 import { BloqueVacunas } from './Vacunas';
 import { BloqueMedicacion, BloquePrescripciones } from './Medicacion';
 import { BloqueEstudios } from './Estudios';
-import { EstadoVacio } from '../Estados';
 import { BloqueConsultas, BloqueCrecimiento, BloqueFiebre, useNuevaConsulta } from './Historia';
 import { BloqueDocumentos } from './Documentos';
 import { BloqueMaterial } from './MaterialFamilia';
 import { Resumen } from './Resumen';
 import { BloqueAntecedentes } from './Antecedentes';
-import { colors, fonts } from '@/theme';
+import { categorias, colors, fonts } from '@/theme';
 
 export type SolapaFicha =
   | 'resumen' | 'historia' | 'consultas' | 'crecimiento' | 'vacunas' | 'medicaciones' | 'estudios'
@@ -125,7 +128,11 @@ export function FichaPaciente({ patientId, solapaInicial }: { patientId: string;
         </>
       ) : null}
       {solapa === 'estudios' ? <BloqueEstudios paciente={p} /> : null}
-      {solapa === 'comunicaciones' ? <EstadoVacio icono="chatbubbles-outline" titulo="Comunicaciones llega en la Etapa 7" texto="Registro de recordatorios, resúmenes y avisos. Las conversaciones siguen por PacienteX." /> : null}
+      {solapa === 'comunicaciones' ? (
+        <Seccion titulo="Comunicaciones" bajada="Registro de recordatorios, resúmenes y avisos. Las conversaciones siguen por PacienteX.">
+          <ComunicacionesPaciente patientId={p.id} />
+        </Seccion>
+      ) : null}
       {solapa === 'fiebre' ? <BloqueFiebre patientId={p.id} /> : null}
       {solapa === 'documentos' ? <BloqueDocumentos patientId={p.id} /> : null}
     </>
@@ -140,4 +147,35 @@ const s = StyleSheet.create({
   solapaActiva: { borderBottomColor: colors.primary2 },
   solapaTexto: { fontFamily: fonts.bodySemi, fontSize: 16, color: colors.textMuted },
   solapaTextoActiva: { color: colors.primary },
+  flotante: { position: 'absolute', right: 20, bottom: 24, width: 58, height: 58, borderRadius: 29, backgroundColor: categorias.violeta.acento, alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(30, 43, 77, 0.25)' },
+  fondo: { flex: 1, backgroundColor: 'rgba(30, 43, 77, 0.35)' },
+  hoja: { maxHeight: '80%', backgroundColor: colors.white, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, gap: 12 },
 });
+
+/**
+ * Botón flotante de la IA (celular, prompt maestro 5.3): abre el panel en una hoja inferior.
+ * Va fuera del contenido que se desplaza (el pie de la pantalla), para quedar fijo.
+ */
+export function BotonIA({ patientId }: { patientId: string }) {
+  const [abierta, setAbierta] = useState(false);
+  return (
+    <>
+      <Pressable onPress={() => setAbierta(true)} accessibilityRole="button" accessibilityLabel="Abrir la IA Asistente" style={s.flotante}>
+        <Ionicons name="sparkles" size={26} color={colors.white} />
+      </Pressable>
+      <Modal visible={abierta} transparent animationType="slide" onRequestClose={() => setAbierta(false)}>
+        <Pressable style={s.fondo} onPress={() => setAbierta(false)} accessibilityLabel="Cerrar" />
+        <View style={s.hoja}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Ionicons name="sparkles-outline" size={22} color={categorias.violeta.acento} />
+            <TextoFuerte style={{ flex: 1 }}>IA Asistente</TextoFuerte>
+            <Pressable onPress={() => setAbierta(false)} accessibilityRole="button" accessibilityLabel="Cerrar" hitSlop={10}>
+              <Ionicons name="close" size={26} color={colors.textMuted} />
+            </Pressable>
+          </View>
+          <ScrollView contentContainerStyle={{ gap: 10, paddingBottom: 24 }}><PanelIA patientId={patientId} /></ScrollView>
+        </View>
+      </Modal>
+    </>
+  );
+}

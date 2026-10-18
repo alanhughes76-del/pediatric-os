@@ -12,6 +12,7 @@ import { buscarDuplicados } from '@shared/duplicados';
 import { horasDeSeguimiento, mensajeDeSeguimiento, nombreCompleto } from './selectores';
 import { pedirEnlace, usarEnlace, TEXTO_MOTIVO_ENLACE, type Enlace } from '@/lib/enlaceMagico';
 import { FIRMA } from '@/lib/certificados';
+import { borradorDeEjemplo } from '@/lib/notaIA';
 import { ahoraISO, sumarHoras } from '@/lib/fechas';
 import { accionTurnoDemo, crearTurnoDemo, pedirVisitaDemo, type Contexto } from './turnosDemo';
 import { dosisDelEsquema } from './vacunasApp';
@@ -175,6 +176,20 @@ export function useFuenteDemo(): AppState {
       return null;
     },
 
+    // En la demostración no hay IA: solo el borrador de evolución se arma sin IA, para mostrar el flujo.
+    pedirIA: async (pedido) => {
+      if (!db.ia.enabled) return { error: 'La IA está apagada. Se enciende en Configuración, después de revisar el consentimiento.' };
+      if (pedido.accion !== 'preparar_evolucion') return { error: 'En la demostración la IA no está conectada: se usa con Firebase y la clave configurada.' };
+      const c = db.consultations.find((x) => x.id === pedido.consultationId);
+      const b = c ? borradorDeEjemplo(pedido.texto ?? c.rawText, c.visitType, '') : null;
+      if (!b) return { error: 'Primero escribí, pegá o dictá el texto de la consulta.' };
+      return {
+        ejemplo: true,
+        resultado: { hallazgos: b.findings, conducta: b.plan, resumenFamilia: b.familySummary, alergiasMedicacion: b.allergiesMedication, banderaClinica: b.clinicalFlag, motivoBandera: '', datosFaltantes: [] },
+      };
+    },
+    decidirIA: async () => null,
+
     registrarComunicacion: async (datos) => {
       if (!datos.subject.trim()) return 'Escribí el asunto (breve, sin datos clínicos).';
       enLote((d, { ahora, usuarioId: uid, log }) => {
@@ -203,6 +218,7 @@ export function useFuenteDemo(): AppState {
         if (ajuste.clave === 'ambitos') return { ...d, ambitos: ajuste.datos };
         if (ajuste.clave === 'certificados') return { ...d, plantillas: ajuste.datos };
         if (ajuste.clave === 'automatizaciones') return { ...d, automatizaciones: ajuste.datos };
+        if (ajuste.clave === 'ia') return { ...d, ia: ajuste.datos };
         return { ...d, precios: ajuste.datos };
       });
       return null;

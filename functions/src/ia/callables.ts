@@ -69,6 +69,8 @@ export const iaAsistente = onCall({ secrets: [ANTHROPIC_API_KEY], timeoutSeconds
     const consultationId = id(d.consultationId, 'La consulta');
     consulta = datos.consultas?.find((x) => x.id === consultationId);
     if (!consulta) throw new HttpsError('not-found', 'No encontramos la consulta.');
+    // El texto que el Dr. tiene en pantalla (el guardado automático puede ir unos segundos atrás).
+    if (typeof d.texto === 'string') consulta = { ...consulta, rawText: d.texto.slice(0, 20_000) };
   }
 
   const r = await ejecutarAccion({ accion: d.accion, consulta, pregunta: typeof d.pregunta === 'string' ? d.pregunta.slice(0, 1000) : undefined }, datos, modeloClaude(clave), hoyArgentina());

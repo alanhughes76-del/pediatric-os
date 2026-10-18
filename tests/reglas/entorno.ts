@@ -71,6 +71,7 @@ export async function sembrar(env: RulesTestEnvironment) {
     await set(r('admisiones', 'ad1'), { ...make, interesadoId: 'i1', mensaje: 'Mensaje privado', respuestas: [] });
     await set(r('triage', 'tr1'), { ...make, appointmentId: null, respuestas: [], revisadoAt: null });
     await set(r('transcripciones', 'pl1'), { ...make, texto: 'Transcripción', estado: 'pendiente' });
+    await set(r('aiInteractions', 'ai1'), { organizationId: ORG, action: 'resumir_historia', patientId: 'p-tomas', resultado: { resumen: 'x' }, aceptado: null });
     await set(r('portalAccess', 'g-paula'), { enabled: true, patientIds: ['p-olivia'] });
     await set(r('portalAccess', 'g-diego'), { enabled: false, patientIds: ['p-tomas'] });
     await set(r('clinical', 'p-tomas', 'problems', 'pr1'), { ...base, patientId: 'p-tomas', description: 'Problema oculto', visibleToFamily: false });

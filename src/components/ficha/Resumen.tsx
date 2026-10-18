@@ -21,6 +21,9 @@ import { resumenVacunas } from '@shared/vacunas';
 import { estudiosDe, medicacionDe, prescripcionesDe, TEXTO_ESTUDIO } from '@/data/seguimientoClinico';
 import { Tarjeta } from '../Tarjeta';
 import { Caja, Grilla } from '../Caja';
+import { ComunicacionesPaciente } from './ComunicacionesPaciente';
+import { PanelIA } from '../ia/PanelIA';
+import { useEscritorio } from '../escritorio/Marco';
 import { Etiqueta } from '../Etiqueta';
 import { Texto, TextoFuerte, TextoChico } from '../Texto';
 import { categorias, colors, fonts, type Categoria } from '@/theme';
@@ -33,6 +36,7 @@ const COLOR_PLAZO: Record<Plazo, Categoria> = { hoy: 'celeste', treinta: 'verde'
 const ICONO_PLAZO: Record<Plazo, NombreIcono> = { hoy: 'today-outline', treinta: 'time-outline', meses: 'calendar-outline', prevencion: 'shield-outline' };
 
 export function Resumen({ paciente: p, irA }: { paciente: Patient; irA: (s: SolapaFicha) => void }) {
+  const escritorio = useEscritorio();
   return (
     <>
       <Grilla>
@@ -44,27 +48,18 @@ export function Resumen({ paciente: p, irA }: { paciente: Patient; irA: (s: Sola
         <Estudios paciente={p} irA={irA} />
         <Prescripciones paciente={p} irA={irA} />
         <Documentos paciente={p} irA={irA} />
-        <Pendiente titulo="Comunicaciones recientes" icono="chatbubbles-outline" etapa="Etapa 7" texto="Recordatorios, resúmenes y avisos enviados." onPress={() => irA('comunicaciones')} />
+        <Caja titulo="Comunicaciones recientes" icono="chatbubbles-outline" color="celeste" ver={{ texto: 'Ver comunicaciones', onPress: () => irA('comunicaciones') }}>
+          <ComunicacionesPaciente patientId={p.id} limite={3} />
+        </Caja>
         <PlanPorPlazo paciente={p} irA={irA} />
-        <Pendiente titulo="IA Asistente" icono="sparkles-outline" color="violeta" etapa="Etapa 9" texto="Resumir la historia, preparar la evolución, sugerir material. Arranca apagada hasta que revises el consentimiento." />
+        {/* En el celular la IA va en un botón flotante (FichaPaciente). */}
+        {escritorio ? <Caja titulo="IA Asistente" icono="sparkles-outline" color="violeta"><PanelIA patientId={p.id} /></Caja> : null}
       </Grilla>
     </>
   );
 }
 
 type PropsTarjeta = { paciente: Patient; irA: (s: SolapaFicha) => void };
-
-/** Tarjeta de un módulo que todavía no existe: dice en qué etapa llega. */
-function Pendiente({ titulo, icono, etapa, texto, color = 'celeste', onPress }: {
-  titulo: string; icono: NombreIcono; etapa: string; texto: string; color?: Categoria; onPress?: () => void;
-}) {
-  return (
-    <Caja titulo={titulo} icono={icono} color={color} ver={onPress ? { texto: `Ver ${titulo.toLowerCase()}`, onPress } : undefined}>
-      <Texto color={colors.textMuted}>{texto}</Texto>
-      <Etiqueta texto={`Llega en la ${etapa}`} tono="neutro" />
-    </Caja>
-  );
-}
 
 const Rotulo = ({ children }: { children: ReactNode }) => <TextoChico style={s.rotulo}>{children}</TextoChico>;
 const Vacio = ({ children }: { children: ReactNode }) => <Texto color={colors.textMuted}>{children}</Texto>;
