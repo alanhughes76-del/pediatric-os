@@ -121,7 +121,7 @@ Seguí `docs/referencia-ui.png`.
 - Profesional, cálido y tranquilo: confianza médica y cercanía.
 - Sin estética de guardería y sin estética de software hospitalario genérico.
 - En la marca del lado médico: "Pediatric OS", con el subtítulo "Cuidando hoy su mañana". La frase "Pequeños pacientes, grandes historias" va en el encabezado, como en la imagen.
-- En el portal de las familias, la marca es "Dr. Alan Hughes · Pediatría a domicilio".
+- En el portal de las familias, la marca es "Dr. Alan Hughes - Pediatría Integral" (cambiado por el Dr. el 23/10/2026; antes "Pediatría a domicilio").
 
 **Accesibilidad.**
 - Contraste AA.

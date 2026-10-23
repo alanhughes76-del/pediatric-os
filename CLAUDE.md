@@ -1,4 +1,4 @@
-# Dr. Alan Hughes · Pediatría a domicilio
+# Dr. Alan Hughes - Pediatría Integral
 
 App móvil (iOS y Android) de la práctica de pediatría a domicilio del Dr. Alan Hughes (Zona Norte y CABA). Es su historia clínica y el portal de las familias. Reemplaza al prototipo web Pediatric OS.
 
@@ -174,7 +174,7 @@ Doctor, Family, Guardian (acceso habilitado sí/no), PatientRelationship (tipo, 
 ## Reglas generales
 
 - Interfaz en español rioplatense con voseo ("Cargá", "Tocá"). Nunca "tú" ni "vosotros".
-- Marca del lado médico: "Pediatric OS" con "Cuidando hoy su mañana"; la frase "Pequeños pacientes, grandes historias" va en el encabezado. En el portal de las familias: "Dr. Alan Hughes · Pediatría a domicilio".
+- Marca del lado médico: "Pediatric OS" con "Cuidando hoy su mañana"; la frase "Pequeños pacientes, grandes historias" va en el encabezado. En el portal de las familias, el mail del enlace y los certificados nuevos: "Dr. Alan Hughes - Pediatría Integral" (pedido del Dr., 23/10/2026; antes "Pediatría a domicilio"). La marca es él mismo.
 - Tokens en un único archivo, `src/theme.ts` (medidos sobre `docs/referencia-ui.png`): barra lateral #1E2B4D, acción #2563EB (`colors.accion`), fondo #F4F8FC, texto #1F2A44.
 - Un pastel por sección (`categorias`): celeste (crecimiento y agenda), rosado (vacunas y próximas acciones), verde (al día), violeta (IA), naranja (prevención). Cada uno tiene fondo, acento (íconos) y texto con contraste AA. Rojo intenso únicamente para alertas, siempre con ícono y palabra.
 - Única excepción: el botón de PacienteX es verde (#1F7A4D, `colors.contacto`), a pedido del Dr.

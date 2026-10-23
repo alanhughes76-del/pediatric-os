@@ -34,7 +34,7 @@ export function htmlCertificado(c: Certificate): string {
 </style></head>
 <body>
   <p class="marca">Dr. Alan Hughes</p>
-  <p class="bajada">PEDIATRÍA A DOMICILIO</p>
+  <p class="bajada">PEDIATRÍA INTEGRAL</p>
   <hr class="linea">
   ${anulado ? `<div class="anulado">ANULADO${c.voidReason ? ` · ${escapar(c.voidReason)}` : ''}</div>` : ''}
   <h1>${escapar(titulo)}</h1>

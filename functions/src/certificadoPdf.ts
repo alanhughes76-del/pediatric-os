@@ -65,7 +65,7 @@ export async function pdfCertificado(c: { titulo: string; cuerpo: string; lugar:
   let y = height - 80;
   page.drawText('Dr. Alan Hughes', { x: margen, y, size: 24, font: serifBold, color: AZUL });
   y -= 18;
-  page.drawText('PEDIATRÍA A DOMICILIO', { x: margen, y, size: 9, font: sansBold, color: CELESTE });
+  page.drawText('PEDIATRÍA INTEGRAL', { x: margen, y, size: 9, font: sansBold, color: CELESTE });
   y -= 14;
   page.drawLine({ start: { x: margen, y }, end: { x: width - margen, y }, thickness: 1.5, color: AZUL });
 

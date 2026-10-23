@@ -1,4 +1,4 @@
-# Dr. Alan Hughes · Pediatría a domicilio
+# Dr. Alan Hughes - Pediatría Integral
 
 Pediatric OS: la historia clínica de la práctica del Dr. Hughes y el portal de las familias. Web y celular (Expo), con backend en Firebase.
 

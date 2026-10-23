@@ -2,7 +2,7 @@
  * Armado para pantallas anchas (web en computadora, tablet apaisada), prompt maestro 5.2:
  * - Médico: barra lateral con los 16 módulos (src/navegacion/modulos.ts) y, abajo, perfil,
  *   Configuración y Cerrar sesión. Encabezado con buscador, frase de marca, campana y nombre.
- * - Familia: marca "Dr. Alan Hughes · Pediatría a domicilio" y sus cuatro secciones.
+ * - Familia: marca "Dr. Alan Hughes - Pediatría Integral" y sus cuatro secciones.
  * En el celular no se muestra nada de esto: se usan las pestañas de abajo.
  */
 import { useState, type ReactNode } from 'react';

@@ -11,7 +11,7 @@ const cert: Certificate = {
 test('el PDF lleva marca, título, texto, lugar y fecha, firma y leyenda', () => {
   const html = htmlCertificado(cert);
   expect(html).toContain('Dr. Alan Hughes');
-  expect(html).toContain('PEDIATRÍA A DOMICILIO');
+  expect(html).toContain('PEDIATRÍA INTEGRAL');
   expect(html).toContain('Certificado de aptitud física');
   expect(html).toContain('Buenos Aires, 16 de octubre de 2026');
   expect(html).toContain(FIRMA);

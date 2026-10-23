@@ -45,7 +45,7 @@ export function mailDelEnlace(nombre: string, enlace: string) {
       'Tocá este enlace para entrar al portal de las familias. Vale 15 minutos y se usa una sola vez:',
       enlace,
       'Si no lo pediste, ignorá este mail.',
-      'Dr. Alan Hughes · Pediatría a domicilio',
+      'Dr. Alan Hughes - Pediatría Integral',
     ].join('\n\n'),
   };
 }

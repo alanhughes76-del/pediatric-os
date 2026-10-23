@@ -125,7 +125,7 @@ export function htmlReporte(r: ReporteMensual, generado: string): string {
   .n { text-align: right; font-weight: 600; }
 </style></head><body>
 <h1>Reporte de ${escapar(nombreMes(r.mes))}</h1>
-<p>Dr. Alan Hughes · Pediatría a domicilio · Generado el ${escapar(generado)}. Solo datos cargados en el sistema.</p>
+<p>Dr. Alan Hughes - Pediatría Integral · Generado el ${escapar(generado)}. Solo datos cargados en el sistema.</p>
 <table>${cuerpo}</table>
 </body></html>`;
 }
