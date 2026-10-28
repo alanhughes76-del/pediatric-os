@@ -18,7 +18,7 @@ interface P {
 const estilos: Record<Variante, { bg: string; fg: string; border: string }> = {
   principal: { bg: colors.accion, fg: colors.white, border: colors.accion },
   secundario: { bg: colors.accionSuave, fg: colors.accionTexto, border: colors.accionSuave },
-  contorno: { bg: colors.white, fg: colors.accionTexto, border: colors.accion },
+  contorno: { bg: colors.white, fg: colors.accion, border: colors.input },
   alerta: { bg: colors.alert, fg: colors.white, border: colors.alert },
   contacto: { bg: colors.contacto, fg: colors.white, border: colors.contacto },
 };
@@ -51,9 +51,10 @@ export function Boton({ titulo, onPress, variante = 'principal', icono, detalle,
 const s = StyleSheet.create({
   base: {
     minHeight: size.touch,
-    borderRadius: size.radius,
+    // Píldora, como en la app de Lovable.
+    borderRadius: 999,
     borderWidth: 1.5,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',

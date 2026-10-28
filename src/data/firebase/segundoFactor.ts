@@ -9,7 +9,8 @@ import {
 } from 'firebase/auth';
 import { limpiarCodigo } from '@/lib/segundoFactor';
 
-export const EMISOR = 'Pediatric OS';
+/** Nombre con que aparece en la app de autenticación (marca del Dr., 28/10/2026). */
+export const EMISOR = 'Pediatría Integral';
 
 /** Si el ingreso con contraseña pide el segundo factor, devuelve con qué resolverlo. */
 export function pideSegundoFactor(auth: Auth, e: unknown): MultiFactorResolver | null {

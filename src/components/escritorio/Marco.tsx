@@ -2,7 +2,7 @@
  * Armado para pantallas anchas (web en computadora, tablet apaisada), prompt maestro 5.2:
  * - Médico: barra lateral con los 16 módulos (src/navegacion/modulos.ts) y, abajo, perfil,
  *   Configuración y Cerrar sesión. Encabezado con buscador, frase de marca, campana y nombre.
- * - Familia: marca "Dr. Alan Hughes - Pediatría Integral" y sus cuatro secciones.
+ * - Familia: sus cuatro secciones. Las dos caras llevan la marca "Dr. Alan Hughes - Pediatría Integral".
  * En el celular no se muestra nada de esto: se usan las pestañas de abajo.
  */
 import { useState, type ReactNode } from 'react';
@@ -62,10 +62,7 @@ function LateralMedico() {
   const activo = moduloActivo(ruta);
   return (
     <View style={s.lateral}>
-      <View style={s.marca} accessible accessibilityLabel="Pediatric OS, Cuidando hoy su mañana">
-        <Text style={s.marcaNombre}>Pediatric OS</Text>
-        <Text style={s.marcaBajada}>Cuidando hoy su mañana</Text>
-      </View>
+      <View style={s.marca}><Marca claro /></View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: 2 }} accessibilityRole="menu">
         {modulosDe(rol).map((m) => (
@@ -175,9 +172,7 @@ const s = StyleSheet.create({
   principal: { flex: 1 },
   lateral: { width: 256, backgroundColor: colors.sidebar, paddingHorizontal: 12, paddingTop: 22, paddingBottom: 14, gap: 18 },
   marca: { paddingHorizontal: 10 },
-  marcaNombre: { fontFamily: fonts.title, fontSize: 24, color: colors.white, letterSpacing: -0.3 },
-  marcaBajada: { fontFamily: fonts.body, fontSize: 13, color: colors.sidebarTexto, marginTop: 2 },
-  item: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, minHeight: 44, borderRadius: 10 },
+  item: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, minHeight: 44, borderRadius: 999 },
   itemActivo: { backgroundColor: colors.sidebarActivo },
   itemApretado: { backgroundColor: 'rgba(255,255,255,0.06)' },
   itemTexto: { fontFamily: fonts.bodySemi, fontSize: 15, color: colors.sidebarTexto, flex: 1 },
@@ -189,16 +184,17 @@ const s = StyleSheet.create({
   perfilDetalle: { fontFamily: fonts.body, fontSize: 13, color: colors.sidebarTexto },
   superior: {
     height: 72, flexDirection: 'row', alignItems: 'center', gap: 18, paddingHorizontal: 28,
-    backgroundColor: colors.white, borderBottomWidth: 1, borderBottomColor: colors.border,
-  },
+    // Blanco translúcido con desenfoque (en la web), como el encabezado de la app de Lovable.
+    backgroundColor: 'rgba(255, 255, 255, 0.72)', backdropFilter: 'blur(16px)', borderBottomWidth: 1, borderBottomColor: colors.border, zIndex: 2,
+  } as object,
   buscador: {
     // Se achica en pantallas de 1024 px para que la barra no se pase del borde.
     flexDirection: 'row', alignItems: 'center', gap: 10, width: '100%', maxWidth: 480, minWidth: 200, flexShrink: 1, height: 44,
-    paddingHorizontal: 14, borderRadius: 12, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border,
+    paddingHorizontal: 18, borderRadius: 999, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.input,
   },
   buscadorTexto: { flex: 1, fontFamily: fonts.body, fontSize: size.base, color: colors.text, outlineStyle: 'none' } as object,
   titulo: { fontFamily: fonts.title, fontSize: 20, color: colors.primary },
-  frase: { fontFamily: fonts.body, fontStyle: 'italic', fontSize: 14, color: colors.textMuted, flexShrink: 1 },
+  frase: { fontFamily: fonts.hand, fontSize: 22, color: colors.primary2, flexShrink: 1 },
   campana: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   contador: { position: 'absolute', top: 4, right: 2, minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 5, backgroundColor: colors.alert, alignItems: 'center', justifyContent: 'center' },
   contadorTexto: { fontFamily: fonts.bodyBold, fontSize: 11, color: colors.white },

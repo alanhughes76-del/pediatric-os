@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '@/data/store';
 import { Pantalla } from '@/components/Pantalla';
 import { Marca } from '@/components/Marca';
+import { Saludo } from '@/components/Saludo';
 import { Subtitulo, Texto, TextoChico } from '@/components/Texto';
 import { Boton } from '@/components/Boton';
 import { Etiqueta } from '@/components/Etiqueta';
@@ -30,7 +31,8 @@ function SelectorDeRol() {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <Pantalla>
         <View style={s.cabecera}>
-          <Marca grande />
+          <Marca grande centrada />
+          <Saludo />
         </View>
 
         <View style={s.aviso}>
@@ -68,6 +70,6 @@ function SelectorDeRol() {
 }
 
 const s = StyleSheet.create({
-  cabecera: { alignItems: 'center', paddingVertical: 24 },
+  cabecera: { alignItems: 'center', paddingVertical: 24, gap: 18 },
   aviso: { gap: 6, alignItems: 'flex-start' },
 });

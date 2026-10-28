@@ -48,7 +48,7 @@ test('una cuenta sin TOTP no intenta ingresar', async () => {
 test('alta: clave y enlace con el email del médico y el nombre de la app; después se confirma con el código', async () => {
   const alta = await prepararAlta(usuario);
   expect(alta.clave).toBe('JBSWY3DPEHPK3PXP');
-  expect(mockSecreto.generateQrCodeUrl).toHaveBeenCalledWith('medico@ejemplo.com', 'Pediatric OS');
+  expect(mockSecreto.generateQrCodeUrl).toHaveBeenCalledWith('medico@ejemplo.com', 'Pediatría Integral');
   await confirmarAlta(usuario, alta.secreto, '654-321');
   expect(mockEnroll).toHaveBeenCalledWith({ s: mockSecreto, codigo: '654321' }, 'App de autenticación');
 });

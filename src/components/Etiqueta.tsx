@@ -5,7 +5,7 @@ type Tono = 'azul' | 'celeste' | 'alerta' | 'neutro' | Exclude<Categoria, 'celes
 
 const tonos: Record<Tono, { bg: string; fg: string }> = {
   azul: { bg: colors.accion, fg: colors.white },
-  celeste: { bg: colors.bgSoft, fg: colors.accionTexto },
+  celeste: { bg: colors.bgSoft, fg: categorias.celeste.texto },
   alerta: { bg: colors.alertBg, fg: colors.alert },
   neutro: { bg: colors.muted, fg: colors.textMuted },
   verde: { bg: categorias.verde.fondo, fg: categorias.verde.texto },
@@ -24,6 +24,6 @@ export function Etiqueta({ texto, tono = 'celeste' }: { texto: string; tono?: To
 }
 
 const s = StyleSheet.create({
-  root: { alignSelf: 'flex-start', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
-  texto: { fontFamily: fonts.bodySemi, fontSize: 14 },
+  root: { alignSelf: 'flex-start', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4 },
+  texto: { fontFamily: fonts.bodyBold, fontSize: 13.5 },
 });

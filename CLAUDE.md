@@ -174,8 +174,8 @@ Doctor, Family, Guardian (acceso habilitado sí/no), PatientRelationship (tipo, 
 ## Reglas generales
 
 - Interfaz en español rioplatense con voseo ("Cargá", "Tocá"). Nunca "tú" ni "vosotros".
-- Marca del lado médico: "Pediatric OS" con "Cuidando hoy su mañana"; la frase "Pequeños pacientes, grandes historias" va en el encabezado. En el portal de las familias, el mail del enlace y los certificados nuevos: "Dr. Alan Hughes - Pediatría Integral" (pedido del Dr., 23/10/2026; antes "Pediatría a domicilio"). La marca es él mismo.
-- Diseño de la app de Lovable (pedido del Dr., 28/10/2026; etapas D1 a D4). D1 hecha: paleta G y tipografía.
+- Marca: "Dr. Alan Hughes - Pediatría Integral" en las dos caras (médico y familias), en el mail del enlace y en los certificados nuevos (`components/Marca.tsx`; pedido del Dr., 28/10/2026). "Pediatric OS" queda solo como nombre interno del sistema. La frase "Pequeños pacientes, grandes historias" va en el encabezado, en letra manuscrita. La marca es él mismo.
+- Diseño de la app de Lovable (pedido del Dr., 28/10/2026; etapas D1 a D4). D1 hecha: paleta G y tipografía. D2 hecha: botones y campos en píldora, tarjetas de 28 px, manchas de fondo (`FondoManchas.tsx`), pestaña activa en píldora y saludo manuscrito (`Saludo.tsx`) en los ingresos.
 - Tokens en un único archivo, `src/theme.ts` (paleta G de Lovable): azul noche #1E3A52 para acción, barra lateral y texto; azul profundo #3A7CA5; celeste #8CC6E8; verde agua #A8DDD0; fondo #F7FAFC.
 - Un pastel por sección (`categorias`, adaptados a la paleta G): celeste (crecimiento y agenda), rosado empolvado (vacunas y próximas acciones), verde agua (al día), lavanda (IA), crema arena (prevención; la clave sigue siendo `naranja`). Sin terracota. Cada uno tiene fondo, acento (íconos) y texto con contraste AA. Rojo intenso únicamente para alertas, siempre con ícono y palabra.
 - Única excepción: el botón de PacienteX es verde (#1F7A4D, `colors.contacto`), a pedido del Dr.

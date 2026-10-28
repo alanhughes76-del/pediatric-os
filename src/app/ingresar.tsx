@@ -12,10 +12,11 @@ import { useApp } from '@/data/store';
 import { VALIDEZ_MINUTOS } from '@/lib/enlaceMagico';
 import { Pantalla } from '@/components/Pantalla';
 import { Marca } from '@/components/Marca';
+import { Saludo } from '@/components/Saludo';
 import { Campo, Aviso } from '@/components/Formulario';
 import { Boton } from '@/components/Boton';
 import { Tarjeta } from '@/components/Tarjeta';
-import { Subtitulo, Texto, TextoChico } from '@/components/Texto';
+import { Subtitulo, Texto, TextoChico, Titulo } from '@/components/Texto';
 import { Etiqueta } from '@/components/Etiqueta';
 import { Cargando } from '@/components/Estados';
 import { colors } from '@/theme';
@@ -70,7 +71,13 @@ export default function Ingresar() {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <Stack.Screen options={{ headerShown: false }} />
       <Pantalla>
-        <View style={{ alignItems: 'center', paddingVertical: 20 }}><Marca grande /></View>
+        <View style={{ alignItems: 'center', paddingVertical: 20, gap: 18 }}>
+          <Marca grande centrada />
+          <View style={{ alignItems: 'center' }}>
+            <Saludo />
+            <Titulo style={{ textAlign: 'center' }}>Tu portal de familia</Titulo>
+          </View>
+        </View>
         <Subtitulo>Entrá con tu email</Subtitulo>
         <Texto>Te mandamos un enlace para entrar, sin contraseña.</Texto>
         <Campo

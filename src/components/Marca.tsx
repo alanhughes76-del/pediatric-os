@@ -1,13 +1,13 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, fonts } from '@/theme';
 
-/** Logotipo tipográfico: "Dr. Alan Hughes - Pediatría Integral". */
-export function Marca({ grande = false, claro = false }: { grande?: boolean; claro?: boolean }) {
+/** Logotipo tipográfico: "Dr. Alan Hughes - Pediatría Integral" (la marca de las dos caras de la app). */
+export function Marca({ grande = false, claro = false, centrada = false }: { grande?: boolean; claro?: boolean; centrada?: boolean }) {
   const c = claro ? colors.white : colors.primary;
   return (
-    <View accessible accessibilityLabel="Dr. Alan Hughes, Pediatría Integral">
+    <View accessible accessibilityLabel="Dr. Alan Hughes, Pediatría Integral" style={centrada && { alignItems: 'center' }}>
       <Text style={[s.nombre, { color: c, fontSize: grande ? 34 : 22 }]}>Dr. Alan Hughes</Text>
-      <Text style={[s.bajada, { color: claro ? colors.bgSoft : colors.primary3, fontSize: grande ? 17 : 14 }]}>
+      <Text style={[s.bajada, { color: claro ? colors.sidebarTexto : colors.textMuted, fontSize: grande ? 14 : 12 }]}>
         PEDIATRÍA INTEGRAL
       </Text>
     </View>
@@ -15,6 +15,6 @@ export function Marca({ grande = false, claro = false }: { grande?: boolean; cla
 }
 
 const s = StyleSheet.create({
-  nombre: { fontFamily: fonts.title },
+  nombre: { fontFamily: fonts.title, letterSpacing: -0.5 },
   bajada: { fontFamily: fonts.bodySemi, letterSpacing: 2, marginTop: 2 },
 });

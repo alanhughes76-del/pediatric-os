@@ -64,7 +64,7 @@ export function Seguridad() {
         <Boton titulo={trabajando ? 'Preparando…' : 'Activar el segundo factor'} icono="shield-checkmark-outline" deshabilitado={trabajando} onPress={() => void empezar()} />
       ) : (
         <>
-          <TextoFuerte>1. Agregá Pediatric OS en la app de autenticación</TextoFuerte>
+          <TextoFuerte>1. Agregá Pediatría Integral en la app de autenticación</TextoFuerte>
           {Platform.OS === 'web' ? (
             <View style={s.qr}><CodigoQR texto={alta.url} accessibilityLabel="Código QR para la app de autenticación" /></View>
           ) : (

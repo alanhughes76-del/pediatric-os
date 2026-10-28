@@ -26,7 +26,7 @@ export default function Prescripciones() {
   return (
     <Pantalla ancho>
       <Titulo>Prescripciones</Titulo>
-      <TextoChico>Pediatric OS no emite recetas: registra lo indicado y abre tu plataforma registrada.</TextoChico>
+      <TextoChico>La app no emite recetas: registra lo indicado y abre tu plataforma registrada.</TextoChico>
       <Grilla>
         <Caja titulo={`Medicación activa (${activas.length})`} icono="reader-outline" color="celeste">
           {activas.length === 0 ? <Texto color={colors.textMuted}>Ningún paciente con medicación activa.</Texto> : null}

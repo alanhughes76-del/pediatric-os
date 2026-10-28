@@ -42,7 +42,7 @@ const s = StyleSheet.create({
   grilla: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
   caja: { flexGrow: 1, flexBasis: 320, minWidth: 0, gap: 14 },
   cabecera: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  icono: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  titulo: { flex: 1, fontSize: 21 },
+  icono: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  titulo: { flex: 1, fontSize: 20 },
   pie: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 4 },
 });

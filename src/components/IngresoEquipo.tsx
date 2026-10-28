@@ -4,17 +4,19 @@
  * Las familias entran con el enlace por email (ingresar.tsx).
  */
 import { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '@/data/store';
 import { Pantalla } from './Pantalla';
 import { Tarjeta } from './Tarjeta';
 import { Campo } from './Formulario';
 import { Boton } from './Boton';
+import { Marca } from './Marca';
+import { Saludo } from './Saludo';
 import { router } from 'expo-router';
 import { ErrorComprensible } from './Estados';
 import { Subtitulo, Texto, TextoChico } from './Texto';
-import { colors, fonts } from '@/theme';
+import { colors } from '@/theme';
 
 export function IngresoEquipo() {
   const { ingresar, error, limpiarError, segundoFactorPendiente, confirmarSegundoFactor, cancelarSegundoFactor } = useApp();
@@ -41,14 +43,14 @@ export function IngresoEquipo() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <Pantalla>
-        <View style={s.marca} accessible accessibilityLabel="Pediatric OS, Cuidando hoy su mañana">
-          <Text style={s.nombre}>Pediatric OS</Text>
-          <Text style={s.bajada}>Cuidando hoy su mañana</Text>
+        <View style={s.marca}>
+          <Marca grande centrada />
+          <Saludo />
         </View>
         {segundoFactorPendiente ? (
           <Tarjeta style={{ gap: 14 }}>
             <Subtitulo>Código de seguridad</Subtitulo>
-            <Texto>Abrí la app de autenticación y escribí el código de 6 números de Pediatric OS.</Texto>
+            <Texto>Abrí la app de autenticación y escribí el código de 6 números de Pediatría Integral.</Texto>
             <Campo etiqueta="Código" value={codigo} onChangeText={setCodigo} keyboardType="number-pad" autoComplete="one-time-code" maxLength={7} onSubmitEditing={confirmar} />
             {falla ? <ErrorComprensible texto={falla} /> : null}
             <Boton titulo={enviando ? 'Verificando…' : 'Entrar'} icono="shield-checkmark-outline" deshabilitado={enviando} onPress={confirmar} />
@@ -78,7 +80,5 @@ export function IngresoEquipo() {
 }
 
 const s = StyleSheet.create({
-  marca: { alignItems: 'center', paddingVertical: 24 },
-  nombre: { fontFamily: fonts.title, fontSize: 34, color: colors.primary, letterSpacing: -0.5 },
-  bajada: { fontFamily: fonts.body, fontSize: 16, color: colors.textMuted, marginTop: 4 },
+  marca: { alignItems: 'center', paddingVertical: 24, gap: 18 },
 });

@@ -17,10 +17,10 @@ export function Tarjeta({ style, onPress, children, ...p }: P) {
 const s = StyleSheet.create({
   card: {
     backgroundColor: colors.white,
-    borderRadius: size.radius,
+    borderRadius: size.radiusGrande,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: 18,
+    padding: 20,
     boxShadow: sombra,
   },
   pressed: { backgroundColor: colors.bgSoft },
