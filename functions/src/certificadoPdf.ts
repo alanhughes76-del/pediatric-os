@@ -8,10 +8,15 @@ import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf
 
 export const LEYENDA_DIGITAL = 'Documento generado digitalmente';
 
-const AZUL = rgb(0x1b / 255, 0x4d / 255, 0x7e / 255);
-const CELESTE = rgb(0x3c / 255, 0x87 / 255, 0xbe / 255);
-const TEXTO = rgb(0x22 / 255, 0x41 / 255, 0x5a / 255);
-const GRIS = rgb(0.45, 0.5, 0.55);
+// Paleta G de la app (src/theme.ts): azul noche, azul profundo, celeste, verde agua y texto atenuado.
+const hex = (h: string) => rgb(parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255);
+const AZUL = hex('#1E3A52');
+const CELESTE = hex('#3A7CA5');
+const CIELO = hex('#8CC6E8');
+const VERDE_AGUA = hex('#A8DDD0');
+const TEXTO = AZUL;
+const GRIS = hex('#48647A');
+const BORDE = hex('#CFE0EA');
 
 /** Las fuentes estándar del PDF solo tienen los caracteres latinos (WinAnsi): el resto se quita. */
 export function textoSeguro(t: string): string {
@@ -57,24 +62,33 @@ export async function pdfCertificado(c: { titulo: string; cuerpo: string; lugar:
   const { width, height } = page.getSize();
   const margen = 68;
   const ancho = width - margen * 2;
-  const serifBold = await pdf.embedFont(StandardFonts.TimesRomanBold);
+  // Fuentes estándar del PDF (sin archivos que embeber): Helvetica, la más cercana a Manrope.
   const sans = await pdf.embedFont(StandardFonts.Helvetica);
   const sansBold = await pdf.embedFont(StandardFonts.HelveticaBold);
 
+  // Mancha celeste suave arriba a la derecha, como en la app.
+  // Círculos superpuestos de poca opacidad: se ve como un degradé.
+  for (let r = 180; r > 20; r -= 20) {
+    page.drawCircle({ x: width + 20, y: height + 20, size: r, color: CIELO, opacity: 0.035 });
+  }
+
   // Encabezado de la marca
   let y = height - 80;
-  page.drawText('Dr. Alan Hughes', { x: margen, y, size: 24, font: serifBold, color: AZUL });
-  y -= 18;
-  page.drawText('PEDIATRÍA INTEGRAL', { x: margen, y, size: 9, font: sansBold, color: CELESTE });
-  y -= 14;
-  page.drawLine({ start: { x: margen, y }, end: { x: width - margen, y }, thickness: 1.5, color: AZUL });
+  page.drawText('Dr. Alan Hughes', { x: margen, y, size: 22, font: sansBold, color: AZUL });
+  y -= 17;
+  page.drawText('P E D I A T R Í A   I N T E G R A L', { x: margen, y, size: 8, font: sansBold, color: CELESTE });
+  y -= 16;
+  // Banda de celeste a verde agua (dos tramos).
+  page.drawRectangle({ x: margen, y: y - 3, width: ancho / 2, height: 3.5, color: CIELO });
+  page.drawRectangle({ x: margen + ancho / 2, y: y - 3, width: ancho / 2, height: 3.5, color: VERDE_AGUA });
 
   // Título
   y -= 54;
-  centrado(page, c.titulo, y, serifBold, 17, AZUL);
+  centrado(page, c.titulo, y, sansBold, 16, AZUL);
+  page.drawRectangle({ x: width / 2 - 24, y: y - 12, width: 48, height: 2.5, color: VERDE_AGUA });
 
   // Cuerpo
-  y -= 44;
+  y -= 46;
   const tamano = 12;
   const interlineado = 19;
   for (const r of renglones(c.cuerpo, sans, tamano, ancho)) {
@@ -85,12 +99,13 @@ export async function pdfCertificado(c: { titulo: string; cuerpo: string; lugar:
   // Lugar y fecha, a la derecha
   y -= 22;
   const lf = textoSeguro(lugarYFecha(c.lugar, c.fecha));
-  page.drawText(lf, { x: width - margen - sans.widthOfTextAtSize(lf, tamano), y, size: tamano, font: sans, color: TEXTO });
+  page.drawText(lf, { x: width - margen - sans.widthOfTextAtSize(lf, tamano), y, size: tamano, font: sans, color: GRIS });
 
   // Firma
-  y -= 90;
-  page.drawLine({ start: { x: width / 2 - 120, y: y + 16 }, end: { x: width / 2 + 120, y: y + 16 }, thickness: 0.6, color: GRIS });
-  centrado(page, c.firma, y, sans, 10.5);
+  y -= 80;
+  centrado(page, 'Dr. Alan Hughes', y + 26, sansBold, 13, AZUL);
+  page.drawLine({ start: { x: width / 2 - 120, y: y + 16 }, end: { x: width / 2 + 120, y: y + 16 }, thickness: 0.6, color: BORDE });
+  centrado(page, c.firma, y, sans, 10, GRIS);
 
   // Leyenda
   centrado(page, LEYENDA_DIGITAL, 48, sans, 9, GRIS);

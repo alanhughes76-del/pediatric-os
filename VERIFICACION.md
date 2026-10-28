@@ -235,7 +235,7 @@ Corridas el 18/10/2026 sobre los emuladores de Firebase con los datos de demostr
 | Tipos, linter y tests | ✅ | `npx tsc --noEmit`, `npx eslint src`, 388 tests |
 | Fuente Inter | ✅ | Ya no se usaba: se quitó `@expo-google-fonts/inter` |
 
-Pendiente de decidir con el Dr.: el diseño de los certificados en PDF (`lib/certificadoPdf.ts` y `functions/src/certificadoPdf.ts`) conserva sus colores y letras propios; no se tocó porque es un documento que sale de la app.
+Certificados en PDF: pasados al diseño nuevo a pedido del Dr. (28/10/2026). Revisados un PDF de muestra del servidor (pdf-lib) y uno de la app (HTML impreso con Chrome), también con el sello de anulado. Los ya emitidos en el servidor no cambian.
 
 No verificado: la app en el iPhone con Expo Go.
 
