@@ -207,4 +207,4 @@ npx eas-cli build --profile preview --platform ios
 
 La versión para las tiendas usa `--profile production` y después `npx eas-cli submit`.
 
-**SDK de Expo:** la app está en el SDK 57 a propósito (el de tu Expo Go). Para compilar con EAS no hace falta cambiarlo; si algún día se actualiza, se hace en una etapa aparte.
+**SDK de Expo:** la app está en el SDK 58, el de tu Expo Go (28/10/2026). Expo Go solo se puede instalar en su última versión: cuando se actualice a un SDK nuevo, la app tiene que acompañarlo (en una etapa aparte). Para compilar con EAS no hace falta.

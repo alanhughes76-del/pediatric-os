@@ -12,12 +12,12 @@ Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionad
 
 ## Stack
 
-- Expo SDK 57 + React Native 0.86 + TypeScript, Expo Router (rutas en `src/app/`).
-- **SDK 57 a propósito**: es la versión que corre el Expo Go del iPhone del Dr. No subir de SDK sin preguntarle.
+- Expo SDK 58 + React Native 0.88 + TypeScript, Expo Router (rutas en `src/app/`).
+- **SDK 58 a propósito**: es la versión que corre el Expo Go del iPhone del Dr. (el 28/10/2026 su Expo Go se actualizó al 58 y la app pasó del 57 al 58). Apple solo deja instalar el Expo Go más nuevo: cuando salga otro SDK, la app tiene que acompañarlo para probarla en el teléfono. No subir de SDK sin preguntarle; se sube con `npx expo install expo@~<versión> && npx expo install --fix`, en un commit aparte.
 - Por defecto la app usa datos de ejemplo **ficticios** en memoria (`src/data/mock.ts`). El backend es **Firebase** (prompt maestro): reglas, Functions y datos de demostración en los emuladores; la app se conecta desde la Etapa 2b (ver "Datos de la app").
 - Gráficos con `react-native-svg`. Tipografía Manrope y Caveat (`@expo-google-fonts/manrope`, `@expo-google-fonts/caveat`).
 - Probar en el teléfono: `npx expo start --tunnel --clear` y abrir en Expo Go. `@expo/ngrok` está instalado en el proyecto, porque la instalación global falla por permisos.
-- Tests con jest-expo. `expo-modules-core` está mapeado en la config de jest a la copia anidada en `node_modules/expo`, porque instalarlo en la raíz choca con una dependencia opcional.
+- Tests con jest-expo (jest 30).
 
 ## Datos de la app (desde la Etapa 2b)
 
