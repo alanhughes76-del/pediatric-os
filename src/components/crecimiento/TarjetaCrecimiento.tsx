@@ -12,7 +12,7 @@ import { useApp } from '@/data/store';
 import { medicionesDe } from '@/data/selectores';
 import type { Patient } from '@/data/types';
 import { filasDeCrecimiento, sexoDeReferencia, type FilaCrecimiento, type Medida } from '@/lib/crecimiento';
-import { CURVAS, INDICADORES, TEXTO_AVISO, TEXTO_MOTIVO, curva, formatoPercentil, formatoZ, type Indicador, type Referencia } from '@/lib/percentiles';
+import { CURVAS, INDICADORES, NOMBRE_SAP, TEXTO_AVISO, TEXTO_MOTIVO, corteDeTalla, curva, formatoPercentil, formatoZ, type Indicador, type Referencia } from '@/lib/percentiles';
 import { edades, edadEnMeses } from '@/lib/edad';
 import { fechaCorta, hoyISO } from '@/lib/fechas';
 import { Opciones, Aviso } from '../Formulario';
@@ -93,7 +93,7 @@ export function TarjetaCrecimiento({ paciente: p, vista }: { paciente: Patient; 
         <View style={s.chips}>
           <Chip chico texto="Según la edad" activo={ref === 'auto'} onPress={() => setRef('auto')} />
           <Chip chico texto="OMS" activo={ref === 'OMS'} onPress={() => setRef('OMS')} />
-          <Chip chico texto="SAP/Lejarraga" activo={ref === 'SAP'} onPress={() => setRef('SAP')} />
+          <Chip chico texto={NOMBRE_SAP} activo={ref === 'SAP'} onPress={() => setRef('SAP')} />
         </View>
       ) : null}
 
@@ -111,8 +111,9 @@ export function TarjetaCrecimiento({ paciente: p, vista }: { paciente: Patient; 
 
       <TextoChico>
         {def.nombre} · {ind === 'peso' || ind === 'talla'
-          ? ref === 'auto' ? 'OMS hasta 5 años, después SAP/Lejarraga' : ref === 'OMS' ? 'OMS' : 'SAP/Lejarraga'
+          ? ref === 'auto' ? `OMS hasta los 2 años, después ${NOMBRE_SAP}` : ref === 'OMS' ? 'OMS' : NOMBRE_SAP
           : 'OMS'}. Curvas P3, P10, P25, P50, P75, P90 y P97.
+        {ind === 'talla' ? ` Talla acostado hasta los ${ref === 'OMS' ? '2' : '4'} años y de pie después: la curva se corta ahí.` : ''}
         {filas.some((f) => f.corregida) ? ' Puntos huecos: calculados con edad corregida.' : ''}
       </TextoChico>
 
@@ -149,8 +150,16 @@ function Grafico({ ind, sexo, filas, rango, referencia, elegido, onElegir }: {
   const xMin = pesoTalla ? (acostado ? 45 : 65) : rango.desde;
   const xMax = pesoTalla ? (acostado ? 110 : 120) : rango.hasta;
   const mesesParaTabla = acostado ? 0 : 24;
+  // Talla: la curva se corta donde la tabla pasa de acostado a de pie (OMS a los 2 años; Garrahan a los 4).
+  const corte = ind === 'talla' ? corteDeTalla(referencia ?? 'SAP') : undefined;
+  const hayCorte = corte != null && corte > xMin && corte < xMax;
+  const separar = <T extends { x: number }>(pts: T[]): T[][] => (hayCorte ? [pts.filter((p) => p.x < corte!), pts.filter((p) => p.x >= corte!)] : [pts]);
 
-  const xs = useMemo(() => Array.from({ length: 61 }, (_, i) => xMin + ((xMax - xMin) * i) / 60), [xMin, xMax]);
+  const xs = useMemo(() => {
+    const base = Array.from({ length: 61 }, (_, i) => xMin + ((xMax - xMin) * i) / 60);
+    // Puntos justo antes y en el corte, para que cada tramo llegue hasta ahí.
+    return hayCorte ? [...base.filter((x) => x !== corte), corte! - 0.001, corte!].sort((a, b) => a - b) : base;
+  }, [xMin, xMax, hayCorte, corte]);
   const curvas = useMemo(
     () => CURVAS.map((c) => ({ ...c, puntos: curva(ind, sexo, c.z, xs, { referencia, mesesParaTabla }) })),
     [ind, sexo, xs, referencia, mesesParaTabla],
@@ -213,15 +222,24 @@ function Grafico({ ind, sexo, filas, rango, referencia, elegido, onElegir }: {
             const ultimo = c.puntos[c.puntos.length - 1];
             return (
               <G key={c.p}>
-                <Polyline points={c.puntos.map((p) => `${px(p.x)},${py(p.y)}`).join(' ')} fill="none" stroke={color} strokeWidth={c.p === 50 ? 2.5 : extremo ? 1.6 : 1.1} />
+                {separar(c.puntos).map((tramo, i) => tramo.length > 1 ? (
+                  <Polyline key={i} points={tramo.map((p) => `${px(p.x)},${py(p.y)}`).join(' ')} fill="none" stroke={color} strokeWidth={c.p === 50 ? 2.5 : extremo ? 1.6 : 1.1} />
+                ) : null)}
                 <SvgText x={px(ultimo.x) + 3} y={py(ultimo.y) + 4} fontSize={10} fill={c.p === 50 ? colors.primary2 : colors.textMuted} fontFamily={fonts.bodySemi}>P{c.p}</SvgText>
               </G>
             );
           })}
 
-          {puntos.length > 1 ? (
-            <Polyline points={puntos.map((p) => `${px(p.x)},${py(p.y)}`).join(' ')} fill="none" stroke={colors.primary} strokeWidth={2} />
+          {hayCorte ? (
+            <G>
+              <Line x1={px(corte!)} x2={px(corte!)} y1={M.arr} y2={M.arr + h} stroke={colors.textMuted} strokeWidth={1} strokeDasharray="4 4" />
+              <SvgText x={px(corte!) + 4} y={M.arr + 12} fontSize={10} fill={colors.textMuted} fontFamily={fonts.bodySemi}>De pie</SvgText>
+              <SvgText x={px(corte!) - 4} y={M.arr + 12} fontSize={10} fill={colors.textMuted} textAnchor="end" fontFamily={fonts.bodySemi}>Acostado</SvgText>
+            </G>
           ) : null}
+          {separar(puntos).map((tramo, i) => tramo.length > 1 ? (
+            <Polyline key={`pac${i}`} points={tramo.map((p) => `${px(p.x)},${py(p.y)}`).join(' ')} fill="none" stroke={colors.primary} strokeWidth={2} />
+          ) : null)}
           {puntos.map((p) => (
             <Circle key={p.id} cx={px(p.x)} cy={py(p.y)} r={p.id === elegido ? 7 : 5} fill={p.hueco ? colors.white : colors.primary} stroke={colors.primary} strokeWidth={2} />
           ))}

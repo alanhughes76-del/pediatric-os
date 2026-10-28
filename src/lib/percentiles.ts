@@ -5,17 +5,20 @@
  * Referencias:
  * - OMS 2006/2007 (oms_lms.json): peso/edad (0–60 m), talla/edad (acostado 0–24 m, de pie 24–228 m),
  *   PC/edad (0–60 m), IMC/edad (0–228 m) y peso/talla (acostado 45–110 cm, de pie 65–120 cm).
- * - SAP/Lejarraga 2009 (argentina_lms.json): peso/edad y talla/edad (0–228 m).
+ * - SAP/Lejarraga 2009, planilla del Garrahan (argentina_lms.json): peso/edad y talla/edad (0–228 m;
+ *   de 0 a 24 m son los valores OMS). La talla es acostado hasta los 48 m y de pie desde los 48.
  * En los dos archivos el sexo va como M o F y "t" es la edad en meses (en peso/talla, la talla en cm).
  *
  * Reglas:
  * - Z = ((X/M)^L − 1) / (L·S); si L = 0, Z = ln(X/M) / S. Interpolación lineal de L, M y S.
  * - Percentilo = Φ(Z) × 100. Curvas: X = M·(1 + L·S·Z)^(1/L), o M·e^(S·Z) si L = 0.
  * - Fuera del rango de la tabla no se extrapola.
- * - Referencia por defecto: OMS hasta los 60 meses; peso y talla después de los 60 meses, SAP.
- *   PC, IMC y peso/talla siempre OMS. Se puede pedir la otra referencia cuando exista.
- * - Talla: acostado antes de los 24 meses, de pie desde los 24. Si se midió en la otra posición,
- *   se corrige 0,7 cm antes de calcular (de pie → acostado +0,7; acostado → de pie −0,7).
+ * - Referencia por defecto: OMS hasta los 24 meses; peso y talla desde los 24 meses, SAP/Lejarraga
+ *   (Garrahan). PC, IMC y peso/talla siempre OMS. Se puede pedir la otra referencia cuando exista.
+ * - Talla (pedido del Dr., 28/10/2026, fuente Garrahan): se mide acostado antes de los 48 meses y de
+ *   pie desde los 48. Cada tabla tiene su corte: OMS a los 24 meses, SAP a los 48. Si la medida no
+ *   está en la posición de la tabla, se corrige 0,7 cm antes de calcular (de pie → acostado +0,7;
+ *   acostado → de pie −0,7).
  * - Prematuros: hasta los 24 meses se usa la edad corregida (ver `edadParaCalculo` en edad.ts).
  * - Avisos (criterios OMS): |Z| > 3 → valor extremo; fuera de los límites de plausibilidad →
  *   probable error de carga.
@@ -40,7 +43,7 @@ export const INDICADORES: { clave: Indicador; nombre: string; corto: string; uni
 export interface TablaElegida {
   filas: FilaLMS[];
   referencia: Referencia;
-  /** Etiqueta para mostrar: "OMS", "OMS (acostado)", "SAP/Lejarraga". */
+  /** Etiqueta para mostrar: "OMS", "OMS (acostado)", "SAP/Lejarraga 2009 (Garrahan)". */
   etiqueta: string;
 }
 
@@ -49,21 +52,37 @@ export interface TablaElegida {
 /** Corrección entre talla acostado y de pie (cm). */
 export const CORRECCION_POSICION = 0.7;
 
-/** Posición que corresponde a la edad: acostado antes de los 24 meses, de pie desde los 24. */
-export const posicionPorEdad = (meses: number): Posicion => (meses < 24 ? 'acostado' : 'de_pie');
+/** Edad (meses) desde la que la talla se mide de pie. */
+export const MESES_DE_PIE = 48;
 
-/** Lleva una talla medida en `medida` a la posición que corresponde a la edad (±0,7 cm). */
-export function tallaParaReferencia(cm: number, medida: Posicion | undefined, meses: number): number {
-  const esperada = posicionPorEdad(meses);
-  if (!medida || medida === esperada) return cm;
+/** Posición en que se mide la talla: acostado antes de los 4 años, de pie desde los 4. */
+export const posicionPorEdad = (meses: number): Posicion => (meses < MESES_DE_PIE ? 'acostado' : 'de_pie');
+
+/** Edad (meses) en que cada tabla de talla pasa de acostado a de pie: OMS a los 24, SAP a los 48. */
+export const corteDeTalla = (referencia: Referencia): number => (referencia === 'SAP' ? MESES_DE_PIE : 24);
+
+/** Posición de la tabla de esa referencia a esa edad. */
+export const posicionDeLaTabla = (referencia: Referencia, meses: number): Posicion => (meses < corteDeTalla(referencia) ? 'acostado' : 'de_pie');
+
+/**
+ * Lleva una talla a la posición de la tabla de `referencia` (±0,7 cm).
+ * Sin `medida`, se supone que se midió como corresponde a la edad.
+ */
+export function tallaParaReferencia(cm: number, medida: Posicion | undefined, meses: number, referencia: Referencia): number {
+  const esperada = posicionDeLaTabla(referencia, meses);
+  const real = medida ?? posicionPorEdad(meses);
+  if (real === esperada) return cm;
   return esperada === 'acostado' ? cm + CORRECCION_POSICION : cm - CORRECCION_POSICION;
 }
 
 // ---------- Referencias ----------
 
-/** Referencia por defecto: OMS hasta los 60 meses; peso y talla después de los 60, SAP. */
+/** Nombre de la referencia argentina para mostrar. */
+export const NOMBRE_SAP = 'SAP/Lejarraga 2009 (Garrahan)';
+
+/** Referencia por defecto: OMS hasta los 24 meses; peso y talla desde los 24, SAP/Lejarraga (Garrahan). */
 export function referenciaPorDefecto(ind: Indicador, meses: number): Referencia {
-  return (ind === 'peso' || ind === 'talla') && meses > 60 ? 'SAP' : 'OMS';
+  return (ind === 'peso' || ind === 'talla') && meses >= 24 ? 'SAP' : 'OMS';
 }
 
 /** Referencias que existen para ese indicador (peso y talla tienen OMS y SAP). */
@@ -77,11 +96,14 @@ export function referenciasDelIndicador(ind: Indicador): Referencia[] {
  */
 export function elegirTabla(ind: Indicador, sexo: SexoRef, meses: number, referencia: Referencia = referenciaPorDefecto(ind, meses)): TablaElegida | null {
   if (referencia === 'SAP') {
-    if (ind === 'peso') return { filas: argentina.peso_edad[sexo], referencia, etiqueta: 'SAP/Lejarraga' };
-    if (ind === 'talla') return { filas: argentina.talla_edad[sexo], referencia, etiqueta: 'SAP/Lejarraga' };
+    if (ind === 'peso') return { filas: argentina.peso_edad[sexo], referencia, etiqueta: NOMBRE_SAP };
+    if (ind === 'talla') {
+      const pos = posicionDeLaTabla('SAP', meses);
+      return { filas: argentina.talla_edad[sexo], referencia, etiqueta: `${NOMBRE_SAP}, ${pos === 'acostado' ? 'acostado' : 'de pie'}` };
+    }
     return null;
   }
-  const pos = posicionPorEdad(meses);
+  const pos = posicionDeLaTabla('OMS', meses);
   switch (ind) {
     case 'peso':
       return { filas: oms.peso_edad[sexo], referencia, etiqueta: 'OMS' };
@@ -194,8 +216,8 @@ export function calcular(p: Pedido): ResultadoPercentil {
   const tabla = elegirTabla(p.indicador, p.sexo, p.meses, p.referencia);
   if (!tabla) return { ok: false, motivo: 'fuera-de-rango' };
 
-  const valor = p.indicador === 'talla' ? tallaParaReferencia(p.valor, p.posicion, p.meses) : p.valor;
-  const t = p.indicador === 'peso-talla' ? tallaParaReferencia(p.tallaCm!, p.posicion, p.meses) : p.meses;
+  const valor = p.indicador === 'talla' ? tallaParaReferencia(p.valor, p.posicion, p.meses, tabla.referencia) : p.valor;
+  const t = p.indicador === 'peso-talla' ? tallaParaReferencia(p.tallaCm!, p.posicion, p.meses, 'OMS') : p.meses;
   const lms = lmsEn(tabla.filas, t);
   if (!lms) return { ok: false, motivo: 'fuera-de-rango' };
 

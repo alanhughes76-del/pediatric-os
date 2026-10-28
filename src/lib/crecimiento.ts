@@ -4,7 +4,7 @@
  */
 import type { GrowthMeasurement, Patient } from '@/data/types';
 import { edadParaCalculo } from './edad';
-import { calcular, imc, posicionPorEdad, type Indicador, type Posicion, type Referencia, type ResultadoPercentil, type SexoRef } from './percentiles';
+import { calcular, imc, posicionPorEdad, tallaParaReferencia, type Indicador, type Posicion, type Referencia, type ResultadoPercentil, type SexoRef } from './percentiles';
 
 export interface Medida { valor: number; resultado: ResultadoPercentil }
 
@@ -51,9 +51,8 @@ export function filaDeCrecimiento(p: Pick<Patient, 'birthDate' | 'gestationalWee
   if (m.heightCm != null) fila.talla = medir('talla', m.heightCm);
   if (m.headCm != null) fila.pc = medir('pc', m.headCm);
   if (m.weightKg != null && m.heightCm != null) {
-    // IMC con la talla llevada a la posición que corresponde a la edad.
-    const tallaUsada = fila.talla?.resultado.ok ? fila.talla.resultado.valorUsado : m.heightCm;
-    fila.imc = medir('imc', imc(m.weightKg, tallaUsada));
+    // IMC (siempre OMS) con la talla llevada a la posición de la tabla OMS.
+    fila.imc = medir('imc', imc(m.weightKg, tallaParaReferencia(m.heightCm, posicion, edad.meses, 'OMS')));
     fila.pesoTalla = medir('peso-talla', m.weightKg, { tallaCm: m.heightCm });
   }
   return fila;

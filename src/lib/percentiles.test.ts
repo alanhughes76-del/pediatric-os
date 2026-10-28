@@ -1,5 +1,5 @@
 import {
-  calcular, curva, elegirTabla, lmsEn, normalCDF, referenciaPorDefecto, tallaParaReferencia,
+  calcular, curva, elegirTabla, lmsEn, normalCDF, referenciaPorDefecto, tallaParaReferencia, posicionPorEdad, corteDeTalla,
   valorParaZ, zScore, avisoPara, imc, type Pedido,
 } from './percentiles';
 import { edadParaCalculo } from './edad';
@@ -78,12 +78,24 @@ describe('fuera del rango de la referencia (no extrapola)', () => {
 });
 
 describe('referencias', () => {
-  test('por defecto: OMS hasta 60 meses; peso y talla después, SAP; PC, IMC y peso/talla siempre OMS', () => {
-    expect(referenciaPorDefecto('peso', 60)).toBe('OMS');
-    expect(referenciaPorDefecto('peso', 61)).toBe('SAP');
+  test('por defecto: OMS hasta 24 meses; peso y talla desde los 24, SAP (Garrahan); PC, IMC y peso/talla siempre OMS', () => {
+    expect(referenciaPorDefecto('peso', 23.9)).toBe('OMS');
+    expect(referenciaPorDefecto('peso', 24)).toBe('SAP');
+    expect(referenciaPorDefecto('talla', 30)).toBe('SAP');
     expect(referenciaPorDefecto('talla', 120)).toBe('SAP');
     expect(referenciaPorDefecto('imc', 120)).toBe('OMS');
     expect(referenciaPorDefecto('pc', 12)).toBe('OMS');
+    expect(referenciaPorDefecto('imc', 30)).toBe('OMS');
+  });
+  test('la referencia argentina se muestra como SAP/Lejarraga 2009 (Garrahan), con la posición en la talla', () => {
+    expect(elegirTabla('peso', 'F', 30)?.etiqueta).toBe('SAP/Lejarraga 2009 (Garrahan)');
+    expect(elegirTabla('talla', 'F', 30)?.etiqueta).toBe('SAP/Lejarraga 2009 (Garrahan), acostado');
+    expect(elegirTabla('talla', 'F', 48)?.etiqueta).toBe('SAP/Lejarraga 2009 (Garrahan), de pie');
+  });
+  test('la planilla del Garrahan es la OMS acostado hasta los 2 años y sigue sin salto', () => {
+    const oms = calcular({ indicador: 'talla', sexo: 'M', valor: 87, meses: 23.9, posicion: 'acostado' });
+    const sap = calcular({ indicador: 'talla', sexo: 'M', valor: 87, meses: 24, posicion: 'acostado' });
+    expect(oms.ok && sap.ok && Math.abs(oms.z - sap.z)).toBeLessThan(0.05);
   });
   test('se puede ver la otra referencia cuando existe', () => {
     const sap = calcular({ indicador: 'talla', sexo: 'M', valor: 75, meses: 12, referencia: 'SAP' });
@@ -93,11 +105,31 @@ describe('referencias', () => {
 });
 
 describe('posición de la talla (corrección de 0,7 cm)', () => {
-  test('de pie antes de los 24 meses suma 0,7; acostado desde los 24 resta 0,7', () => {
-    expect(tallaParaReferencia(80, 'de_pie', 18)).toBeCloseTo(80.7, 10);
-    expect(tallaParaReferencia(90, 'acostado', 30)).toBeCloseTo(89.3, 10);
-    expect(tallaParaReferencia(80, 'acostado', 18)).toBe(80);
-    expect(tallaParaReferencia(90, undefined, 30)).toBe(90);
+  test('se mide acostado antes de los 4 años y de pie desde los 4', () => {
+    expect(posicionPorEdad(47.9)).toBe('acostado');
+    expect(posicionPorEdad(48)).toBe('de_pie');
+    expect(corteDeTalla('SAP')).toBe(48);
+    expect(corteDeTalla('OMS')).toBe(24);
+  });
+  test('Garrahan: acostado hasta los 48 meses; de pie antes suma 0,7 y acostado desde los 48 resta 0,7', () => {
+    expect(tallaParaReferencia(90, 'acostado', 30, 'SAP')).toBe(90);
+    expect(tallaParaReferencia(90, undefined, 30, 'SAP')).toBe(90);
+    expect(tallaParaReferencia(90, 'de_pie', 30, 'SAP')).toBeCloseTo(90.7, 10);
+    expect(tallaParaReferencia(100, 'acostado', 50, 'SAP')).toBeCloseTo(99.3, 10);
+    expect(tallaParaReferencia(100, undefined, 50, 'SAP')).toBe(100);
+  });
+  test('OMS: de pie antes de los 24 meses suma 0,7; acostado desde los 24 resta 0,7', () => {
+    expect(tallaParaReferencia(80, 'de_pie', 18, 'OMS')).toBeCloseTo(80.7, 10);
+    expect(tallaParaReferencia(90, 'acostado', 30, 'OMS')).toBeCloseTo(89.3, 10);
+    expect(tallaParaReferencia(80, 'acostado', 18, 'OMS')).toBe(80);
+    // Sin posición, a los 30 meses se supone acostado (se mide así hasta los 4 años).
+    expect(tallaParaReferencia(90, undefined, 30, 'OMS')).toBeCloseTo(89.3, 10);
+  });
+  test('a los 30 meses, una talla acostado no se corrige contra el Garrahan y sí contra la OMS', () => {
+    const sap = calcular({ indicador: 'talla', sexo: 'F', valor: 90, meses: 30, posicion: 'acostado' });
+    const oms = calcular({ indicador: 'talla', sexo: 'F', valor: 90, meses: 30, posicion: 'acostado', referencia: 'OMS' });
+    expect(sap.ok && sap.valorUsado).toBe(90);
+    expect(oms.ok && oms.valorUsado).toBeCloseTo(89.3, 10);
   });
   test('el percentilo de una talla de pie a los 18 meses es el de la talla +0,7 acostado', () => {
     const dePie = calcular({ indicador: 'talla', sexo: 'F', valor: 80, meses: 18, posicion: 'de_pie' });
@@ -146,5 +178,11 @@ describe('prematuros: edad corregida hasta los 24 meses', () => {
     expect(fila.corregida).toBe(true);
     expect(fila.peso?.resultado.ok).toBe(true);
     expect(fila.imc?.valor).toBeCloseTo(imc(8, 68), 10);
+  });
+  test('el IMC después de los 2 años usa la talla llevada a de pie (tabla OMS)', () => {
+    const nene = { birthDate: '2024-01-01' };
+    const fila = filaDeCrecimiento(nene, 'M', { id: 'm', createdAt: '', createdBy: '', patientId: 'p', measuredAt: '2026-07-01', weightKg: 13, heightCm: 90, position: 'acostado' });
+    expect(fila.talla?.resultado.ok && fila.talla.resultado.valorUsado).toBe(90);
+    expect(fila.imc?.valor).toBeCloseTo(imc(13, 89.3), 10);
   });
 });

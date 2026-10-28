@@ -238,3 +238,17 @@ Corridas el 18/10/2026 sobre los emuladores de Firebase con los datos de demostr
 Pendiente de decidir con el Dr.: el diseño de los certificados en PDF (`lib/certificadoPdf.ts` y `functions/src/certificadoPdf.ts`) conserva sus colores y letras propios; no se tocó porque es un documento que sale de la app.
 
 No verificado: la app en el iPhone con Expo Go.
+
+## Curvas del Garrahan (Parte C, 28/10/2026)
+
+| Punto | Estado | Cómo se verificó |
+|---|---|---|
+| Por defecto OMS hasta los 2 años y Garrahan desde los 2 (peso y talla) | ✅ | Tests de `referenciaPorDefecto` y de etiquetas |
+| La planilla del Garrahan sigue a la OMS acostado sin salto a los 2 años | ✅ | Test (diferencia de Z < 0,05 entre 23,9 y 24 meses) |
+| Talla acostado antes de los 4 años, de pie desde los 4, con corrección de 0,7 cm | ✅ | Tests de posición contra las dos tablas (OMS corta a los 2 años, Garrahan a los 4) |
+| IMC con la talla llevada a la posición de la tabla OMS | ✅ | Test con un chico de 2 años y medio medido acostado |
+| Corte de la curva de talla y nombre "SAP/Lejarraga 2009 (Garrahan)" | ✅ | Navegador: Tomás (ficticio, 3 años), con "Según la edad" (corte a los 4 años) y con "OMS" (corte a los 2) |
+
+Arreglo de paso: las manchas de fondo de D2 agrandaban el ancho desplazable y el contenido se corría 160 px al enfocar algo; ahora se recortan en su propio contenedor.
+
+Nota: la planilla del Garrahan trae una sola fila a los 48 meses, así que las curvas casi no saltan en el corte; la línea marca dónde cambia la posición.
