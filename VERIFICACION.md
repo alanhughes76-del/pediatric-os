@@ -222,3 +222,19 @@ Corridas el 18/10/2026 sobre los emuladores de Firebase con los datos de demostr
 
 - La app en un iPhone real con Expo Go (en esta etapa y en las anteriores).
 - Mails reales (faltan `SMTP_USUARIO` y `SMTP_CLAVE`), envío real a Make (falta `MAKE_WEBHOOK_URL`), reservas reales de Cal.com y una respuesta real de la IA (falta `ANTHROPIC_API_KEY` y la revisión legal del consentimiento).
+
+## Diseño de Lovable (etapas D1 a D4, 28/10/2026)
+
+| Punto | Estado | Cómo se verificó |
+|---|---|---|
+| Paleta G y tipografía Manrope/Caveat en toda la app | ✅ | Ningún color suelto fuera de `src/theme.ts`, salvo el blanco y negro del código QR (tiene que ser así para que se lea) y el rosado de los extremos de las curvas |
+| Contraste AA de todas las combinaciones nuevas | ✅ | 41 combinaciones medidas: texto, texto atenuado, azul noche y rojo de alerta sobre los cinco pasteles (4,5:1 o más); íconos sobre pastel y sobre blanco (3:1 o más); barra lateral, botón de acción, PacienteX y saludo manuscrito |
+| Marca "Dr. Alan Hughes - Pediatría Integral" en las dos caras | ✅ | Barra lateral del médico, ingresos, portal y autenticador del segundo factor |
+| Botones, campos, solapas y pestañas en píldora; tarjetas de 28 px; manchas de fondo | ✅ | Navegador a 1280 px y a 375 px |
+| Pantallas clave (Inicio del médico, ficha, Inicio del portal, ingresos) | ✅ | Navegador a 1280 px y a 375 px, sin errores en la consola. También Agenda, Certificados, Configuración y la curva de crecimiento |
+| Tipos, linter y tests | ✅ | `npx tsc --noEmit`, `npx eslint src`, 388 tests |
+| Fuente Inter | ✅ | Ya no se usaba: se quitó `@expo-google-fonts/inter` |
+
+Pendiente de decidir con el Dr.: el diseño de los certificados en PDF (`lib/certificadoPdf.ts` y `functions/src/certificadoPdf.ts`) conserva sus colores y letras propios; no se tocó porque es un documento que sale de la app.
+
+No verificado: la app en el iPhone con Expo Go.
