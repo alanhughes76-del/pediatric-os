@@ -28,8 +28,8 @@ const RANGOS: { valor: Rango; texto: string; desde: number; hasta: number }[] = 
 
 const ALTO = 280;
 const M = { izq: 40, der: 34, arr: 12, abj: 30 };
-/** P3 y P97 en un tono de alerta suave (sin rojo fuerte). */
-const COLOR_EXTREMOS = '#E3A49C';
+/** P3 y P97 en un rosado empolvado suave (sin rojo fuerte). */
+const COLOR_EXTREMOS = '#D7A3B1';
 
 const decimales = (ind: Indicador) => (ind === 'peso' || ind === 'peso-talla' ? 2 : 1);
 const num = (n: number, dec: number) => n.toFixed(dec).replace('.', ',');

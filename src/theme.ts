@@ -1,58 +1,72 @@
 /**
- * Tokens de diseño de Pediatric OS: único archivo de colores, tipografía y medidas.
- * Colores medidos sobre docs/referencia-ui.png y ajustados para contraste AA
- * (Etapa 0, sección 9.1). Texto sobre fondo de color: siempre el tono `texto` de su familia.
+ * Tokens de diseño: único archivo de colores, tipografía y medidas.
+ * Paleta G de la app de Lovable (azul noche, celestes y verde agua), con contraste AA medido.
+ * Texto sobre fondo de color: siempre el tono `texto` de su familia.
  */
 import { Platform } from 'react-native';
 
 export const colors = {
-  /** Acción principal (botones, ítem activo, enlaces). Blanco encima: 5,2:1. */
-  accion: '#2563EB',
-  /** Texto de acción sobre fondo claro (6,4:1 sobre accionSuave). */
-  accionTexto: '#1D4ED8',
-  accionSuave: '#EAF1FE',
-  /** Títulos y texto fuerte (azul marino casi negro, como en la imagen). */
-  primary: '#1F2A44',
-  primary2: '#2563EB',
-  primary3: '#3B8FE0',
-  sky: '#93C5FD',
-  bgSoft: '#EAF1FE',
-  bg: '#F4F8FC',
-  text: '#1F2A44',
-  textMuted: '#5B6585',
+  /** Acción principal (botones, ítem activo): azul noche de la paleta G. Blanco encima: 11,8:1. */
+  accion: '#1E3A52',
+  /** Texto de acción y enlaces sobre fondo claro (5,9:1 sobre blanco; 5,3:1 sobre accionSuave). */
+  accionTexto: '#2C6A93',
+  accionSuave: '#EAF4FB',
+  /** Títulos y texto fuerte. */
+  primary: '#1E3A52',
+  /** Azul profundo: íconos y texto destacado (4,6:1 sobre blanco). */
+  primary2: '#3A7CA5',
+  /** Íconos de navegación y bordes (3,6:1 sobre el fondo). */
+  primary3: '#4A8AB5',
+  /** Celeste: líneas de gráficos y bordes finos (decorativo, nunca texto). */
+  sky: '#8CC6E8',
+  /** Verde agua de la paleta G (decorativo) y su versión suave para fondos. */
+  sage: '#A8DDD0',
+  sageSoft: '#EDF8F4',
+  /** Crema para fondos cálidos. */
+  cream: '#FBF8F4',
+  bgSoft: '#EAF4FB',
+  bg: '#F7FAFC',
+  /** Fondo neutro (etiquetas, campos deshabilitados). */
+  muted: '#F0F5F9',
+  text: '#1E3A52',
+  textMuted: '#48647A',
   white: '#FFFFFF',
-  border: '#E3EAF3',
+  border: '#E3ECF2',
+  /** Borde de campos de formulario. */
+  input: '#CFE0EA',
   // Barra lateral (pantallas anchas).
-  sidebar: '#1E2B4D',
-  sidebarTexto: '#AEB9D3',
-  sidebarActivo: '#2F4A8A',
-  sidebarApagado: '#8A96B2',
+  sidebar: '#1E3A52',
+  sidebarTexto: '#B9CCDB',
+  sidebarActivo: '#2D5375',
+  sidebarApagado: '#8FA8BC',
   // Verde intenso: solo el botón de PacienteX (pedido del Dr.).
   contacto: '#1F7A4D',
   // Rojo intenso: solo alertas, siempre con ícono y palabra (nunca solo el color).
-  alert: '#C62828',
-  alertBg: '#FDECEC',
-  alertBorder: '#F6C7C7',
+  alert: '#B42318',
+  alertBg: '#FDECEA',
+  alertBorder: '#F5C2BC',
   /** Anillo de foco visible (teclado, web). */
-  foco: '#2563EB',
+  foco: '#3A7CA5',
 };
 
 /**
- * Un color pastel por sección (prompt maestro 5.1): celeste para crecimiento y agenda,
- * rosado para vacunas y próximas acciones, verde para lo que está al día, violeta para la IA,
- * naranja para prevención. `fondo` va detrás, `acento` en íconos, `texto` para letras sobre `fondo`.
+ * Un color pastel por sección, adaptado a la paleta G (pedido del Dr., 28/10/2026): celeste para
+ * crecimiento y agenda, rosado empolvado para vacunas y próximas acciones, verde agua para lo que
+ * está al día, lavanda para la IA, crema arena para prevención. `fondo` va detrás, `acento` en
+ * íconos (3:1 o más), `texto` para letras sobre `fondo` (AA, 4,5:1 o más).
+ * Las claves se mantienen para no tocar las pantallas.
  */
 export const categorias = {
-  celeste: { fondo: '#E3F1FD', acento: '#3B8FE0', texto: '#1D5C99' },
-  rosado: { fondo: '#FDEEF3', acento: '#D9467A', texto: '#A12B57' },
-  verde: { fondo: '#E5F5EC', acento: '#3E9B63', texto: '#1F6B40' },
-  violeta: { fondo: '#F0EBFC', acento: '#7C5CD6', texto: '#5B3FB0' },
-  naranja: { fondo: '#FEF0E4', acento: '#E07A2E', texto: '#9A4A12' },
+  celeste: { fondo: '#EAF4FB', acento: '#3A7CA5', texto: '#1E5578' },
+  rosado: { fondo: '#FBEFF2', acento: '#C0627C', texto: '#8E3D55' },
+  verde: { fondo: '#EDF8F4', acento: '#2E8F7E', texto: '#1A6B5F' },
+  violeta: { fondo: '#F2EFFA', acento: '#7D6BC4', texto: '#54459A' },
+  naranja: { fondo: '#FAF4EA', acento: '#AE7F3F', texto: '#77521F' },
 } as const;
 export type Categoria = keyof typeof categorias;
 
-/** Sombra suave de las tarjetas. */
-export const sombra = '0px 1px 2px rgba(30, 43, 77, 0.06), 0px 4px 14px rgba(30, 43, 77, 0.06)';
+/** Sombra suave de las tarjetas (la misma de la app de Lovable). */
+export const sombra = '0px 1px 2px rgba(30, 58, 82, 0.04), 0px 10px 26px rgba(30, 58, 82, 0.06)';
 
 /** Anillo de foco para elementos tocables (se ve al navegar con teclado en la web). */
 export const anilloFoco = { outlineColor: colors.foco, outlineStyle: 'solid', outlineWidth: 2, outlineOffset: 2 } as object;
@@ -60,13 +74,15 @@ export const anilloFoco = { outlineColor: colors.foco, outlineStyle: 'solid', ou
 /** Desde este ancho (computadora o tablet apaisada) se usa barra lateral en vez de pestañas. */
 export const ANCHO_ESCRITORIO = 1024;
 
-/** Inter (prompt maestro 5.1). */
+/** Manrope para todo y Caveat para los toques manuscritos (diseño de Lovable, 28/10/2026). */
 export const fonts = {
-  title: 'Inter_700Bold',
-  titleSemi: 'Inter_600SemiBold',
-  body: 'Inter_400Regular',
-  bodySemi: 'Inter_600SemiBold',
-  bodyBold: 'Inter_700Bold',
+  title: 'Manrope_800ExtraBold',
+  titleSemi: 'Manrope_700Bold',
+  body: 'Manrope_400Regular',
+  bodySemi: 'Manrope_600SemiBold',
+  bodyBold: 'Manrope_700Bold',
+  /** Solo saludos y frases cortas; nunca datos ni texto largo. */
+  hand: 'Caveat_600SemiBold',
 };
 
 const web = Platform.OS === 'web';
@@ -81,6 +97,8 @@ export const size = {
   h3: 18,
   /** Alto mínimo de un botón: cómodo con una sola mano (y mayor a 44 px). */
   touch: 52,
-  radius: 14,
+  radius: 20,
+  /** Tarjetas y paneles grandes. */
+  radiusGrande: 28,
   gutter: 20,
 };

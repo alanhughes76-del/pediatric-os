@@ -7,7 +7,7 @@ const tonos: Record<Tono, { bg: string; fg: string }> = {
   azul: { bg: colors.accion, fg: colors.white },
   celeste: { bg: colors.bgSoft, fg: colors.accionTexto },
   alerta: { bg: colors.alertBg, fg: colors.alert },
-  neutro: { bg: '#EEF2F5', fg: colors.textMuted },
+  neutro: { bg: colors.muted, fg: colors.textMuted },
   verde: { bg: categorias.verde.fondo, fg: categorias.verde.texto },
   violeta: { bg: categorias.violeta.fondo, fg: categorias.violeta.texto },
   naranja: { bg: categorias.naranja.fondo, fg: categorias.naranja.texto },

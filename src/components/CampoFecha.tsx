@@ -161,7 +161,7 @@ const s = StyleSheet.create({
   },
   campoError: { borderColor: colors.alert },
   valor: { flex: 1, fontFamily: fonts.body, fontSize: size.base, color: colors.text },
-  fondo: { flex: 1, backgroundColor: 'rgba(30, 43, 77, 0.35)', alignItems: 'center', justifyContent: 'center', padding: 16 },
+  fondo: { flex: 1, backgroundColor: 'rgba(30, 58, 82, 0.35)', alignItems: 'center', justifyContent: 'center', padding: 16 },
   tarjeta: { width: '100%', maxWidth: 380, backgroundColor: colors.white, borderRadius: 20, padding: 16, gap: 10 },
   cabecera: { flexDirection: 'row', alignItems: 'center' },
   flecha: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },

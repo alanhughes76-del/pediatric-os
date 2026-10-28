@@ -116,12 +116,12 @@ export function htmlReporte(r: ReporteMensual, generado: string): string {
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Reporte ${escapar(nombreMes(r.mes))}</title>
 <style>
   @page { margin: 20mm; }
-  body { font-family: Inter, Helvetica, Arial, sans-serif; color: #1F2A44; font-size: 11pt; }
-  h1 { font-size: 18pt; margin: 0; color: #1E2B4D; }
-  p { color: #5A6478; margin: 4px 0 18px; }
+  body { font-family: Manrope, Helvetica, Arial, sans-serif; color: #1E3A52; font-size: 11pt; }
+  h1 { font-size: 18pt; margin: 0; color: #1E3A52; }
+  p { color: #48647A; margin: 4px 0 18px; }
   table { width: 100%; border-collapse: collapse; }
-  th { text-align: left; background: #F4F8FC; padding: 8px; font-size: 11pt; color: #1E2B4D; }
-  td { padding: 6px 8px; border-bottom: 1px solid #E3E8EF; }
+  th { text-align: left; background: #EAF4FB; padding: 8px; font-size: 11pt; color: #1E3A52; }
+  td { padding: 6px 8px; border-bottom: 1px solid #E3ECF2; }
   .n { text-align: right; font-weight: 600; }
 </style></head><body>
 <h1>Reporte de ${escapar(nombreMes(r.mes))}</h1>

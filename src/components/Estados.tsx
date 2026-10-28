@@ -90,7 +90,7 @@ const s = StyleSheet.create({
   accion: { marginTop: 8, minWidth: 240 },
   error: { gap: 12, backgroundColor: colors.alertBg, borderColor: colors.alertBorder, borderWidth: 1, borderRadius: size.radius, padding: 16 },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  velo: { flex: 1, backgroundColor: 'rgba(30, 43, 77, 0.45)', alignItems: 'center', justifyContent: 'center', padding: 20 },
+  velo: { flex: 1, backgroundColor: 'rgba(30, 58, 82, 0.45)', alignItems: 'center', justifyContent: 'center', padding: 20 },
   dialogo: { width: '100%', maxWidth: 440, backgroundColor: colors.white, borderRadius: 18, padding: 22, gap: 14, boxShadow: sombra },
   botones: { flexDirection: 'row', gap: 10, marginTop: 4 },
 });

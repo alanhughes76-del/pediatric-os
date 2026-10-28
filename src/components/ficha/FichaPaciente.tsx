@@ -147,8 +147,8 @@ const s = StyleSheet.create({
   solapaActiva: { borderBottomColor: colors.primary2 },
   solapaTexto: { fontFamily: fonts.bodySemi, fontSize: 16, color: colors.textMuted },
   solapaTextoActiva: { color: colors.primary },
-  flotante: { position: 'absolute', right: 20, bottom: 24, width: 58, height: 58, borderRadius: 29, backgroundColor: categorias.violeta.acento, alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(30, 43, 77, 0.25)' },
-  fondo: { flex: 1, backgroundColor: 'rgba(30, 43, 77, 0.35)' },
+  flotante: { position: 'absolute', right: 20, bottom: 24, width: 58, height: 58, borderRadius: 29, backgroundColor: categorias.violeta.acento, alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(30, 58, 82, 0.25)' },
+  fondo: { flex: 1, backgroundColor: 'rgba(30, 58, 82, 0.35)' },
   hoja: { maxHeight: '80%', backgroundColor: colors.white, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, gap: 12 },
 });
 

@@ -15,7 +15,7 @@ Ver también `AGENTS.md` (guía de Expo: usar `npx expo install`, docs versionad
 - Expo SDK 57 + React Native 0.86 + TypeScript, Expo Router (rutas en `src/app/`).
 - **SDK 57 a propósito**: es la versión que corre el Expo Go del iPhone del Dr. No subir de SDK sin preguntarle.
 - Por defecto la app usa datos de ejemplo **ficticios** en memoria (`src/data/mock.ts`). El backend es **Firebase** (prompt maestro): reglas, Functions y datos de demostración en los emuladores; la app se conecta desde la Etapa 2b (ver "Datos de la app").
-- Gráficos con `react-native-svg`. Tipografía Inter (`@expo-google-fonts/inter`).
+- Gráficos con `react-native-svg`. Tipografía Manrope y Caveat (`@expo-google-fonts/manrope`, `@expo-google-fonts/caveat`).
 - Probar en el teléfono: `npx expo start --tunnel --clear` y abrir en Expo Go. `@expo/ngrok` está instalado en el proyecto, porque la instalación global falla por permisos.
 - Tests con jest-expo. `expo-modules-core` está mapeado en la config de jest a la copia anidada en `node_modules/expo`, porque instalarlo en la raíz choca con una dependencia opcional.
 
@@ -175,11 +175,12 @@ Doctor, Family, Guardian (acceso habilitado sí/no), PatientRelationship (tipo, 
 
 - Interfaz en español rioplatense con voseo ("Cargá", "Tocá"). Nunca "tú" ni "vosotros".
 - Marca del lado médico: "Pediatric OS" con "Cuidando hoy su mañana"; la frase "Pequeños pacientes, grandes historias" va en el encabezado. En el portal de las familias, el mail del enlace y los certificados nuevos: "Dr. Alan Hughes - Pediatría Integral" (pedido del Dr., 23/10/2026; antes "Pediatría a domicilio"). La marca es él mismo.
-- Tokens en un único archivo, `src/theme.ts` (medidos sobre `docs/referencia-ui.png`): barra lateral #1E2B4D, acción #2563EB (`colors.accion`), fondo #F4F8FC, texto #1F2A44.
-- Un pastel por sección (`categorias`): celeste (crecimiento y agenda), rosado (vacunas y próximas acciones), verde (al día), violeta (IA), naranja (prevención). Cada uno tiene fondo, acento (íconos) y texto con contraste AA. Rojo intenso únicamente para alertas, siempre con ícono y palabra.
+- Diseño de la app de Lovable (pedido del Dr., 28/10/2026; etapas D1 a D4). D1 hecha: paleta G y tipografía.
+- Tokens en un único archivo, `src/theme.ts` (paleta G de Lovable): azul noche #1E3A52 para acción, barra lateral y texto; azul profundo #3A7CA5; celeste #8CC6E8; verde agua #A8DDD0; fondo #F7FAFC.
+- Un pastel por sección (`categorias`, adaptados a la paleta G): celeste (crecimiento y agenda), rosado empolvado (vacunas y próximas acciones), verde agua (al día), lavanda (IA), crema arena (prevención; la clave sigue siendo `naranja`). Sin terracota. Cada uno tiene fondo, acento (íconos) y texto con contraste AA. Rojo intenso únicamente para alertas, siempre con ícono y palabra.
 - Única excepción: el botón de PacienteX es verde (#1F7A4D, `colors.contacto`), a pedido del Dr.
 - Fechas: siempre con `components/CampoFecha.tsx` (calendario para elegir día, mes y año; tocando el título se elige año y mes; `minimo`/`maximo`), nunca escritas a mano. El valor sigue siendo "dd/mm/aaaa"; cuentas en `lib/calendario.ts`. Pedido del Dr., 18/10/2026.
-- Tipografía Inter. Áreas táctiles de 44 px o más, foco visible (`anilloFoco`), estados vacío, de carga, de error y de confirmación en `components/Estados.tsx`.
+- Tipografía Manrope (`fonts`); Caveat (`fonts.hand`) solo para saludos y frases cortas. Áreas táctiles de 44 px o más, foco visible (`anilloFoco`), estados vacío, de carga, de error y de confirmación en `components/Estados.tsx`.
 - Navegación: una sola lista de módulos en `src/navegacion/modulos.ts`. Web y tablet: barra lateral con los 16 módulos. Celular: Inicio · Agenda · Pacientes · Avisos · Más. Los módulos sin construir dicen en qué etapa llegan. Los avisos salen de datos reales (`src/data/avisos.ts`).
 - Tono cálido y profesional, nada comercial. Botones grandes y pocos pasos (padres con un bebé en brazos).
 - Contacto: **no hay WhatsApp en ningún lado**, tampoco como preferencia de contacto del adulto (solo llamada o email; las reglas lo exigen). Botón "Escribime por PacienteX" (texto elegido por el Dr. el 17/10/2026), que abre `CONFIG.pacienteXUrl` en el navegador del teléfono.
