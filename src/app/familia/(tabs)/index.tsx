@@ -13,6 +13,7 @@ import { FichaHijo } from '@/components/FichaHijo';
 import { Tarjeta } from '@/components/Tarjeta';
 import { Boton } from '@/components/Boton';
 import { Avatar } from '@/components/Avatar';
+import { Saludo } from '@/components/Saludo';
 import { categorias, colors, fonts, size } from '@/theme';
 
 export default function InicioFamilia() {
@@ -29,6 +30,7 @@ export default function InicioFamilia() {
   return (
     <Pantalla ancho pie={<BarraPacienteX />}>
       <View>
+        <Saludo texto="Qué bueno verte" izquierda />
         <Titulo>Hola, {guardian.firstName}</Titulo>
         {familia ? <Texto color={colors.textMuted}>{familia.name}</Texto> : null}
       </View>
@@ -97,10 +99,10 @@ const s = StyleSheet.create({
   costado: { flexGrow: 1, flexBasis: 280, gap: 12, justifyContent: 'center' },
   banner: {
     flexDirection: 'row', gap: 10, alignItems: 'center',
-    backgroundColor: categorias.verde.fondo, borderRadius: size.radius, padding: 14,
+    backgroundColor: categorias.verde.fondo, borderRadius: size.radiusGrande, padding: 16,
   },
   bannerVencida: { backgroundColor: colors.alertBg, borderWidth: 1, borderColor: colors.alertBorder, alignItems: 'flex-start' },
-  proxima: { flexGrow: 2, flexBasis: 340, backgroundColor: colors.accion, borderColor: colors.accion, gap: 6, padding: 22 },
+  proxima: { flexGrow: 2, flexBasis: 340, backgroundColor: colors.accion, borderColor: colors.accion, gap: 6, padding: 24 },
   selector: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   hijo: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 8, paddingRight: 22, borderRadius: 999, borderWidth: 1.5, borderColor: colors.primary3, backgroundColor: colors.white, justifyContent: 'center' },
   hijoActivo: { backgroundColor: colors.accion, borderColor: colors.accion },

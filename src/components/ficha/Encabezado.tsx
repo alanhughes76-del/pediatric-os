@@ -22,7 +22,7 @@ import { Etiqueta } from '../Etiqueta';
 import { Seccion } from '../Seccion';
 import { BotonTexto, CampoEditable } from './piezas';
 import { Avatar, TONO_AMBITO } from '../Avatar';
-import { colors, fonts, size } from '@/theme';
+import { categorias, colors, fonts, size } from '@/theme';
 
 const SEXO = { M: 'Masculino', F: 'Femenino', X: 'X' } as const;
 
@@ -40,15 +40,17 @@ export function Encabezado({ paciente: p, acciones }: { paciente: Patient; accio
   const familia = db.families.find((f) => f.id === p.familyId);
   const cobertura = textoCobertura(p.coverage);
   const turno = proximoTurno(db, [p.id]);
+  // Como en Lovable: la tarjeta lleva el color del ámbito del paciente.
+  const tono = categorias[TONO_AMBITO[p.scope]];
 
   return (
-    <Tarjeta style={s.tarjeta}>
+    <Tarjeta style={[s.tarjeta, { backgroundColor: tono.fondo, borderColor: tono.fondo }]}>
       <View style={s.arriba}>
-        <Avatar paciente={p} tamano={72} />
+        <Avatar paciente={p} tamano={72} sobreColor />
         <View style={s.datos}>
           <Titulo>{nombreCompleto(p)}</Titulo>
           <View style={s.cifras}>
-            <Cifra texto={e.cronologica} fuerte />
+            <Cifra texto={e.cronologica} color={tono.texto} />
             {peso?.weightKg != null ? <Cifra texto={`${coma(peso.weightKg)} kg`} /> : null}
             {talla?.heightCm != null ? <Cifra texto={`${coma(talla.heightCm)} cm`} /> : null}
             {p.bloodType ? <Cifra texto={p.bloodType} /> : null}
@@ -96,8 +98,8 @@ export function Encabezado({ paciente: p, acciones }: { paciente: Patient; accio
   );
 }
 
-function Cifra({ texto, fuerte }: { texto: string; fuerte?: boolean }) {
-  return <Text style={[s.cifra, fuerte && { color: colors.primary2, fontFamily: fonts.bodyBold }]}>{texto}</Text>;
+function Cifra({ texto, color }: { texto: string; color?: string }) {
+  return <Text style={[s.cifra, color ? { color, fontFamily: fonts.bodyBold } : null]}>{texto}</Text>;
 }
 
 const COBERTURAS = (Object.keys(TEXTO_COBERTURA) as CoverageKind[]).map((v) => ({ valor: v, texto: TEXTO_COBERTURA[v] }));
@@ -161,8 +163,8 @@ const s = StyleSheet.create({
   cifras: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 18, rowGap: 4 },
   cifra: { fontFamily: fonts.bodySemi, fontSize: size.large, color: colors.text },
   acciones: { gap: 10, minWidth: 240, maxWidth: 320, flexGrow: 1 },
-  turno: { gap: 2, minWidth: 240, flexGrow: 1, maxWidth: 320, backgroundColor: colors.bg, borderRadius: 12, padding: 12 },
+  turno: { gap: 2, minWidth: 240, flexGrow: 1, maxWidth: 320, backgroundColor: colors.white, borderRadius: 20, padding: 14 },
   familia: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  corregida: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.bgSoft, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },
+  corregida: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.white, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 10 },
   etiquetas: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 });

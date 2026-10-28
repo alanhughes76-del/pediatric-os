@@ -15,9 +15,10 @@ import { paciente, nombreCompleto, alergiasDe, problemasDe, informesFamilia, TEX
 import type { CarePlanCategory } from '@/data/types';
 import { edades } from '@/lib/edad';
 import { fechaLarga, fechaCorta, hoyISO } from '@/lib/fechas';
-import { categorias, colors, fonts, size } from '@/theme';
+import { categorias, colors, fonts, size, sombra } from '@/theme';
 import { Titulo, Texto, TextoFuerte, TextoChico } from './Texto';
 import { Caja, Grilla } from './Caja';
+import { Avatar, TONO_AMBITO } from './Avatar';
 import { Etiqueta } from './Etiqueta';
 import { Boton } from './Boton';
 import { AlergiasDestacadas } from './Alergias';
@@ -31,20 +32,27 @@ export function FichaHijo({ hijoId, conEncabezado = true }: { hijoId: string; co
   const p = paciente(db, hijoId);
   if (!p) return <Texto>No encontramos esta ficha.</Texto>;
   const e = edades(p);
+  // Como en Lovable: el encabezado lleva el color del chico (el de su ámbito, igual que sus iniciales).
+  const tono = categorias[TONO_AMBITO[p.scope]];
 
   return (
     <>
       {conEncabezado ? (
-        <View style={{ gap: 6 }}>
-          <Titulo>{nombreCompleto(p)}</Titulo>
-          <Texto style={s.edad}>{e.cronologica}</Texto>
+        <View style={[s.encabezado, { backgroundColor: tono.fondo }]}>
+          <View style={s.fila}>
+            <Avatar paciente={p} tamano={64} sobreColor />
+            <View style={{ flex: 1, gap: 2 }}>
+              <Titulo>{nombreCompleto(p)}</Titulo>
+              <Texto style={[s.edad, { color: tono.texto }]}>{e.cronologica}</Texto>
+              <TextoChico>Nació el {fechaLarga(p.birthDate)}</TextoChico>
+            </View>
+          </View>
           {e.corregida ? (
             <View style={s.corregida}>
               <Ionicons name="time-outline" size={20} color={colors.primary} />
               <Texto style={{ flex: 1 }}><TextoFuerte color={colors.primary}>Edad corregida: </TextoFuerte>{e.corregida}</Texto>
             </View>
           ) : null}
-          <TextoChico>Nació el {fechaLarga(p.birthDate)}</TextoChico>
         </View>
       ) : null}
 
@@ -174,8 +182,9 @@ function Certificados({ patientId }: { patientId: string }) {
 }
 
 const s = StyleSheet.create({
-  edad: { fontFamily: fonts.bodySemi, fontSize: size.large, color: colors.primary2 },
-  corregida: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.bgSoft, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },
+  encabezado: { gap: 12, borderRadius: size.radiusGrande, padding: 20, boxShadow: sombra },
+  edad: { fontFamily: fonts.bodyBold, fontSize: size.large },
+  corregida: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.white, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 10 },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   filaEntre: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' },
   separador: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 12 },

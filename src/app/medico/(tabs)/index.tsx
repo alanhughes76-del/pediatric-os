@@ -32,6 +32,8 @@ import { useEscritorio } from '@/components/escritorio/Marco';
 import { categorias, colors, fonts, type Categoria } from '@/theme';
 import { useRolEquipo } from '@/navegacion/useRolEquipo';
 import { InicioAsistente } from '@/components/InicioAsistente';
+import { Saludo } from '@/components/Saludo';
+import { fraseDeEstacion } from '@/lib/estacion';
 
 type NombreIcono = keyof typeof Ionicons.glyphMap;
 
@@ -92,8 +94,9 @@ function Hoy() {
 
   return (
     <Pantalla ancho>
-      <View>
-        <TextoChico>{diaYFecha(hoy)}</TextoChico>
+      <View style={{ gap: 2 }}>
+        <Saludo texto={`Hola, ${db.doctor.name}`} izquierda />
+        <TextoChico>{diaYFecha(hoy)} · {fraseDeEstacion(hoy)}</TextoChico>
         <Titulo>{visitas.length === 0 ? 'Hoy no hay visitas' : `${visitas.length} ${visitas.length === 1 ? 'visita' : 'visitas'} hoy`}</Titulo>
       </View>
 
@@ -137,8 +140,8 @@ function Cifra({ color, icono, numero, texto, detalle, alerta, onPress }: {
   // En el teléfono, sin ícono: las cifras van de a dos por fila y el texto no entra.
   const escritorio = useEscritorio();
   return (
-    <Tarjeta style={s.cifra} onPress={onPress} accessibilityLabel={onPress ? `${texto}: ${numero}. ${detalle}` : undefined}>
-      {escritorio ? <View style={[s.cifraIcono, { backgroundColor: c.fondo }]}><Ionicons name={icono} size={22} color={c.acento} /></View> : null}
+    <Tarjeta style={[s.cifra, { backgroundColor: c.fondo, borderColor: c.fondo }]} onPress={onPress} accessibilityLabel={onPress ? `${texto}: ${numero}. ${detalle}` : undefined}>
+      {escritorio ? <View style={s.cifraIcono}><Ionicons name={icono} size={22} color={c.acento} /></View> : null}
       <View style={{ flex: 1 }}>
         <TextoChico>{texto}</TextoChico>
         <TextoFuerte style={s.cifraNumero}>{numero}</TextoFuerte>
@@ -232,7 +235,7 @@ const Ancho = ({ children, completo }: { children: ReactNode; completo?: boolean
 const s = StyleSheet.create({
   cifras: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
   cifra: { flexGrow: 1, flexBasis: 150, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
-  cifraIcono: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  cifraIcono: { width: 44, height: 44, borderRadius: 14, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
   cifraNumero: { fontFamily: fonts.title, fontSize: 30, lineHeight: 36, color: colors.primary },
   columnas: { flexDirection: 'row', alignItems: 'flex-start', gap: 24 },
   arriba: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 14 },

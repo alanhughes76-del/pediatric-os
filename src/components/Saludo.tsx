@@ -2,8 +2,8 @@ import { Text, StyleSheet } from 'react-native';
 import { colors, fonts } from '@/theme';
 
 /** Frase corta en letra manuscrita (Caveat), como en la app de Lovable. Nunca para datos. */
-export function Saludo({ texto = 'Hola, qué bueno verte' }: { texto?: string }) {
-  return <Text style={s.saludo}>{texto}</Text>;
+export function Saludo({ texto = 'Hola, qué bueno verte', izquierda }: { texto?: string; izquierda?: boolean }) {
+  return <Text style={[s.saludo, izquierda && { textAlign: 'left' }]}>{texto}</Text>;
 }
 
 const s = StyleSheet.create({

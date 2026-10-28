@@ -4,7 +4,7 @@
  */
 import { View, Text, StyleSheet } from 'react-native';
 import type { Patient, Scope } from '@/data/types';
-import { categorias, fonts, type Categoria } from '@/theme';
+import { categorias, colors, fonts, type Categoria } from '@/theme';
 
 export const TONO_AMBITO: Record<Scope, Categoria> = {
   membresia: 'celeste',
@@ -14,11 +14,12 @@ export const TONO_AMBITO: Record<Scope, Categoria> = {
   'sin-asignar': 'rosado',
 };
 
-export function Avatar({ paciente: p, tamano = 48 }: { paciente: Pick<Patient, 'firstName' | 'lastName' | 'scope'>; tamano?: number }) {
+/** `sobreColor`: fondo blanco, para cuando va sobre una tarjeta ya pintada con el color del ámbito. */
+export function Avatar({ paciente: p, tamano = 48, sobreColor }: { paciente: Pick<Patient, 'firstName' | 'lastName' | 'scope'>; tamano?: number; sobreColor?: boolean }) {
   const c = categorias[TONO_AMBITO[p.scope]];
   return (
     <View
-      style={[s.circulo, { width: tamano, height: tamano, borderRadius: tamano / 2, backgroundColor: c.fondo }]}
+      style={[s.circulo, { width: tamano, height: tamano, borderRadius: tamano / 2, backgroundColor: sobreColor ? colors.white : c.fondo }]}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
