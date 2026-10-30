@@ -9,7 +9,7 @@ import { ACLARACION_DOSIS, PRESENTACIONES, TEXTO_DROGA, TEXTO_ESTADO, TEXTO_MEJO
 import { aCampos, ahoraISO, deCampos, hora, hoyISO } from '@/lib/fechas';
 import { Campo, Opciones, Aviso } from '../Formulario';
 import { Boton } from '../Boton';
-
+import { SelectorTemperatura } from './SelectorTemperatura';
 
 const opciones = <T extends string>(textos: Record<T, string>) => (Object.keys(textos) as T[]).map((v) => ({ valor: v, texto: textos[v] }));
 
@@ -77,16 +77,7 @@ export function FormularioFiebre({ patientId, tipo, porMedico = false, onListo }
 
       {tipo === 'toma' ? (
         <>
-          <Campo
-            etiqueta="Temperatura (°C)"
-            value={temp}
-            onChangeText={setTemp}
-            keyboardType="decimal-pad"
-            inputMode="decimal"
-            placeholder="38,5"
-            style={{ fontSize: 26, minHeight: 60 }}
-            error={intento ? errores.temp : undefined}
-          />
+          <SelectorTemperatura valor={temp} onCambio={setTemp} error={intento ? errores.temp : undefined} />
           <Opciones etiqueta="¿Dónde se midió?" opciones={opciones(TEXTO_SITIO)} valor={sitio} onCambio={setSitio} />
           <Opciones etiqueta="¿Cómo está?" columna opciones={opciones(TEXTO_ESTADO)} valor={estado} onCambio={setEstado} />
           {intento && errores.estado ? <Aviso tono="alerta" texto={errores.estado} /> : null}

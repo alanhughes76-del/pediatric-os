@@ -1,4 +1,4 @@
-/** Tarjeta azul noche con círculos finos de adorno: lo más importante de la pantalla, una por pantalla. */
+/** Tarjeta azul noche con círculos finos de adorno: lo más importante de cada bloque (próxima visita, último informe). */
 import type { ReactNode } from 'react';
 import { View, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';

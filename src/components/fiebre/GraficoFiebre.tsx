@@ -4,7 +4,7 @@
  */
 import { useState } from 'react';
 import { View, type LayoutChangeEvent } from 'react-native';
-import Svg, { G, Line, Polyline, Circle, Text as SvgText, Rect } from 'react-native-svg';
+import Svg, { G, Line, Polygon, Polyline, Circle, Text as SvgText, Rect } from 'react-native-svg';
 import type { FeverEntry } from '@/data/types';
 import { LETRA_DROGA, UMBRAL_FIEBRE } from '@/lib/fiebre';
 import { fechaHoraCorta } from '@/lib/fechas';
@@ -62,6 +62,11 @@ export function GraficoFiebre({ registros }: { registros: FeverEntry[] }) {
               </G>
             ))}
 
+            <Polygon
+              points={`${px(tomas[0].at)},${py(yMin)} ${tomas.map((t) => `${px(t.at)},${py(t.temperatureC!)}`).join(' ')} ${px(tomas[tomas.length - 1].at)},${py(yMin)}`}
+              fill={colors.sky}
+              fillOpacity={0.18}
+            />
             <Polyline points={tomas.map((t) => `${px(t.at)},${py(t.temperatureC!)}`).join(' ')} fill="none" stroke={colors.primary3} strokeWidth={2} />
             {tomas.map((t) => {
               const fiebre = t.temperatureC! >= UMBRAL_FIEBRE;

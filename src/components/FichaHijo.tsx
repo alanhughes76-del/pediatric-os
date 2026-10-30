@@ -7,7 +7,7 @@
  * Plan vigente, Vacunas, Alergias y temas de salud, Crecimiento, Registro de fiebre y Certificados.
  * Documentos y materiales no se bajan desde el portal (decisión del Dr., 17/10/2026).
  */
-import { View, StyleSheet } from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '@/data/store';
@@ -16,8 +16,9 @@ import type { CarePlanCategory } from '@/data/types';
 import { edades } from '@/lib/edad';
 import { fechaLarga, fechaCorta, hoyISO } from '@/lib/fechas';
 import { categorias, colors, fonts, size, sombra } from '@/theme';
-import { Titulo, Texto, TextoFuerte, TextoChico } from './Texto';
+import { Antetitulo, Subtitulo, Titulo, Texto, TextoFuerte, TextoChico } from './Texto';
 import { Caja, Grilla } from './Caja';
+import { TarjetaNoche } from './TarjetaNoche';
 import { Avatar, TONO_AMBITO } from './Avatar';
 import { Etiqueta } from './Etiqueta';
 import { Boton } from './Boton';
@@ -42,6 +43,7 @@ export function FichaHijo({ hijoId, conEncabezado = true }: { hijoId: string; co
           <View style={s.fila}>
             <Avatar paciente={p} tamano={64} sobreColor />
             <View style={{ flex: 1, gap: 2 }}>
+              <Antetitulo color={tono.texto}>Ficha pediátrica</Antetitulo>
               <Titulo>{nombreCompleto(p)}</Titulo>
               <Texto style={[s.edad, { color: tono.texto }]}>{e.cronologica}</Texto>
               <TextoChico>Nació el {fechaLarga(p.birthDate)}</TextoChico>
@@ -78,21 +80,38 @@ export function FichaHijo({ hijoId, conEncabezado = true }: { hijoId: string; co
 
 function Informes({ patientId }: { patientId: string }) {
   const { db } = useApp();
-  const informes = informesFamilia(db, patientId);
+  const [ultimo, ...anteriores] = informesFamilia(db, patientId);
+  if (!ultimo) {
+    return (
+      <Caja titulo="Informes de las visitas" icono="document-text-outline" color="celeste">
+        <Texto color={colors.textMuted}>Todavía no hay informes.</Texto>
+      </Caja>
+    );
+  }
   return (
-    <Caja titulo="Informes de las visitas" icono="document-text-outline" color="celeste">
-      {informes.length === 0 ? <Texto color={colors.textMuted}>Todavía no hay informes.</Texto> : null}
-      {informes.map((i, n) => (
-        <View key={i.consulta.id} style={[{ gap: 8 }, n > 0 && s.separador]}>
-          <View style={s.filaEntre}>
-            <TextoFuerte>{fechaLarga(i.consulta.occurredAt)}</TextoFuerte>
-            <Etiqueta texto={TEXTO_VISITA[i.consulta.visitType]} tono="celeste" />
-          </View>
-          <Texto>{i.resumen}</Texto>
-          {i.version > 1 ? <TextoChico>Corregido el {fechaCorta(i.aprobadaEn)}</TextoChico> : null}
-        </View>
-      ))}
-    </Caja>
+    <>
+      <TarjetaNoche style={s.ultimo}>
+        <View style={s.chip}><Text style={s.chipTexto}>Última visita · {TEXTO_VISITA[ultimo.consulta.visitType]}</Text></View>
+        <Subtitulo color={colors.white}>{fechaLarga(ultimo.consulta.occurredAt)}</Subtitulo>
+        <Texto color={colors.white}>{ultimo.resumen}</Texto>
+        {ultimo.version > 1 ? <TextoChico color={colors.bgSoft}>Corregido el {fechaCorta(ultimo.aprobadaEn)}</TextoChico> : null}
+        <Text style={s.firma}>Un abrazo grande, Alan</Text>
+      </TarjetaNoche>
+      {anteriores.length > 0 ? (
+        <Caja titulo="Informes anteriores" icono="document-text-outline" color="celeste">
+          {anteriores.map((i, n) => (
+            <View key={i.consulta.id} style={[{ gap: 8 }, n > 0 && s.separador]}>
+              <View style={s.filaEntre}>
+                <TextoFuerte>{fechaLarga(i.consulta.occurredAt)}</TextoFuerte>
+                <Etiqueta texto={TEXTO_VISITA[i.consulta.visitType]} tono="celeste" />
+              </View>
+              <Texto>{i.resumen}</Texto>
+              {i.version > 1 ? <TextoChico>Corregido el {fechaCorta(i.aprobadaEn)}</TextoChico> : null}
+            </View>
+          ))}
+        </Caja>
+      ) : null}
+    </>
   );
 }
 
@@ -131,7 +150,7 @@ function PlanVigente({ patientId }: { patientId: string }) {
           <View style={{ gap: 12 }}>
             {vacunas.map((v, n) => (
               <View key={v.id} style={[s.fila, n > 0 && s.separador]}>
-                <Ionicons name="shield-checkmark" size={22} color={categorias.rosado.acento} />
+                <View style={s.tilde}><Ionicons name="checkmark" size={16} color={categorias.verde.texto} /></View>
                 <TextoFuerte style={{ flex: 1 }}>{v.vaccine}{v.dose ? ` · ${v.dose}` : ''}</TextoFuerte>
                 <TextoChico>{fechaCorta(v.appliedDate!)}</TextoChico>
               </View>
@@ -188,4 +207,9 @@ const s = StyleSheet.create({
   fila: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   filaEntre: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' },
   separador: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 12 },
+  ultimo: { flexGrow: 1, flexBasis: 320, minWidth: 0 },
+  chip: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 5, marginBottom: 4, borderRadius: 999, backgroundColor: colors.nocheSuave },
+  chipTexto: { fontFamily: fonts.bodyBold, fontSize: 12, color: colors.bgSoft },
+  firma: { fontFamily: fonts.hand, fontSize: 22, color: colors.sky, marginTop: 4 },
+  tilde: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: categorias.verde.fondo },
 });

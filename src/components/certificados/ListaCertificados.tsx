@@ -64,7 +64,8 @@ function ItemCertificado({ c, vista }: { c: Certificate; vista: 'medico' | 'fami
   };
 
   return (
-    <Tarjeta style={[{ gap: 10 }, anulado && { opacity: 0.8 }]}>
+    // En el portal va dentro de otra tarjeta: sin sombra, sobre fondo suave.
+    <Tarjeta style={[{ gap: 10 }, vista === 'familia' && s.anidada, anulado && { opacity: 0.8 }]}>
       <View style={s.fila}>
         <Ionicons name="ribbon-outline" size={24} color={anulado ? colors.textMuted : colors.primary2} />
         <View style={{ flex: 1, gap: 4 }}>
@@ -110,6 +111,7 @@ function ItemCertificado({ c, vista }: { c: Certificate; vista: 'medico' | 'fami
 }
 
 const s = StyleSheet.create({
+  anidada: { backgroundColor: colors.muted, boxShadow: 'none', padding: 14 },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   acciones: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 16, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 4 },
 });

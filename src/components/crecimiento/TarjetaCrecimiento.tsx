@@ -59,8 +59,18 @@ export function TarjetaCrecimiento({ paciente: p, vista }: { paciente: Patient; 
   const r = RANGOS.find((x) => x.valor === rango)!;
   const tieneOtraReferencia = esMedico && (ind === 'peso' || ind === 'talla');
 
+  const ultimoPeso = [...mediciones].reverse().find((m) => m.weightKg != null);
+  const ultimaTalla = [...mediciones].reverse().find((m) => m.heightCm != null);
+
   return (
     <View style={{ gap: 12 }}>
+      {!esMedico && (ultimoPeso || ultimaTalla) ? (
+        <View style={s.chips}>
+          {ultimoPeso ? <Medicion nombre="Peso" valor={`${ultimoPeso.weightKg!.toString().replace('.', ',')} kg`} fecha={ultimoPeso.measuredAt} /> : null}
+          {ultimaTalla ? <Medicion nombre="Talla" valor={`${ultimaTalla.heightCm!.toString().replace('.', ',')} cm`} fecha={ultimaTalla.measuredAt} /> : null}
+        </View>
+      ) : null}
+
       {p.sex === 'X' ? (
         esMedico ? (
           <Opciones
@@ -121,6 +131,17 @@ export function TarjetaCrecimiento({ paciente: p, vista }: { paciente: Patient; 
 
       {esMedico ? <TablaPorVisita filas={filas} paciente={p} /> : null}
       {!esMedico ? <TextoChico>Edad actual: {edadActual}</TextoChico> : null}
+    </View>
+  );
+}
+
+/** Última medida, sin juicio: solo el dato y su fecha. */
+function Medicion({ nombre, valor, fecha }: { nombre: string; valor: string; fecha: string }) {
+  return (
+    <View style={s.medicion}>
+      <TextoChico>{nombre}</TextoChico>
+      <TextoFuerte>{valor}</TextoFuerte>
+      <TextoChico>{fechaCorta(fecha)}</TextoChico>
     </View>
   );
 }
@@ -347,6 +368,7 @@ function TablaPorVisita({ filas, paciente }: { filas: FilaCrecimiento[]; pacient
 
 const s = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  medicion: { flexGrow: 1, flexBasis: 120, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: colors.muted },
   chip: { minHeight: 44, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1.5, borderColor: colors.primary3, backgroundColor: colors.white, justifyContent: 'center' },
   chipChico: { minHeight: 36, paddingHorizontal: 10 },
   chipActivo: { backgroundColor: colors.accion, borderColor: colors.accion },

@@ -37,11 +37,13 @@ function ItemFiebre({ r, vista }: { r: FeverEntry; vista: Vista }) {
   return (
     <Tarjeta style={{ gap: 8 }}>
       <View style={s.fila}>
-        <Ionicons
-          name={r.kind === 'toma' ? 'thermometer-outline' : 'medkit-outline'}
-          size={26}
-          color={fiebre ? colors.alert : colors.primary2}
-        />
+        <View style={[s.icono, { backgroundColor: fiebre ? colors.alertBg : colors.accionSuave }]}>
+          <Ionicons
+            name={r.kind === 'toma' ? 'thermometer-outline' : 'medkit-outline'}
+            size={22}
+            color={fiebre ? colors.alert : colors.primary2}
+          />
+        </View>
         <View style={{ flex: 1, gap: 2 }}>
           <TextoChico>{fechaHoraCorta(r.at)}</TextoChico>
           {r.kind === 'toma' ? (
@@ -121,6 +123,7 @@ function AccionesMedico({ r }: { r: FeverEntry }) {
 
 const s = StyleSheet.create({
   fila: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  icono: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   temp: { fontFamily: fonts.bodyBold, fontSize: 24, color: colors.primary },
   sitio: { fontFamily: fonts.body, fontSize: 16, color: colors.textMuted },
   droga: { fontFamily: fonts.bodySemi, fontSize: 20, color: colors.primary },

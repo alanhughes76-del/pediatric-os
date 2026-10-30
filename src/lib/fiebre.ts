@@ -55,3 +55,13 @@ export function leerTemperatura(texto: string): number | undefined {
   const n = Number(texto.trim().replace(',', '.'));
   return texto.trim() && Number.isFinite(n) && n >= 34 && n <= 43 ? n : undefined;
 }
+
+/**
+ * Botones + y − de la temperatura. Sin un valor válido arrancan en 37,0 con cualquiera de los dos:
+ * nunca se elige sola una temperatura al abrir el formulario.
+ */
+export function pasoTemperatura(texto: string, paso: number): string {
+  const actual = leerTemperatura(texto);
+  const n = actual == null ? 37 : Math.min(43, Math.max(34, Math.round((actual + paso) * 10) / 10));
+  return n.toFixed(1).replace('.', ',');
+}
