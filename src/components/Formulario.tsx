@@ -44,21 +44,24 @@ export function Opciones<T extends string>({ opciones, valor, onCambio, etiqueta
 
 // ---------- Campo de texto ----------
 
-export function Campo({ etiqueta, ayuda, error, style, multiline, ...p }: TextInputProps & { etiqueta?: string; ayuda?: string; error?: string }) {
+export function Campo({ etiqueta, ayuda, error, style, multiline, icono, ...p }: TextInputProps & { etiqueta?: string; ayuda?: string; error?: string; icono?: keyof typeof Ionicons.glyphMap }) {
   const [foco, setFoco] = useState(false);
   return (
     <View style={{ gap: 6, flexShrink: 1 }}>
       {etiqueta ? <Text style={s.etiqueta}>{etiqueta}</Text> : null}
-      <TextInput
-        placeholderTextColor={colors.textMuted}
-        onFocus={(e) => { setFoco(true); p.onFocus?.(e); }}
-        onBlur={(e) => { setFoco(false); p.onBlur?.(e); }}
-        multiline={multiline}
-        textAlignVertical={multiline ? 'top' : 'center'}
-        accessibilityLabel={p.accessibilityLabel ?? etiqueta}
-        style={[s.campo, multiline && s.campoMulti, foco && s.campoFoco, error ? s.campoError : null, style]}
-        {...p}
-      />
+      <View>
+        <TextInput
+          placeholderTextColor={colors.textMuted}
+          onFocus={(e) => { setFoco(true); p.onFocus?.(e); }}
+          onBlur={(e) => { setFoco(false); p.onBlur?.(e); }}
+          multiline={multiline}
+          textAlignVertical={multiline ? 'top' : 'center'}
+          accessibilityLabel={p.accessibilityLabel ?? etiqueta}
+          style={[s.campo, multiline && s.campoMulti, foco && s.campoFoco, error ? s.campoError : null, icono ? s.campoConIcono : null, style]}
+          {...p}
+        />
+        {icono ? <View style={s.campoIcono} pointerEvents="none"><Ionicons name={icono} size={20} color={colors.primary2} /></View> : null}
+      </View>
       {error ? <TextoChico color={colors.alert}>{error}</TextoChico> : ayuda ? <TextoChico>{ayuda}</TextoChico> : null}
     </View>
   );
@@ -138,6 +141,8 @@ const s = StyleSheet.create({
   campoMulti: { minHeight: 120, paddingTop: 12, borderRadius: 20 },
   campoFoco: { borderColor: colors.primary2 },
   campoError: { borderColor: colors.alert },
+  campoConIcono: { paddingLeft: 48 },
+  campoIcono: { position: 'absolute', left: 18, top: 16 },
   casilla: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48, paddingVertical: 6, borderRadius: 10 },
   casillaTexto: { fontFamily: fonts.body, fontSize: size.base, color: colors.text, lineHeight: 24 },
   interruptor: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 44 },

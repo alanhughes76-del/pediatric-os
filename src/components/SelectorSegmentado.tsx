@@ -4,6 +4,7 @@
  */
 import type { ReactNode } from 'react';
 import { Pressable, Text, View, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { anilloFoco, colors, fonts, sombra } from '@/theme';
 
 export interface OpcionSegmentada<T extends string> {
@@ -45,8 +46,9 @@ export function SelectorSegmentado<T extends string>({ opciones, valor, onCambio
             {o.adorno}
             <View style={{ flexShrink: 1 }}>
               <Text style={[s.texto, activa && s.textoActivo, oscura && { color: colors.white }]} numberOfLines={1}>{o.texto}</Text>
-              {o.detalle ? <Text style={[s.detalle, oscura && { color: colors.bgSoft }]} numberOfLines={1}>{o.detalle}</Text> : null}
+              {o.detalle ? <Text style={[s.detalle, oscura && { color: colors.bgSoft }]} numberOfLines={2}>{o.detalle}</Text> : null}
             </View>
+            {activa && tono === 'claro' ? <Ionicons name="checkmark-circle" size={20} color={colors.primary2} /> : null}
           </Pressable>
         );
       })}

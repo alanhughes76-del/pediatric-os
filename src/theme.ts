@@ -49,6 +49,8 @@ export const colors = {
   alertBorder: '#F5C2BC',
   /** Anillo de foco visible (teclado, web). */
   foco: '#3A7CA5',
+  /** Chips y cajas dentro de la tarjeta azul noche. */
+  nocheSuave: 'rgba(255, 255, 255, 0.12)',
 };
 
 /**

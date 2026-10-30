@@ -9,6 +9,8 @@ interface P {
   onPress: () => void;
   variante?: Variante;
   icono?: keyof typeof Ionicons.glyphMap;
+  /** Ícono después del texto, por ejemplo una flecha. */
+  iconoFinal?: keyof typeof Ionicons.glyphMap;
   detalle?: string;
   deshabilitado?: boolean;
   /** Menos relleno y letra un poco más chica, para botones lado a lado. */
@@ -23,7 +25,7 @@ const estilos: Record<Variante, { bg: string; fg: string; border: string }> = {
   contacto: { bg: colors.contacto, fg: colors.white, border: colors.contacto },
 };
 
-export function Boton({ titulo, onPress, variante = 'principal', icono, detalle, deshabilitado, compacto }: P) {
+export function Boton({ titulo, onPress, variante = 'principal', icono, iconoFinal, detalle, deshabilitado, compacto }: P) {
   const e = estilos[variante];
   return (
     <Pressable
@@ -44,6 +46,7 @@ export function Boton({ titulo, onPress, variante = 'principal', icono, detalle,
         <Text style={[s.texto, compacto && s.textoCompacto, { color: e.fg }]} numberOfLines={compacto ? 1 : undefined}>{titulo}</Text>
         {detalle ? <Text style={[s.detalle, { color: e.fg }]}>{detalle}</Text> : null}
       </View>
+      {iconoFinal ? <Ionicons name={iconoFinal} size={20} color={variante === 'principal' ? colors.sage : e.fg} /> : null}
     </Pressable>
   );
 }
