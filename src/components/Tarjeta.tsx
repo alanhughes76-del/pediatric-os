@@ -18,8 +18,9 @@ const s = StyleSheet.create({
   card: {
     backgroundColor: colors.white,
     borderRadius: size.radiusGrande,
+    // Sin borde a la vista (Stitch). Queda transparente para las tarjetas que marcan el suyo (formularios abiertos).
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'transparent',
     padding: 20,
     boxShadow: sombra,
   },

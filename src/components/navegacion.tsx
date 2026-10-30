@@ -1,5 +1,6 @@
-import { View, type ColorValue } from 'react-native';
+import type { ColorValue } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts } from '@/theme';
 
 /** Estilo común de encabezados y pestañas. */
@@ -11,28 +12,30 @@ export const encabezado = {
   headerBackTitle: 'Volver',
 } as const;
 
+/** La pestaña activa, ícono y texto, va dentro de una píldora azul noche (Stitch). */
 export const pestanas = {
   ...encabezado,
-  tabBarActiveTintColor: colors.accion,
-  tabBarActiveBackgroundColor: 'transparent',
+  tabBarActiveTintColor: colors.white,
+  tabBarActiveBackgroundColor: colors.accion,
   tabBarInactiveTintColor: colors.textMuted,
-  tabBarStyle: { backgroundColor: colors.white, borderTopColor: colors.border, height: 72, paddingTop: 8 },
-  tabBarLabelStyle: { fontFamily: fonts.bodyBold, fontSize: 12.5 },
+  tabBarItemStyle: { borderRadius: 999, overflow: 'hidden', marginHorizontal: 2, marginBottom: 8 },
+  tabBarLabelStyle: { fontFamily: fonts.bodyBold, fontSize: 12 },
 } as const;
+
+const ALTO_BARRA = 70;
+
+/** Barra inferior: el alto suma la franja segura del teléfono, para que la píldora entre completa. */
+export function useBarraPestanas() {
+  const { bottom } = useSafeAreaInsets();
+  return {
+    backgroundColor: colors.bg, borderTopWidth: 0, paddingTop: 8, paddingHorizontal: 2,
+    height: ALTO_BARRA + bottom, boxShadow: '0px -8px 24px rgba(30, 58, 82, 0.05)',
+  };
+}
 
 type NombreIcono = keyof typeof Ionicons.glyphMap;
 
-/** Ícono para una pestaña: la activa va dentro de una píldora azul noche (como en la app de Lovable). */
 export const iconoPestana = (nombre: NombreIcono) =>
-  function IconoPestana({ color, size, focused }: { color: ColorValue; size: number; focused: boolean }) {
-    return (
-      <View
-        style={{
-          width: 52, height: 30, borderRadius: 999, alignItems: 'center', justifyContent: 'center',
-          backgroundColor: focused ? colors.accion : 'transparent',
-        }}
-      >
-        <Ionicons name={nombre} color={focused ? colors.white : typeof color === 'string' ? color : undefined} size={size - 2} />
-      </View>
-    );
+  function IconoPestana({ color, size }: { color: ColorValue; size: number }) {
+    return <Ionicons name={nombre} color={typeof color === 'string' ? color : undefined} size={size - 2} />;
   };

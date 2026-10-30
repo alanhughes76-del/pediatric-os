@@ -1,6 +1,7 @@
 /**
  * Tokens de diseño: único archivo de colores, tipografía y medidas.
- * Paleta G de la app de Lovable (azul noche, celestes y verde agua), con contraste AA medido.
+ * Paleta G de la app de Lovable (azul noche, celestes y verde agua) sobre el crema cálido del diseño
+ * de Stitch (etapas S1 a S5), con contraste AA medido.
  * Texto sobre fondo de color: siempre el tono `texto` de su familia.
  */
 import { Platform } from 'react-native';
@@ -13,8 +14,8 @@ export const colors = {
   accionSuave: '#EAF4FB',
   /** Títulos y texto fuerte. */
   primary: '#1E3A52',
-  /** Azul profundo: íconos y texto destacado (4,6:1 sobre blanco). */
-  primary2: '#3A7CA5',
+  /** Azul profundo: íconos y texto destacado (5,2:1 sobre blanco; 4,9:1 sobre el crema). */
+  primary2: '#33739A',
   /** Íconos de navegación y bordes (3,6:1 sobre el fondo). */
   primary3: '#4A8AB5',
   /** Celeste: líneas de gráficos y bordes finos (decorativo, nunca texto). */
@@ -25,13 +26,14 @@ export const colors = {
   /** Crema para fondos cálidos. */
   cream: '#FBF8F4',
   bgSoft: '#EAF4FB',
-  bg: '#F7FAFC',
-  /** Fondo neutro (etiquetas, campos deshabilitados). */
-  muted: '#F0F5F9',
+  /** Fondo de la app: crema cálido (Stitch). */
+  bg: '#FCF9F5',
+  /** Fondo neutro (etiquetas, campos deshabilitados, selectores). */
+  muted: '#F6F3EF',
   text: '#1E3A52',
   textMuted: '#48647A',
   white: '#FFFFFF',
-  border: '#E3ECF2',
+  border: '#E9E4DD',
   /** Borde de campos de formulario. */
   input: '#CFE0EA',
   // Barra lateral (pantallas anchas).
@@ -67,6 +69,8 @@ export type Categoria = keyof typeof categorias;
 
 /** Sombra suave de las tarjetas (la misma de la app de Lovable). */
 export const sombra = '0px 1px 2px rgba(30, 58, 82, 0.04), 0px 10px 26px rgba(30, 58, 82, 0.06)';
+/** Sombra más marcada de la tarjeta azul noche. */
+export const sombraNoche = '0px 14px 32px -6px rgba(30, 58, 82, 0.18)';
 
 /** Anillo de foco para elementos tocables (se ve al navegar con teclado en la web). */
 export const anilloFoco = { outlineColor: colors.foco, outlineStyle: 'solid', outlineWidth: 2, outlineOffset: 2 } as object;
@@ -78,6 +82,8 @@ export const ANCHO_ESCRITORIO = 1024;
 export const fonts = {
   title: 'Manrope_800ExtraBold',
   titleSemi: 'Manrope_700Bold',
+  /** Parte liviana de los títulos editoriales (`TituloEditorial`). */
+  titleLight: 'Manrope_300Light',
   body: 'Manrope_400Regular',
   bodySemi: 'Manrope_600SemiBold',
   bodyBold: 'Manrope_700Bold',

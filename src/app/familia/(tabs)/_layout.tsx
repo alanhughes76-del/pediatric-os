@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { pestanas, iconoPestana as icono } from '@/components/navegacion';
+import { pestanas, iconoPestana as icono, useBarraPestanas } from '@/components/navegacion';
 import { CambiarRol } from '@/components/CambiarRol';
 import { useEscritorio } from '@/components/escritorio/Marco';
 import { Marca } from '@/components/Marca';
@@ -7,12 +7,13 @@ import { Marca } from '@/components/Marca';
 export default function FamiliaTabs() {
   // En pantallas anchas la navegación está en la barra lateral.
   const escritorio = useEscritorio();
+  const barra = useBarraPestanas();
   return (
     <Tabs
       screenOptions={{
         ...pestanas,
         headerRight: escritorio ? undefined : () => <CambiarRol />,
-        tabBarStyle: escritorio ? { display: 'none' } : pestanas.tabBarStyle,
+        tabBarStyle: escritorio ? { display: 'none' } : barra,
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Inicio', headerTitle: escritorio ? undefined : () => <Marca />, tabBarIcon: icono('home-outline') }} />

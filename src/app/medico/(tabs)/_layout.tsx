@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { pestanas, iconoPestana as icono } from '@/components/navegacion';
+import { pestanas, iconoPestana as icono, useBarraPestanas } from '@/components/navegacion';
 import { useEscritorio } from '@/components/escritorio/Marco';
 import { useApp } from '@/data/store';
 import { avisosDelMedico } from '@/data/avisos';
@@ -12,13 +12,14 @@ import { colors } from '@/theme';
  */
 export default function MedicoTabs() {
   const escritorio = useEscritorio();
+  const barra = useBarraPestanas();
   const { db } = useApp();
   const avisos = avisosDelMedico(db).length;
   return (
     <Tabs
       screenOptions={{
         ...pestanas,
-        tabBarStyle: escritorio ? { display: 'none' } : pestanas.tabBarStyle,
+        tabBarStyle: escritorio ? { display: 'none' } : barra,
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Inicio', tabBarIcon: icono('home-outline') }} />

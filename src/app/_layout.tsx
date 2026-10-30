@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   useFonts,
+  Manrope_300Light,
   Manrope_400Regular,
   Manrope_600SemiBold,
   Manrope_700Bold,
@@ -15,6 +16,7 @@ import { colors } from '@/theme';
 
 export default function RootLayout() {
   const [listo] = useFonts({
+    Manrope_300Light,
     Manrope_400Regular,
     Manrope_600SemiBold,
     Manrope_700Bold,
