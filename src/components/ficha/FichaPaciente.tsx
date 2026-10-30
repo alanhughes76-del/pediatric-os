@@ -11,7 +11,7 @@ import { View, ScrollView, Pressable, Text, Modal, StyleSheet } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useApp } from '@/data/store';
-import { paciente as buscarPaciente } from '@/data/selectores';
+import { fiebreDe, paciente as buscarPaciente, sinRevisar } from '@/data/selectores';
 import { Texto, TextoFuerte } from '../Texto';
 import { Seccion } from '../Seccion';
 import { PanelIA } from '../ia/PanelIA';
@@ -29,7 +29,7 @@ import { BloqueDocumentos } from './Documentos';
 import { BloqueMaterial } from './MaterialFamilia';
 import { Resumen } from './Resumen';
 import { BloqueAntecedentes } from './Antecedentes';
-import { categorias, colors, fonts } from '@/theme';
+import { anilloFoco, categorias, colors, fonts } from '@/theme';
 
 export type SolapaFicha =
   | 'resumen' | 'historia' | 'consultas' | 'crecimiento' | 'vacunas' | 'medicaciones' | 'estudios'
@@ -57,6 +57,7 @@ export function FichaPaciente({ patientId, solapaInicial }: { patientId: string;
   const nuevaConsulta = useNuevaConsulta(patientId);
   const p = buscarPaciente(db, patientId);
   if (!p) return <Texto>No encontramos esta ficha.</Texto>;
+  const fiebreSinRevisar = fiebreDe(db, p.id).filter(sinRevisar).length;
 
   return (
     <>
@@ -64,11 +65,11 @@ export function FichaPaciente({ patientId, solapaInicial }: { patientId: string;
         paciente={p}
         acciones={
           <>
-            <Boton titulo="Nueva consulta" icono="add" compacto onPress={nuevaConsulta} />
-            <Boton titulo="Acciones rápidas" icono={rapidas ? 'chevron-up' : 'chevron-down'} variante="contorno" compacto onPress={() => setRapidas((x) => !x)} />
+            <View style={s.accion}><Boton titulo="Nueva consulta" icono="add" compacto onPress={nuevaConsulta} /></View>
+            <View style={s.accion}><Boton titulo="Emitir certificado" icono="ribbon-outline" variante="contorno" compacto onPress={() => router.push({ pathname: '/medico/certificado/nuevo', params: { paciente: p.id } })} /></View>
+            <View style={s.accion}><Boton titulo="Acciones rápidas" icono={rapidas ? 'chevron-up' : 'chevron-down'} variante="secundario" compacto onPress={() => setRapidas((x) => !x)} /></View>
             {rapidas ? (
               <View style={s.rapidas}>
-                <BotonTexto texto="Emitir certificado" onPress={() => router.push({ pathname: '/medico/certificado/nuevo', params: { paciente: p.id } })} />
                 <BotonTexto texto="Registrar fiebre a mano" onPress={() => router.push({ pathname: '/medico/fiebre/nuevo', params: { paciente: p.id, tipo: 'toma' } })} />
                 <BotonTexto texto="Editar datos y familia" onPress={() => { setSolapa('datos'); setRapidas(false); }} />
                 {p.familyId ? <BotonTexto texto="Ver la familia" onPress={() => router.push(`/medico/familia/${p.familyId}`)} /> : null}
@@ -78,18 +79,21 @@ export function FichaPaciente({ patientId, solapaInicial }: { patientId: string;
         }
       />
 
-      <View style={s.barra}>
+      <View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.solapas} accessibilityRole="tablist">
           {SOLAPAS.map((x) => {
             const activa = x.clave === solapa;
+            const marcada = x.clave === 'fiebre' && fiebreSinRevisar > 0;
             return (
               <Pressable
                 key={x.clave}
                 onPress={() => setSolapa(x.clave)}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: activa }}
-                style={[s.solapa, activa && s.solapaActiva]}
+                accessibilityLabel={marcada ? `Fiebre, ${fiebreSinRevisar} sin revisar` : x.texto}
+                style={(e) => [s.solapa, activa && s.solapaActiva, (e as { focused?: boolean }).focused && anilloFoco]}
               >
+                {marcada ? <View style={s.punto} /> : null}
                 <Text style={[s.solapaTexto, activa && s.solapaTextoActiva]}>{x.texto}</Text>
               </Pressable>
             );
@@ -140,11 +144,13 @@ export function FichaPaciente({ patientId, solapaInicial }: { patientId: string;
 }
 
 const s = StyleSheet.create({
-  rapidas: { backgroundColor: colors.white, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4 },
-  // Solapas como píldoras (Lovable): la activa, azul marino con letra blanca.
-  barra: { backgroundColor: colors.white, borderRadius: 999, borderWidth: 1, borderColor: colors.border, padding: 5 },
-  solapas: { gap: 4 },
-  solapa: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 18, borderRadius: 999 },
+  accion: { flexGrow: 1, flexBasis: 200 },
+  rapidas: { flexBasis: '100%', flexDirection: 'row', flexWrap: 'wrap', columnGap: 16, backgroundColor: colors.muted, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4 },
+  // Solapas como píldoras sueltas: la activa, azul noche con letra blanca.
+  // El margen vertical deja lugar al anillo de foco, que la tira recortaría.
+  solapas: { gap: 8, paddingVertical: 5, paddingHorizontal: 2 },
+  solapa: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 18, borderRadius: 999, backgroundColor: colors.white },
+  punto: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.alert },
   solapaActiva: { backgroundColor: colors.accion },
   solapaTexto: { fontFamily: fonts.bodySemi, fontSize: 16, color: colors.textMuted },
   solapaTextoActiva: { color: colors.white, fontFamily: fonts.bodyBold },

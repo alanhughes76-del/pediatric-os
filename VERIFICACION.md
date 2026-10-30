@@ -239,6 +239,36 @@ Certificados en PDF: pasados al diseño nuevo a pedido del Dr. (28/10/2026). Rev
 
 No verificado: la app en el iPhone con Expo Go.
 
+## Diseño de Stitch (etapas S1 a S5, 30/10/2026)
+
+De Stitch se tomó solo lo visual. Las reglas, los datos y las funciones quedan igual, salvo lo que se lista en "Decisiones".
+
+| Punto | Estado | Cómo se verificó |
+|---|---|---|
+| Base: fondo crema, tarjetas sin borde, pestaña en píldora, títulos editoriales, tarjeta azul noche | ✅ | Navegador a 1280 px y a 375 px |
+| Ingreso e Inicio del portal | ✅ | Navegador a 1280 px y a 375 px, con Lucía Ferreyra |
+| Ficha del hijo y registro de fiebre de la familia | ✅ | Navegador a 1280 px y a 375 px |
+| Inicio y Agenda del médico, próxima salida y aviso de fiebre | ✅ | Navegador a 1280 px y a 375 px, como médico y como asistente |
+| Ficha del paciente: encabezado, 12 solapas, Resumen y Plan de cuidado | ✅ | Navegador a 1280 px y a 375 px. Las 12 solapas siguen; se abrieron Resumen, Crecimiento y Fiebre |
+| Barra lateral del médico, de la familia y del asistente | ✅ | Navegador a 1280 px |
+| Formulario de fiebre del médico (usa el selector nuevo) | ✅ | Navegador a 1280 px |
+| Contraste AA | ✅ | 29 combinaciones nuevas medidas, todas de 4,5:1 o más. Las más justas: azul profundo sobre el panel de alerta (4,52:1) y sobre `muted` (4,68:1) |
+| Rojo solo para alertas, con ícono y palabra | ✅ | `Etiqueta` de alerta ahora lleva siempre el ícono. El punto rojo de la solapa Fiebre va junto a la palabra |
+| Sin colores sueltos en las pantallas tocadas en S4 y S5 | ✅ | Búsqueda de `#` en esos archivos |
+| Sin WhatsApp | ✅ | Búsqueda en `src/app` y `src/components`: solo el comentario que filtra el valor viejo |
+| Consola del navegador | ✅ | Sin errores. Se fue el aviso de `accessibilityElementsHidden` en la web: los adornos usan `aria-hidden`, que vale en iOS, Android y web |
+| Tipos, linter y tests | ✅ | `npx tsc --noEmit`, `npx eslint src`, 400 tests |
+
+### Decisiones
+
+- **Quedó afuera de Stitch por inventado o por clínico:** "24 hs", consejos y pautas de fiebre firmados, alerta de 38,5 °C y "fiebre moderada", "Normal", "Excelente" y "Armónico", frecuencia cardíaca y tensión arterial, "Firmar ahora", botón de teléfono para urgencias, matrículas de ejemplo, "En guardia", maletín, traslados, "Plan Familiar", "Nota clínica del Dr." manuscrita, "Abrir ruta GPS" (siguen Google Maps y Waze), "Libreta digital", "Contactar mamá" y mapa de ruta.
+- **Cambios que no son solo de aspecto:** "Emitir certificado" pasó de Acciones rápidas a un botón a la vista en la ficha; la solapa Fiebre muestra un punto rojo si hay registros sin revisar; el Inicio del médico muestra el aviso de fiebre de 38 °C o más sin revisar (usa `UMBRAL_FIEBRE`, el mismo de siempre).
+- **Confirmar y reprogramar:** siguen dentro del turno (`medico/turno/[id]`), no en la tarjeta de la agenda como proponía Stitch.
+- **Motivo del turno:** el asistente no lo ve en las tarjetas, pero sí en el detalle del turno, como antes de esta etapa. Queda para que lo decida el Dr.
+- **Encabezado de la ficha:** dejó de estar pintado entero con el color del ámbito (D3); ahora es blanco con un aura de ese color, y las iniciales llevan el pastel del ámbito.
+
+No verificado: la app en el iPhone con Expo Go. En el navegador la fuente Caveat, las sombras y el desplazamiento de las solapas pueden verse algo distintos que en el teléfono.
+
 ## Curvas del Garrahan (Parte C, 28/10/2026)
 
 | Punto | Estado | Cómo se verificó |

@@ -4,7 +4,7 @@
  * En pantalla ancha las tarjetas van en grilla; en el teléfono, una debajo de otra.
  */
 import type { ReactNode } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
 import Svg, { Circle, Polyline } from 'react-native-svg';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,7 +25,7 @@ import { ComunicacionesPaciente } from './ComunicacionesPaciente';
 import { PanelIA } from '../ia/PanelIA';
 import { useEscritorio } from '../escritorio/Marco';
 import { Etiqueta } from '../Etiqueta';
-import { Texto, TextoFuerte, TextoChico } from '../Texto';
+import { Antetitulo, Texto, TextoFuerte, TextoChico } from '../Texto';
 import { categorias, colors, fonts, type Categoria } from '@/theme';
 import type { SolapaFicha } from './FichaPaciente';
 
@@ -61,7 +61,7 @@ export function Resumen({ paciente: p, irA }: { paciente: Patient; irA: (s: Sola
 
 type PropsTarjeta = { paciente: Patient; irA: (s: SolapaFicha) => void };
 
-const Rotulo = ({ children }: { children: ReactNode }) => <TextoChico style={s.rotulo}>{children}</TextoChico>;
+const Rotulo = ({ children }: { children: ReactNode }) => <Antetitulo style={{ marginBottom: 2 }}>{children}</Antetitulo>;
 const Vacio = ({ children }: { children: ReactNode }) => <Texto color={colors.textMuted}>{children}</Texto>;
 
 function ResumenClinico({ paciente: p, irA }: PropsTarjeta) {
@@ -70,11 +70,7 @@ function ResumenClinico({ paciente: p, irA }: PropsTarjeta) {
   const alergias = alergiasDe(db, p.id, 'medico');
   return (
     <Caja titulo="Resumen clínico" icono="document-text-outline" color="celeste" ver={{ texto: 'Ver historia clínica', onPress: () => irA('historia') }}>
-      <View>
-        <Rotulo>Nacimiento</Rotulo>
-        <Texto>{textoEG(p)}</Texto>
-      </View>
-      <View style={{ gap: 2 }}>
+      <View style={[s.panel, alergias.some((a) => a.status === 'confirmada') && s.panelAlerta]}>
         <Rotulo>Alergias</Rotulo>
         {alergias.length === 0 ? <Texto>Sin alergias cargadas</Texto> : null}
         {alergias.map((a) => (
@@ -86,13 +82,17 @@ function ResumenClinico({ paciente: p, irA }: PropsTarjeta) {
           </View>
         ))}
       </View>
-      <View style={{ gap: 2 }}>
+      <View style={s.panel}>
+        <Rotulo>Nacimiento</Rotulo>
+        <Texto>{textoEG(p)}</Texto>
+      </View>
+      <View style={s.panel}>
         <Rotulo>Medicación actual</Rotulo>
         {medicacionDe(db, p.id, hoyISO()).activas.length === 0
           ? <Texto>Ninguna</Texto>
           : medicacionDe(db, p.id, hoyISO()).activas.map((m) => <Texto key={m.id}>• {m.drug}</Texto>)}
       </View>
-      <View style={{ gap: 2 }}>
+      <View style={s.panel}>
         <Rotulo>Problemas activos</Rotulo>
         {problemas.length === 0 ? <Texto>Ninguno</Texto> : problemas.map((x) => <Texto key={x.id}>• {x.description}</Texto>)}
       </View>
@@ -117,8 +117,8 @@ function UltimaConsulta({ paciente: p, irA }: PropsTarjeta) {
             <TextoFuerte>{fechaLarga(c.occurredAt)}</TextoFuerte>
             <TextoChico>{TEXTO_VISITA[c.visitType]} · {TEXTO_MODALIDAD[c.modality]}</TextoChico>
           </View>
-          {nota?.findings ? <View><Rotulo>Hallazgos</Rotulo><Texto numberOfLines={3}>{nota.findings}</Texto></View> : null}
-          {nota?.plan ? <View><Rotulo>Conducta</Rotulo><Texto numberOfLines={3}>{nota.plan}</Texto></View> : null}
+          {nota?.findings ? <View style={s.panel}><Rotulo>Hallazgos</Rotulo><Texto numberOfLines={3}>{nota.findings}</Texto></View> : null}
+          {nota?.plan ? <View style={s.panel}><Rotulo>Conducta</Rotulo><Texto numberOfLines={3}>{nota.plan}</Texto></View> : null}
           <View style={s.etiquetas}>
             <Etiqueta
               texto={!nota ? 'Sin nota' : nota.status === 'aprobada' ? `Nota aprobada · v${nota.version}` : `Nota en borrador · v${nota.version}`}
@@ -165,12 +165,13 @@ function ProximasAcciones({ paciente: p, irA }: PropsTarjeta) {
   );
 }
 
-function ItemPlan({ item: i }: { item: CarePlanItem }) {
+function ItemPlan({ item: i, sobrePastel }: { item: CarePlanItem; sobrePastel?: boolean }) {
   const vencido = !!i.targetDate && i.targetDate < hoyISO();
   return (
     <Accion
       color={COLOR_CATEGORIA[i.category]}
       alerta={vencido}
+      sobrePastel={sobrePastel}
       icono={i.category === 'vacuna' ? 'shield-checkmark-outline' : i.category === 'prevencion' ? 'leaf-outline' : 'ellipse-outline'}
       titulo={i.description}
       detalle={i.targetDate ? `${vencido ? 'Vencido · ' : ''}${fechaCorta(i.targetDate)}` : 'Sin fecha'}
@@ -178,12 +179,12 @@ function ItemPlan({ item: i }: { item: CarePlanItem }) {
   );
 }
 
-function Accion({ color, alerta, icono, titulo, detalle, onPress }: {
-  color: Categoria; alerta?: boolean; icono: NombreIcono; titulo: string; detalle: string; onPress?: () => void;
+function Accion({ color, alerta, sobrePastel, icono, titulo, detalle, onPress }: {
+  color: Categoria; alerta?: boolean; sobrePastel?: boolean; icono: NombreIcono; titulo: string; detalle: string; onPress?: () => void;
 }) {
   const c = categorias[color];
   const contenido = (
-    <View style={[s.accion, { backgroundColor: alerta ? colors.alertBg : c.fondo }]}>
+    <View style={[s.accion, { backgroundColor: alerta ? colors.alertBg : sobrePastel ? colors.white : c.fondo }]}>
       <Ionicons name={icono} size={20} color={alerta ? colors.alert : c.acento} />
       <View style={{ flex: 1 }}>
         <TextoFuerte style={{ fontSize: 16 }} color={alerta ? colors.alert : c.texto}>{titulo}</TextoFuerte>
@@ -202,8 +203,8 @@ function Crecimiento({ paciente: p, irA }: PropsTarjeta) {
   const dato = (titulo: string, m: Medida | undefined, unidad: string) =>
     m ? (
       <View style={s.dato}>
-        <TextoChico>{titulo}</TextoChico>
-        <TextoFuerte style={{ fontSize: 22 }}>{String(m.valor).replace('.', ',')} {unidad}</TextoFuerte>
+        <Antetitulo>{titulo}</Antetitulo>
+        <TextoFuerte style={s.datoValor}>{String(m.valor).replace('.', ',')} {unidad}</TextoFuerte>
         <TextoChico style={{ fontFamily: fonts.bodySemi }} color={categorias.celeste.texto}>
           {m.resultado.ok ? formatoPercentil(m.resultado.percentil) : 'Sin percentilo'}
         </TextoChico>
@@ -327,16 +328,17 @@ function PlanPorPlazo({ paciente: p, irA }: PropsTarjeta) {
   return (
     <Caja titulo={`Plan de cuidado de ${p.firstName}`} icono="git-network-outline" color="celeste" ancha ver={{ texto: 'Ver plan completo', onPress: () => irA('plan') }}>
       <View style={s.columnas}>
-        {PLAZOS.map(({ clave, titulo }) => {
+        {PLAZOS.map(({ clave, titulo }, n) => {
           const c = categorias[COLOR_PLAZO[clave]];
           return (
-            <View key={clave} style={s.columna}>
-              <View style={[s.plazo, { backgroundColor: c.fondo }]}>
+            <View key={clave} style={[s.columna, { backgroundColor: c.fondo }]}>
+              <View style={s.plazo}>
+                <View style={[s.plazoNumero, { backgroundColor: c.texto }]}><Text style={s.plazoNumeroTexto}>{n + 1}</Text></View>
+                <TextoFuerte style={{ flex: 1, fontSize: 16 }} color={c.texto}>{titulo}</TextoFuerte>
                 <Ionicons name={ICONO_PLAZO[clave]} size={18} color={c.acento} />
-                <TextoFuerte style={{ fontSize: 16 }} color={c.texto}>{titulo}</TextoFuerte>
               </View>
-              {g[clave].length === 0 ? <TextoChico style={{ paddingHorizontal: 4 }}>Nada pendiente</TextoChico> : null}
-              {g[clave].map((i) => <ItemPlan key={i.id} item={i} />)}
+              {g[clave].length === 0 ? <TextoChico color={c.texto} style={{ paddingHorizontal: 4 }}>Nada pendiente</TextoChico> : null}
+              {g[clave].map((i) => <ItemPlan key={i.id} item={i} sobrePastel />)}
             </View>
           );
         })}
@@ -346,14 +348,18 @@ function PlanPorPlazo({ paciente: p, irA }: PropsTarjeta) {
 }
 
 const s = StyleSheet.create({
-  rotulo: { fontFamily: fonts.bodySemi, textTransform: 'uppercase', letterSpacing: 0.6, fontSize: 13 },
+  panel: { padding: 12, borderRadius: 20, backgroundColor: colors.muted },
+  panelAlerta: { backgroundColor: colors.alertBg },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   etiquetas: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  accion: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },
+  accion: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 10 },
   accionToque: { padding: 0, borderWidth: 0, boxShadow: 'none' },
   datos: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  dato: { flexGrow: 1, flexBasis: 110, backgroundColor: colors.bg, borderRadius: 12, padding: 12, gap: 2 },
+  dato: { flexGrow: 1, flexBasis: 110, backgroundColor: colors.muted, borderRadius: 20, padding: 12, gap: 2 },
+  datoValor: { fontFamily: fonts.title, fontSize: 24, lineHeight: 30, color: colors.primary },
   columnas: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
-  columna: { flexGrow: 1, flexBasis: 220, minWidth: 0, gap: 8 },
-  plazo: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9 },
+  columna: { flexGrow: 1, flexBasis: 220, minWidth: 0, gap: 8, padding: 12, borderRadius: 20 },
+  plazo: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingBottom: 2 },
+  plazoNumero: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  plazoNumeroTexto: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.white },
 });

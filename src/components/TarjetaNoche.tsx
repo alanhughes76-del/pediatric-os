@@ -10,7 +10,7 @@ export function TarjetaNoche({ children, style }: { children: ReactNode; style?:
     // La sombra va por fuera: `overflow: hidden` la recortaría en el teléfono.
     <View style={[s.sombra, style]}>
       <View style={s.tarjeta}>
-        <View style={s.adorno} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        <View style={s.adorno} pointerEvents="none" aria-hidden>
           <Svg width="100%" height="100%" viewBox="0 0 100 100">
             <Circle cx="50" cy="50" r="46" stroke={colors.white} strokeWidth={1.2} strokeDasharray="4 3" fill="none" />
             <Circle cx="50" cy="50" r="32" stroke={colors.white} strokeWidth={0.8} fill="none" />

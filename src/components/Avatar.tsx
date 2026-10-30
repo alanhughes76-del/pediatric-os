@@ -20,8 +20,7 @@ export function Avatar({ paciente: p, tamano = 48, sobreColor }: { paciente: Pic
   return (
     <View
       style={[s.circulo, { width: tamano, height: tamano, borderRadius: tamano / 2, backgroundColor: sobreColor ? colors.white : c.fondo }]}
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
+      aria-hidden
     >
       <Text style={[s.texto, { color: c.texto, fontSize: Math.round(tamano * 0.38) }]}>
         {`${p.firstName[0] ?? ''}${p.lastName[0] ?? ''}`.toUpperCase()}

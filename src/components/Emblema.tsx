@@ -5,7 +5,7 @@ import { colors, sombra } from '@/theme';
 
 export function Emblema() {
   return (
-    <View style={s.circulo} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <View style={s.circulo} aria-hidden>
       <View style={s.aro} />
       <Svg width={44} height={44} viewBox="0 0 64 64" fill="none">
         <Path d="M12 28L32 12L52 28" stroke={colors.primary} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />

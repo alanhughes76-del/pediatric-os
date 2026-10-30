@@ -9,7 +9,7 @@ import { colors, fonts, size } from '@/theme';
 /** Decorativa: el lector de pantalla no la lee. */
 export function LineaOndulada({ ancho = 96 }: { ancho?: number }) {
   return (
-    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <View aria-hidden>
       <Svg width={ancho} height={8} viewBox="0 0 100 8" preserveAspectRatio="none">
         <Path d="M1 4C12 1 18 7 30 4C42 1 48 7 60 4C72 1 78 7 90 4C94 3 97 3.5 99 4" stroke={colors.sky} strokeWidth={2} strokeLinecap="round" fill="none" />
       </Svg>

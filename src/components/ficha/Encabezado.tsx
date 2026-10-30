@@ -1,12 +1,12 @@
 /**
  * Encabezado de la ficha (prompt maestro 5.2): iniciales, nombre, edad, peso y talla de la última
  * medición, grupo sanguíneo, nacimiento y DNI; etiquetas de familia, cobertura, alergias y ámbito
- * (tipo de seguimiento); acciones y tarjeta "Próximo turno".
+ * (tipo de seguimiento); tarjeta "Próximo turno" y acciones. Blanco, con un aura del color del ámbito.
  * Y el bloque "Datos del paciente": DNI, ámbito (se guarda al cambiarlo), cobertura, grupo
  * sanguíneo y familia, editables.
  */
 import type { ReactNode } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '@/data/store';
@@ -15,14 +15,14 @@ import { TEXTO_TIPO_TURNO, TEXTO_ESTADO_TURNO } from '@shared/agenda';
 import { GRUPOS_SANGUINEOS, type BloodType, type CoverageKind, type Patient, type Scope } from '@/data/types';
 import { edades, textoEG } from '@/lib/edad';
 import { cuandoEs, fechaCorta, hora } from '@/lib/fechas';
-import { Titulo, Texto, TextoFuerte, TextoChico } from '../Texto';
+import { Antetitulo, Titulo, Texto, TextoFuerte, TextoChico } from '../Texto';
 import { Opciones } from '../Formulario';
 import { Tarjeta } from '../Tarjeta';
 import { Etiqueta } from '../Etiqueta';
 import { Seccion } from '../Seccion';
 import { BotonTexto, CampoEditable } from './piezas';
 import { Avatar, TONO_AMBITO } from '../Avatar';
-import { categorias, colors, fonts, size } from '@/theme';
+import { categorias, colors, size } from '@/theme';
 
 const SEXO = { M: 'Masculino', F: 'Femenino', X: 'X' } as const;
 
@@ -44,26 +44,57 @@ export function Encabezado({ paciente: p, acciones }: { paciente: Patient; accio
   const tono = categorias[TONO_AMBITO[p.scope]];
 
   return (
-    <Tarjeta style={[s.tarjeta, { backgroundColor: tono.fondo, borderColor: tono.fondo }]}>
+    <Tarjeta style={s.tarjeta}>
+      {/* Aura del color del ámbito; recortada acá para no cortar la sombra de la tarjeta. */}
+      <View style={s.aura} pointerEvents="none" aria-hidden>
+        <View style={[s.mancha, { backgroundColor: tono.fondo }]} />
+      </View>
+
       <View style={s.arriba}>
-        <Avatar paciente={p} tamano={72} sobreColor />
         <View style={s.datos}>
-          <Titulo>{nombreCompleto(p)}</Titulo>
-          <View style={s.cifras}>
-            <Cifra texto={e.cronologica} color={tono.texto} />
-            {peso?.weightKg != null ? <Cifra texto={`${coma(peso.weightKg)} kg`} /> : null}
-            {talla?.heightCm != null ? <Cifra texto={`${coma(talla.heightCm)} cm`} /> : null}
-            {p.bloodType ? <Cifra texto={p.bloodType} /> : null}
-            {p.dni ? <Cifra texto={`DNI ${p.dni}`} /> : null}
+          <View style={s.identidad}>
+            <Avatar paciente={p} tamano={72} />
+            <View style={{ flex: 1, gap: 2 }}>
+              <Antetitulo color={tono.texto}>Ficha pediátrica</Antetitulo>
+              <Titulo>{nombreCompleto(p)}</Titulo>
+            </View>
           </View>
-          <TextoChico>
-            Nació el {fechaCorta(p.birthDate)} · {textoEG(p)} · Sexo {SEXO[p.sex]}
-            {peso || talla ? ` · Última medición ${fechaCorta((peso ?? talla)!.measuredAt)}` : ''}
-          </TextoChico>
+          <Dato icono="gift-outline">
+            <TextoFuerte style={{ fontSize: 16 }}>{e.cronologica}</TextoFuerte> · Nació el {fechaCorta(p.birthDate)} · {textoEG(p)} · Sexo {SEXO[p.sex]}
+          </Dato>
+          {peso || talla ? (
+            <Dato icono="resize-outline">
+              {peso?.weightKg != null ? <>Peso: <TextoFuerte style={{ fontSize: 16 }}>{coma(peso.weightKg)} kg</TextoFuerte></> : null}
+              {peso && talla ? ' · ' : ''}
+              {talla?.heightCm != null ? <>Talla: <TextoFuerte style={{ fontSize: 16 }}>{coma(talla.heightCm)} cm</TextoFuerte></> : null}
+              {` · ${fechaCorta((peso ?? talla)!.measuredAt)}`}
+            </Dato>
+          ) : null}
+          {p.dni || p.bloodType ? (
+            <Dato icono="card-outline">
+              {[p.dni && `DNI ${p.dni}`, p.bloodType && `Grupo ${p.bloodType}`].filter(Boolean).join(' · ')}
+            </Dato>
+          ) : null}
+          {e.corregida ? (
+            <View style={s.corregida}>
+              <Ionicons name="time-outline" size={20} color={colors.primary} />
+              <Texto style={{ flex: 1 }}>
+                <TextoFuerte color={colors.primary}>Edad corregida: </TextoFuerte>
+                {e.corregida}
+              </Texto>
+            </View>
+          ) : null}
+          <View style={s.etiquetas}>
+            {familia ? <Etiqueta texto={familia.name} tono="neutro" /> : null}
+            {cobertura ? <Etiqueta texto={cobertura} tono="celeste" /> : null}
+            {confirmadas.map((a) => <Etiqueta key={a.id} texto={`Alergia: ${a.allergen}`} tono="alerta" />)}
+            {referidas.map((a) => <Etiqueta key={a.id} texto={`Alergia referida: ${a.allergen}`} tono="naranja" />)}
+            {alergias.length === 0 ? <Etiqueta texto="Sin alergias cargadas" tono="verde" /> : null}
+            <Etiqueta texto={db.ambitos[p.scope]} tono={TONO_AMBITO[p.scope]} />
+          </View>
         </View>
-        {acciones ? <View style={s.acciones}>{acciones}</View> : null}
         <View style={s.turno}>
-          <TextoChico style={{ fontFamily: fonts.bodySemi }}>Próximo turno</TextoChico>
+          <Antetitulo>Próximo turno</Antetitulo>
           {turno ? (
             <>
               <TextoFuerte>{cuandoEs(turno.start)}, {hora(turno.start)} h</TextoFuerte>
@@ -76,30 +107,18 @@ export function Encabezado({ paciente: p, acciones }: { paciente: Patient; accio
         </View>
       </View>
 
-      {e.corregida ? (
-        <View style={s.corregida}>
-          <Ionicons name="time-outline" size={20} color={colors.primary} />
-          <Texto style={{ flex: 1 }}>
-            <TextoFuerte color={colors.primary}>Edad corregida: </TextoFuerte>
-            {e.corregida}
-          </Texto>
-        </View>
-      ) : null}
-
-      <View style={s.etiquetas}>
-        {familia ? <Etiqueta texto={familia.name} tono="neutro" /> : null}
-        {cobertura ? <Etiqueta texto={cobertura} tono="celeste" /> : null}
-        {confirmadas.map((a) => <Etiqueta key={a.id} texto={`Alergia: ${a.allergen}`} tono="alerta" />)}
-        {referidas.map((a) => <Etiqueta key={a.id} texto={`Alergia referida: ${a.allergen}`} tono="naranja" />)}
-        {alergias.length === 0 ? <Etiqueta texto="Sin alergias cargadas" tono="verde" /> : null}
-        <Etiqueta texto={db.ambitos[p.scope]} tono={TONO_AMBITO[p.scope]} />
-      </View>
+      {acciones ? <View style={s.acciones}>{acciones}</View> : null}
     </Tarjeta>
   );
 }
 
-function Cifra({ texto, color }: { texto: string; color?: string }) {
-  return <Text style={[s.cifra, color ? { color, fontFamily: fonts.bodyBold } : null]}>{texto}</Text>;
+function Dato({ icono, children }: { icono: keyof typeof Ionicons.glyphMap; children: ReactNode }) {
+  return (
+    <View style={s.dato}>
+      <Ionicons name={icono} size={18} color={colors.primary2} style={{ marginTop: 2 }} />
+      <Texto style={{ flex: 1, fontSize: 16 }}>{children}</Texto>
+    </View>
+  );
 }
 
 const COBERTURAS = (Object.keys(TEXTO_COBERTURA) as CoverageKind[]).map((v) => ({ valor: v, texto: TEXTO_COBERTURA[v] }));
@@ -158,13 +177,15 @@ export function BloqueDatos({ paciente: p }: { paciente: Patient }) {
 
 const s = StyleSheet.create({
   tarjeta: { gap: 14, padding: 22 },
+  aura: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, overflow: 'hidden', borderRadius: size.radiusGrande },
+  mancha: { position: 'absolute', top: -96, right: -72, width: 280, height: 280, borderRadius: 140, opacity: 0.7 },
   arriba: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 18 },
-  datos: { flex: 1, minWidth: 220, gap: 6 },
-  cifras: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 18, rowGap: 4 },
-  cifra: { fontFamily: fonts.bodySemi, fontSize: size.large, color: colors.text },
-  acciones: { gap: 10, minWidth: 240, maxWidth: 320, flexGrow: 1 },
-  turno: { gap: 2, minWidth: 240, flexGrow: 1, maxWidth: 320, backgroundColor: colors.white, borderRadius: 20, padding: 14 },
+  datos: { flexGrow: 1, flexBasis: 280, minWidth: 0, gap: 8 },
+  identidad: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  dato: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  acciones: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  turno: { gap: 2, minWidth: 240, flexGrow: 1, maxWidth: 320, backgroundColor: colors.muted, borderRadius: 20, padding: 14 },
   familia: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  corregida: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.white, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 10 },
+  corregida: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.muted, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 10 },
   etiquetas: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 });

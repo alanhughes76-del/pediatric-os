@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, fonts, categorias, type Categoria } from '@/theme';
 
 type Tono = 'azul' | 'celeste' | 'alerta' | 'neutro' | Exclude<Categoria, 'celeste'>;
@@ -18,12 +19,13 @@ export function Etiqueta({ texto, tono = 'celeste' }: { texto: string; tono?: To
   const t = tonos[tono];
   return (
     <View style={[s.root, { backgroundColor: t.bg }]}>
+      {tono === 'alerta' ? <Ionicons name="warning" size={14} color={t.fg} /> : null}
       <Text style={[s.texto, { color: t.fg }]}>{texto}</Text>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  root: { alignSelf: 'flex-start', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4 },
+  root: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4 },
   texto: { fontFamily: fonts.bodyBold, fontSize: 13.5 },
 });

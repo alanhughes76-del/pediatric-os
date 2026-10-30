@@ -23,7 +23,7 @@ function Mancha({ id, color, estilo }: { id: string; color: string; estilo: obje
 export function FondoManchas() {
   return (
     // Recortadas acá: si no, agrandan el ancho desplazable de la pantalla y el contenido se corre al enfocar algo.
-    <View style={[StyleSheet.absoluteFill, { overflow: 'hidden' }]} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <View style={[StyleSheet.absoluteFill, { overflow: 'hidden' }]} pointerEvents="none" aria-hidden>
       <Mancha id="mancha-celeste" color={colors.sky} estilo={{ right: -160, top: -190 }} />
       <Mancha id="mancha-verde" color={colors.sage} estilo={{ left: -190, top: '35%' }} />
     </View>

@@ -49,8 +49,8 @@ function Item({ texto, icono, activo, onPress, detalle }: { texto: string; icono
       accessibilityLabel={detalle ? `${texto}, ${detalle}` : texto}
       style={(e) => [s.item, activo && s.itemActivo, e.pressed && !activo && s.itemApretado, (e as { focused?: boolean }).focused && anilloFoco]}
     >
-      <Ionicons name={icono} size={20} color={activo ? colors.white : colors.sidebarTexto} />
-      <Text style={[s.itemTexto, activo && { color: colors.white }]} numberOfLines={1}>{texto}</Text>
+      <Ionicons name={icono} size={20} color={activo ? colors.primary : colors.sidebarTexto} />
+      <Text style={[s.itemTexto, activo && s.itemTextoActivo]} numberOfLines={1}>{texto}</Text>
     </Pressable>
   );
 }
@@ -173,11 +173,12 @@ const s = StyleSheet.create({
   lateral: { width: 256, backgroundColor: colors.sidebar, paddingHorizontal: 12, paddingTop: 22, paddingBottom: 14, gap: 18 },
   marca: { paddingHorizontal: 10 },
   item: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, minHeight: 44, borderRadius: 999 },
-  itemActivo: { backgroundColor: colors.sidebarActivo },
-  itemApretado: { backgroundColor: 'rgba(255,255,255,0.06)' },
+  itemActivo: { backgroundColor: colors.accionSuave },
+  itemApretado: { backgroundColor: colors.nocheSuave },
+  itemTextoActivo: { fontFamily: fonts.bodyBold, color: colors.primary },
   itemTexto: { fontFamily: fonts.bodySemi, fontSize: 15, color: colors.sidebarTexto, flex: 1 },
-  pie: { gap: 2, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)', paddingTop: 12 },
-  perfil: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 10, paddingBottom: 8 },
+  pie: { gap: 2 },
+  perfil: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 8, marginBottom: 4, borderRadius: 20, backgroundColor: colors.nocheSuave },
   avatar: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.sidebarActivo, alignItems: 'center', justifyContent: 'center' },
   avatarTexto: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.white },
   perfilNombre: { fontFamily: fonts.bodySemi, fontSize: 15, color: colors.white },
@@ -190,7 +191,7 @@ const s = StyleSheet.create({
   buscador: {
     // Se achica en pantallas de 1024 px para que la barra no se pase del borde.
     flexDirection: 'row', alignItems: 'center', gap: 10, width: '100%', maxWidth: 480, minWidth: 200, flexShrink: 1, height: 44,
-    paddingHorizontal: 18, borderRadius: 999, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.input,
+    paddingHorizontal: 18, borderRadius: 999, backgroundColor: colors.muted,
   },
   buscadorTexto: { flex: 1, fontFamily: fonts.body, fontSize: size.base, color: colors.text, outlineStyle: 'none' } as object,
   titulo: { fontFamily: fonts.title, fontSize: 20, color: colors.primary },
