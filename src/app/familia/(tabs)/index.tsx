@@ -11,7 +11,7 @@ import { Pantalla } from '@/components/Pantalla';
 import { BarraPacienteX } from '@/components/BotonPacienteX';
 import { Antetitulo, Subtitulo, Texto, TextoChico, TextoFuerte } from '@/components/Texto';
 import { FichaHijo } from '@/components/FichaHijo';
-import { TarjetaNoche } from '@/components/TarjetaNoche';
+import { ChipNoche, TarjetaNoche } from '@/components/TarjetaNoche';
 import { TituloEditorial } from '@/components/TituloEditorial';
 import { Papelito } from '@/components/Papelito';
 import { SelectorSegmentado } from '@/components/SelectorSegmentado';
@@ -44,8 +44,8 @@ export default function InicioFamilia() {
       <View style={s.arriba}>
         <TarjetaNoche style={s.proxima}>
           <View style={s.chips}>
-            <Chip texto="Próxima visita" />
-            {proxima?.modality === 'domicilio' ? <Chip texto="En tu hogar" icono="home-outline" /> : null}
+            <ChipNoche texto="Próxima visita" />
+            {proxima?.modality === 'domicilio' ? <ChipNoche texto="En tu hogar" icono="home-outline" /> : null}
           </View>
           {proxima ? (
             <>
@@ -108,15 +108,6 @@ export default function InicioFamilia() {
   );
 }
 
-function Chip({ texto, icono }: { texto: string; icono?: keyof typeof Ionicons.glyphMap }) {
-  return (
-    <View style={s.chip}>
-      {icono ? <Ionicons name={icono} size={14} color={colors.bgSoft} /> : null}
-      <Text style={s.chipTexto}>{texto}</Text>
-    </View>
-  );
-}
-
 const s = StyleSheet.create({
   arriba: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
   costado: { flexGrow: 1, flexBasis: 280, gap: 12 },
@@ -125,8 +116,6 @@ const s = StyleSheet.create({
   visita: { gap: 8, borderRadius: size.radiusGrande, padding: 20, backgroundColor: categorias.verde.fondo },
   proxima: { flexGrow: 2, flexBasis: 340 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, backgroundColor: colors.nocheSuave },
-  chipTexto: { fontFamily: fonts.bodyBold, fontSize: 12, color: colors.bgSoft },
   detalle: { gap: 2, marginTop: 6, padding: 14, borderRadius: 20, backgroundColor: colors.nocheSuave },
   firma: { fontFamily: fonts.hand, fontSize: 22, color: colors.sky, marginTop: 4 },
 });

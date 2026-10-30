@@ -12,9 +12,14 @@ import { porConfirmar, turnosDelDia, turnosEntre } from '@/data/selectores';
 import type { Appointment } from '@/data/types';
 import { ahoraISO, diaYFecha, hora } from '@/lib/fechas';
 import { Pantalla } from '@/components/Pantalla';
-import { Titulo, TextoFuerte, TextoChico } from '@/components/Texto';
+import { Antetitulo, TextoFuerte, TextoChico } from '@/components/Texto';
 import { Boton } from '@/components/Boton';
-import { Opciones, Aviso } from '@/components/Formulario';
+import { Tarjeta } from '@/components/Tarjeta';
+import { TituloEditorial } from '@/components/TituloEditorial';
+import { SelectorSegmentado } from '@/components/SelectorSegmentado';
+import { Etiqueta } from '@/components/Etiqueta';
+import { BotonTexto } from '@/components/ficha/piezas';
+import { Aviso } from '@/components/Formulario';
 import { EstadoVacio } from '@/components/Estados';
 import { TarjetaTurno } from '@/components/agenda/piezas';
 import { useEscritorio } from '@/components/escritorio/Marco';
@@ -50,7 +55,7 @@ export default function Agenda() {
 
   const mover = (n: number) => setDia((d) => (vista === 'dia' ? sumarDiasA(d, n) : vista === 'semana' ? sumarDiasA(d, 7 * n) : sumarMeses(d, n)));
   const titulo = vista === 'dia'
-    ? `${diaYFecha(dia)}${dia === hoy ? ' · hoy' : ''}`
+    ? diaYFecha(dia)
     : vista === 'semana'
       ? `Semana del ${numero(lunesDe(dia))} de ${MESES[Number(lunesDe(dia).slice(5, 7)) - 1]}`
       : mesDe(dia)[0].toUpperCase() + mesDe(dia).slice(1);
@@ -58,8 +63,12 @@ export default function Agenda() {
   return (
     <Pantalla ancho>
       <View style={s.encabezado}>
-        <Titulo style={{ flex: 1 }}>Agenda</Titulo>
-        <View style={{ minWidth: 150 }}>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Antetitulo>Cuaderno de ruta</Antetitulo>
+          <TituloEditorial texto="Agenda de" destacado="visitas" ondulada />
+          <Text style={s.frase}>Organizando el cuidado, casa por casa.</Text>
+        </View>
+        <View style={{ minWidth: 104 }}>
           <Boton titulo="+ Turno" compacto onPress={() => router.push({ pathname: '/medico/turno/nuevo', params: { dia } })} />
         </View>
       </View>
@@ -87,24 +96,75 @@ export default function Agenda() {
         </View>
       ) : null}
 
-      <Opciones
-        opciones={[{ valor: 'dia', texto: 'Día' }, { valor: 'semana', texto: 'Semana' }, { valor: 'mes', texto: 'Mes' }]}
-        valor={vista}
-        onCambio={setVista}
-        etiqueta="Ver"
-      />
-
-      <View style={s.navegacion}>
-        <BotonFlecha icono="chevron-back" etiqueta="Anterior" onPress={() => mover(-1)} />
-        <TextoFuerte style={s.tituloVista}>{titulo}</TextoFuerte>
-        <BotonFlecha icono="chevron-forward" etiqueta="Siguiente" onPress={() => mover(1)} />
-        {dia !== hoy ? <View style={{ minWidth: 90 }}><Boton titulo="Hoy" compacto variante="secundario" onPress={() => setDia(hoy)} /></View> : null}
-      </View>
+      <Tarjeta style={{ gap: 14 }}>
+        <View style={s.navegacion}>
+          <BotonFlecha icono="chevron-back" etiqueta="Anterior" onPress={() => mover(-1)} />
+          <View style={s.tituloVista}>
+            <TextoFuerte style={{ textAlign: 'center', fontSize: 18 }}>{titulo}</TextoFuerte>
+            {dia !== hoy ? <BotonTexto texto="Volver a hoy" onPress={() => setDia(hoy)} /> : vista === 'dia' ? <View><Etiqueta texto="Hoy" tono="celeste" /></View> : null}
+          </View>
+          <BotonFlecha icono="chevron-forward" etiqueta="Siguiente" onPress={() => mover(1)} />
+        </View>
+        {vista === 'dia' ? <TiraDias dia={dia} hoy={hoy} onElegir={setDia} /> : null}
+        <SelectorSegmentado
+          etiqueta="Ver"
+          anchoMinimo={80}
+          opciones={[{ valor: 'dia', texto: 'Día' }, { valor: 'semana', texto: 'Semana' }, { valor: 'mes', texto: 'Mes' }]}
+          valor={vista}
+          onCambio={setVista}
+        />
+      </Tarjeta>
 
       {vista === 'dia' ? <VistaDia dia={dia} /> : null}
       {vista === 'semana' ? <VistaSemana dia={dia} escritorio={escritorio} onElegir={(d) => { setDia(d); setVista('dia'); }} /> : null}
       {vista === 'mes' ? <VistaMes dia={dia} hoy={hoy} onElegir={(d) => { setDia(d); setVista('dia'); }} /> : null}
     </Pantalla>
+  );
+}
+
+/** Cinco días alrededor del elegido. */
+function TiraDias({ dia, hoy, onElegir }: { dia: string; hoy: string; onElegir: (d: string) => void }) {
+  return (
+    <View style={s.tira}>
+      {[-2, -1, 0, 1, 2].map((n) => {
+        const d = sumarDiasA(dia, n);
+        const activo = d === dia;
+        return (
+          <Pressable
+            key={d}
+            onPress={() => onElegir(d)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: activo }}
+            accessibilityLabel={`${diaYFecha(d)}${d === hoy ? ', hoy' : ''}`}
+            style={(estado) => [s.diaTira, activo && s.diaTiraActivo, (estado as { focused?: boolean }).focused && anilloFoco]}
+          >
+            <Text style={[s.diaTiraNombre, activo && { color: colors.bgSoft }]}>{CORTOS[diaSemana(d)]}</Text>
+            <Text style={[s.diaTiraNumero, activo && { color: colors.white }]}>{numero(d)}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+/** Cuentas del día, solo con los turnos vigentes. */
+function Panorama({ turnos }: { turnos: Appointment[] }) {
+  const cuantos = (...estados: Appointment['status'][]) => turnos.filter((t) => estados.includes(t.status)).length;
+  const cifras = [
+    { texto: 'Visitas', numero: turnos.length },
+    { texto: 'Confirmadas', numero: cuantos('confirmado') },
+    { texto: 'Realizadas', numero: cuantos('realizado') },
+    { texto: 'Por confirmar', numero: cuantos('solicitado', 'pendiente') },
+  ];
+  return (
+    <View style={s.panorama}>
+      {cifras.map((c) => (
+        <View key={c.texto} style={s.panoramaCifra}>
+          <TextoFuerte style={s.panoramaNumero}>{c.numero}</TextoFuerte>
+          <TextoChico style={s.panoramaTexto}>{c.texto}</TextoChico>
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -127,6 +187,7 @@ function VistaDia({ dia }: { dia: string }) {
 
   return (
     <View style={{ gap: 12 }}>
+      {vigentes.length > 0 ? <Panorama turnos={vigentes} /> : null}
       <TextoChico>
         {franjas.length > 0 ? `Atención: ${franjas.map((f) => `${f.desde} a ${f.hasta}`).join(' y ')}` : 'Este día no tiene horario de atención cargado.'}
         {` · Buffer de traslado: ${db.agenda.bufferMin} min`}
@@ -240,10 +301,20 @@ function VistaMes({ dia, hoy, onElegir }: { dia: string; hoy: string; onElegir: 
 
 const s = StyleSheet.create({
   encabezado: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  pendientes: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 14, borderRadius: 14, backgroundColor: categorias.naranja.fondo },
+  frase: { fontFamily: fonts.hand, fontSize: 22, color: colors.primary2 },
+  pendientes: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 16, borderRadius: 20, backgroundColor: categorias.naranja.fondo },
   navegacion: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  tituloVista: { flex: 1, textAlign: 'center', fontSize: 18 },
-  flecha: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.white },
+  tituloVista: { flex: 1, alignItems: 'center', gap: 4 },
+  flecha: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.muted },
+  tira: { flexDirection: 'row', gap: 6 },
+  diaTira: { flex: 1, minHeight: 60, alignItems: 'center', justifyContent: 'center', borderRadius: 20, backgroundColor: colors.muted },
+  diaTiraActivo: { backgroundColor: colors.accion },
+  diaTiraNombre: { fontFamily: fonts.bodySemi, fontSize: 13, color: colors.textMuted },
+  diaTiraNumero: { fontFamily: fonts.title, fontSize: 18, color: colors.primary },
+  panorama: { flexDirection: 'row', gap: 6 },
+  panoramaCifra: { flex: 1, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 4, borderRadius: 20, backgroundColor: colors.muted },
+  panoramaNumero: { fontFamily: fonts.title, fontSize: 22, lineHeight: 28 },
+  panoramaTexto: { fontSize: 12, textAlign: 'center' },
   semana: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
   columnaDia: { flex: 1, gap: 6, minWidth: 0 },
   cabeceraDia: { alignItems: 'center', paddingVertical: 6, borderRadius: 10, backgroundColor: categorias.celeste.fondo },

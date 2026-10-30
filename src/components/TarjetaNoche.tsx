@@ -1,8 +1,9 @@
 /** Tarjeta azul noche con círculos finos de adorno: lo más importante de cada bloque (próxima visita, último informe). */
 import type { ReactNode } from 'react';
-import { View, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import { Text, View, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
-import { colors, size, sombraNoche } from '@/theme';
+import { colors, fonts, size, sombraNoche } from '@/theme';
 
 export function TarjetaNoche({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   return (
@@ -21,7 +22,19 @@ export function TarjetaNoche({ children, style }: { children: ReactNode; style?:
   );
 }
 
+/** Etiqueta chica sobre la tarjeta azul noche. */
+export function ChipNoche({ texto, icono }: { texto: string; icono?: keyof typeof Ionicons.glyphMap }) {
+  return (
+    <View style={s.chip}>
+      {icono ? <Ionicons name={icono} size={14} color={colors.bgSoft} /> : null}
+      <Text style={s.chipTexto}>{texto}</Text>
+    </View>
+  );
+}
+
 const s = StyleSheet.create({
+  chip: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, backgroundColor: colors.nocheSuave },
+  chipTexto: { fontFamily: fonts.bodyBold, fontSize: 12, color: colors.bgSoft },
   sombra: { borderRadius: size.radiusGrande, boxShadow: sombraNoche },
   tarjeta: { flexGrow: 1, gap: 8, padding: 24, borderRadius: size.radiusGrande, backgroundColor: colors.accion, overflow: 'hidden' },
   adorno: { position: 'absolute', top: -36, right: -36, width: 176, height: 176, opacity: 0.15 },

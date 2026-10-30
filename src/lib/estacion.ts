@@ -23,3 +23,10 @@ const FRASE: Record<Estacion, string> = {
 
 /** Línea corta para el saludo, sin datos de pacientes. */
 export const fraseDeEstacion = (dia: string) => FRASE[estacionDe(dia)];
+
+/** "Buen día, Alan": según la hora ("hh:mm"), con el nombre de pila aunque venga con "Dr.". */
+export function saludoDeHora(hora: string, nombre: string): string {
+  const h = Number(hora.slice(0, 2));
+  const saludo = h >= 6 && h < 13 ? 'Buen día' : h >= 13 && h < 20 ? 'Buenas tardes' : 'Buenas noches';
+  return `${saludo}, ${nombre.replace(/^Dra?\.\s*/, '').split(' ')[0]}`;
+}

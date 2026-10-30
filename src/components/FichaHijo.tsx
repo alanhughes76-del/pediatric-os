@@ -18,7 +18,7 @@ import { fechaLarga, fechaCorta, hoyISO } from '@/lib/fechas';
 import { categorias, colors, fonts, size, sombra } from '@/theme';
 import { Antetitulo, Subtitulo, Titulo, Texto, TextoFuerte, TextoChico } from './Texto';
 import { Caja, Grilla } from './Caja';
-import { TarjetaNoche } from './TarjetaNoche';
+import { ChipNoche, TarjetaNoche } from './TarjetaNoche';
 import { Avatar, TONO_AMBITO } from './Avatar';
 import { Etiqueta } from './Etiqueta';
 import { Boton } from './Boton';
@@ -91,7 +91,7 @@ function Informes({ patientId }: { patientId: string }) {
   return (
     <>
       <TarjetaNoche style={s.ultimo}>
-        <View style={s.chip}><Text style={s.chipTexto}>Última visita · {TEXTO_VISITA[ultimo.consulta.visitType]}</Text></View>
+        <View style={{ marginBottom: 4 }}><ChipNoche texto={`Última visita · ${TEXTO_VISITA[ultimo.consulta.visitType]}`} /></View>
         <Subtitulo color={colors.white}>{fechaLarga(ultimo.consulta.occurredAt)}</Subtitulo>
         <Texto color={colors.white}>{ultimo.resumen}</Texto>
         {ultimo.version > 1 ? <TextoChico color={colors.bgSoft}>Corregido el {fechaCorta(ultimo.aprobadaEn)}</TextoChico> : null}
@@ -208,8 +208,6 @@ const s = StyleSheet.create({
   filaEntre: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' },
   separador: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 12 },
   ultimo: { flexGrow: 1, flexBasis: 320, minWidth: 0 },
-  chip: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 5, marginBottom: 4, borderRadius: 999, backgroundColor: colors.nocheSuave },
-  chipTexto: { fontFamily: fonts.bodyBold, fontSize: 12, color: colors.bgSoft },
   firma: { fontFamily: fonts.hand, fontSize: 22, color: colors.sky, marginTop: 4 },
   tilde: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: categorias.verde.fondo },
 });
