@@ -40,8 +40,11 @@ const SOLO_MEDICO = [
   'materialDeliveries', 'aiInteractions', 'admisiones', 'triage', 'transcripciones', 'auditLog', 'outbox',
 ] as const satisfies readonly (keyof Database)[];
 
-/** Lo que ve el asistente: la base sin nada clínico (la IA, apagada). */
+/**
+ * Lo que ve el asistente: la base sin nada clínico (la IA, apagada) y los turnos sin el motivo,
+ * que suele decir qué le pasa al chico ("Fiebre desde ayer"). Puede cargarlo en un turno nuevo, no leerlo.
+ */
 export function vistaAsistente(db: Database): Database {
   const vacias = Object.fromEntries(SOLO_MEDICO.map((t) => [t, []]));
-  return { ...db, ...vacias, ia: { enabled: false } } as Database;
+  return { ...db, ...vacias, appointments: db.appointments.map((t) => ({ ...t, reason: '' })), ia: { enabled: false } } as Database;
 }

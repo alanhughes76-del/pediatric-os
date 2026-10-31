@@ -5,7 +5,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { TEXTO_ESTADO_TURNO, TEXTO_TIPO_TURNO, horaDe, type Aviso, type EstadoTurno } from '@shared/agenda';
 import type { Appointment } from '@/data/types';
 import { useApp } from '@/data/store';
-import { useRolEquipo } from '@/navegacion/useRolEquipo';
 import { nombreDeTurno, pacientesDeTurno, textoDireccionTurno, TEXTO_MODALIDAD } from '@/data/selectores';
 import { edades } from '@/lib/edad';
 import { hora } from '@/lib/fechas';
@@ -33,7 +32,6 @@ export const horaFin = (t: Pick<Appointment, 'start' | 'durationMin'>) => horaDe
 /** Tarjeta de un turno en la agenda. `compacta` para la vista semanal. */
 export function TarjetaTurno({ turno: t, compacta }: { turno: Appointment; compacta?: boolean }) {
   const { db } = useApp();
-  const rol = useRolEquipo();
   const apagado = t.status === 'cancelado' || t.status === 'ausente';
   const nombre = nombreDeTurno(db, t);
   const etiqueta = `Turno de las ${hora(t.start)}: ${nombre}, ${TEXTO_ESTADO_TURNO[t.status]}`;
@@ -62,7 +60,7 @@ export function TarjetaTurno({ turno: t, compacta }: { turno: Appointment; compa
         <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
           <TextoFuerte>{nombre}</TextoFuerte>
           {pacientes.length === 1 ? <TextoChico>{edades(pacientes[0], undefined, 'abreviado').cronologica}</TextoChico> : null}
-          {t.reason && rol === 'medico' ? <TextoChico>{t.reason}</TextoChico> : null}
+          {t.reason ? <TextoChico>{t.reason}</TextoChico> : null}
         </View>
         <View style={{ alignItems: 'flex-end' }}>
           <TextoFuerte style={s.horaTexto}>{hora(t.start)}</TextoFuerte>

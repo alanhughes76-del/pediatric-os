@@ -31,8 +31,16 @@ describe('asistente', () => {
       expect(v[t]).toEqual([]);
     }
     expect(v.patients).toBe(DB.patients);
-    expect(v.appointments).toBe(DB.appointments);
+    expect(v.appointments).toHaveLength(DB.appointments.length);
     expect(v.payments).toBe(DB.payments);
     expect(v.ia.enabled).toBe(false);
+  });
+
+  test('los turnos le llegan sin el motivo, y con las notas operativas', () => {
+    const conMotivo = { ...DB.appointments[0], reason: 'Fiebre desde ayer', opsNotes: 'Timbre 3.º A' };
+    const [t] = vistaAsistente({ ...DB, appointments: [conMotivo] }).appointments;
+    expect(t.reason).toBe('');
+    expect(t.opsNotes).toBe('Timbre 3.º A');
+    expect(conMotivo.reason).toBe('Fiebre desde ayer');
   });
 });

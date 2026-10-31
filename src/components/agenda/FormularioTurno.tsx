@@ -30,11 +30,13 @@ export interface Inicial {
   dia?: string;
 }
 
-export function FormularioTurno({ inicial, conHorario, conConfirmar, textoGuardar, guardando, onGuardar, respuesta }: {
+export function FormularioTurno({ inicial, conHorario, conConfirmar, conMotivo = true, textoGuardar, guardando, onGuardar, respuesta }: {
   inicial: Inicial;
   /** Muestra fecha, hora y duración (alta). En la edición, el horario se cambia con "Reprogramar". */
   conHorario: boolean;
   conConfirmar: boolean;
+  /** false: sin el campo "Motivo general" (el asistente, al editar un turno: no lo ve). */
+  conMotivo?: boolean;
   textoGuardar: string;
   guardando: boolean;
   onGuardar: (datos: DatosTurno, confirmar: boolean) => void;
@@ -202,7 +204,7 @@ export function FormularioTurno({ inicial, conHorario, conConfirmar, textoGuarda
         </View>
       ) : null}
 
-      <Campo etiqueta="Motivo general" value={reason} onChangeText={setReason} maxLength={200} placeholder="Control, fiebre, vacunas…" ayuda="Solo lo necesario para organizar la visita. Lo clínico va en la consulta." />
+      {conMotivo ? <Campo etiqueta="Motivo general" value={reason} onChangeText={setReason} maxLength={200} placeholder="Control, fiebre, vacunas…" ayuda="Solo lo necesario para organizar la visita. Lo clínico va en la consulta." /> : null}
       <Campo etiqueta="Notas operativas" value={opsNotes} onChangeText={setOpsNotes} maxLength={1000} multiline placeholder="Timbre, estacionamiento, quién recibe…" ayuda="Solo las ve el equipo (el Dr. y el asistente). La familia no." />
 
       {conConfirmar ? <Interruptor texto={confirmar ? 'Queda confirmado' : 'Queda pendiente de confirmación'} activo={confirmar} onCambio={setConfirmar} /> : null}

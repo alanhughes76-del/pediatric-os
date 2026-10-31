@@ -188,11 +188,13 @@ export default function Turno() {
               inicial={{ turno: t }}
               conHorario={false}
               conConfirmar={false}
+              conMotivo={rol === 'medico'}
               textoGuardar="Guardar cambios"
               guardando={guardando}
               onGuardar={(d) => ejecutar({
                 accion: 'editar',
-                cambios: { type: d.type, modality: d.modality, familyId: d.familyId, patientIds: d.patientIds, address: d.address, reason: d.reason, opsNotes: d.opsNotes },
+                // El asistente no ve el motivo: si lo mandara vacío, borraría el que hay.
+                cambios: { type: d.type, modality: d.modality, familyId: d.familyId, patientIds: d.patientIds, address: d.address, opsNotes: d.opsNotes, ...(rol === 'medico' ? { reason: d.reason } : {}) },
               }, 'Cambios guardados.')}
             />
           </Tarjeta>
@@ -238,9 +240,9 @@ export default function Turno() {
             </Seccion>
           ) : null}
 
-          <Seccion titulo="Motivo y notas">
+          <Seccion titulo={rol === 'medico' ? 'Motivo y notas' : 'Notas'}>
             <Tarjeta style={{ gap: 8 }}>
-              <Dato titulo="Motivo general">{t.reason || 'Sin motivo cargado'}</Dato>
+              {rol === 'medico' ? <Dato titulo="Motivo general">{t.reason || 'Sin motivo cargado'}</Dato> : null}
               <Dato titulo="Notas operativas (no las ve la familia)">{t.opsNotes || 'Sin notas'}</Dato>
               {t.porIdentificar ? (
                 <Dato titulo="Contacto de quien lo pidió">
