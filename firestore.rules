@@ -205,6 +205,11 @@ service cloud.firestore {
           allow write: if false;
         }
       }
+      // Motivo del turno (mismo id que el turno): suele decir qué le pasa al chico, así que el asistente no lo lee.
+      match /motivosTurno/{id} {
+        allow read: if esMedico(orgId);
+        allow write: if false;
+      }
       match /agendaDays/{day} {
         allow read: if esStaff(orgId);
         allow write: if false;

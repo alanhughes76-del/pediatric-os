@@ -240,6 +240,14 @@ describe('administrativo y agenda', () => {
     await assertFails(setDoc(doc(db('medico'), r('appointments', 't2')), firma(uid('medico'), { status: 'confirmado', date: '2026-10-17' })));
     await assertFails(updateDoc(doc(db('medico'), r('appointments', 't1')), { status: 'cancelado', updatedBy: uid('medico'), updatedAt: AHORA }));
   });
+  test('el motivo del turno: lo lee solo el médico; nadie lo escribe directo', async () => {
+    await assertSucceeds(leer('medico', r('motivosTurno', 't1')));
+    await assertFails(leer('asistente', r('motivosTurno', 't1')));
+    await assertFails(leer('lucia', r('motivosTurno', 't1')));
+    await assertFails(getDocs(collection(db('asistente'), r('motivosTurno'))));
+    await assertFails(setDoc(doc(db('medico'), r('motivosTurno', 't1')), firma(uid('medico'), { reason: 'x' })));
+    await assertFails(setDoc(doc(db('asistente'), r('motivosTurno', 't2')), firma(uid('asistente'), { reason: 'x' })));
+  });
   test('el historial de los turnos: lo leen el médico y el asistente, no la familia; nadie lo escribe', async () => {
     const historial = (quien: Quien) => getDocs(query(collectionGroup(db(quien), 'history'), where('organizationId', '==', ORG)));
     await assertSucceeds(historial('medico'));

@@ -26,7 +26,8 @@ export interface Turno {
   patientIds: string[];
   address: DireccionVisita | null;
   zone: string | null;
-  reason: string;
+  /** Solo de ida: `guardarTurno` lo escribe en `motivosTurno`, que lee solo el médico. El turno guardado no lo lleva. */
+  reason?: string;
   opsNotes: string;
   status: EstadoTurno;
   origin: OrigenTurno;

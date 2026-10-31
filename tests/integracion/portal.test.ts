@@ -154,7 +154,9 @@ describe('acciones de la familia', () => {
     const manana = new Date(Date.now() + 2 * 86_400_000 - 3 * 3_600_000).toISOString().slice(0, 10);
     const r = await llamar<{ id: string }>(familia, 'pedirVisita', { patientIds: [P], tipo: 'control', fecha: manana, hora: '10:00', addressId: 'ad-portal', motivo: 'Control anual' });
     const t = (await fs.doc(`${base}/appointments/${r.data.id}`).get()).data()!;
-    expect(t).toMatchObject({ status: 'solicitado', origin: 'portal', type: 'control', patientIds: [P], familyId: 'f-portal', start: `${manana}T10:00:00-03:00`, reason: 'Control anual' });
+    expect(t).toMatchObject({ status: 'solicitado', origin: 'portal', type: 'control', patientIds: [P], familyId: 'f-portal', start: `${manana}T10:00:00-03:00` });
+    expect(t.reason).toBeUndefined();
+    expect((await fs.doc(`${base}/motivosTurno/${r.data.id}`).get()).data()?.reason).toBe('Control anual');
     expect(t.address).toMatchObject({ text: 'Calle Falsa 123', locality: 'Olivos', addressId: 'ad-portal' });
     // La familia lo ve en su portal (sin notas internas).
     await esperar(async () => (await fs.doc(`${portal('turnos')}/${r.data.id}`).get()).exists);

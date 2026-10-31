@@ -88,6 +88,7 @@ export async function sembrar(env: RulesTestEnvironment) {
     await set(r('clinical', 'p-tomas', 'background', 'ant-p-tomas'), { ...base, patientId: 'p-tomas', habits: 'x' });
     await set(r('appointments', 't1'), { ...base, status: 'confirmado', date: '2026-10-17' });
     await set(r('appointments', 't1', 'history', 'h1'), { organizationId: ORG, appointmentId: 't1', action: 'crear' });
+    await set(r('motivosTurno', 't1'), { organizationId: ORG, reason: 'Fiebre desde ayer' });
     await set(r('agendaDays', '2026-10-17'), { organizationId: ORG, bloques: {} });
     await set(r('auditLog', 'au1'), { action: 'create', actorId: 'medico-1' });
     await set(r('outbox', 'ev1'), { type: 'turno.confirmado', status: 'pendiente' });

@@ -143,9 +143,12 @@ async function main() {
   agregar(o('settings', 'agenda'), { ...firma(DOCTOR_ID), ...d.agenda });
   d.blocks.forEach((b) => agregar(o('blocks', b.id), { ...limpio(b), ...firma(b.createdBy, b.createdAt) }));
   const uidDe = (x: string) => (x === DOCTOR_ID ? MEDICO_UID : x);
-  d.appointments.forEach((t) => agregar(o('appointments', t.id), {
-    ...limpio(t), ...firma(t.createdBy, t.createdAt), updatedBy: uidDe(t.updatedBy ?? t.createdBy),
-  }));
+  d.appointments.forEach((t) => {
+    const { reason, ...turno } = limpio(t);
+    const updatedBy = uidDe(t.updatedBy ?? t.createdBy);
+    agregar(o('appointments', t.id), { ...turno, ...firma(t.createdBy, t.createdAt), updatedBy });
+    agregar(o('motivosTurno', t.id), { organizationId: ORG, reason, updatedBy, updatedAt: ahora, demo: true });
+  });
   d.appointmentHistory.forEach((h) => agregar(o('appointments', h.appointmentId, 'history', h.id), { ...limpio(h), organizationId: ORG, actorId: uidDe(h.actorId), demo: true }));
   const dias = new Map<string, Record<string, BloqueOcupado>>();
   d.appointments.filter((t) => ocupaLugar(t.status)).forEach((t) => {

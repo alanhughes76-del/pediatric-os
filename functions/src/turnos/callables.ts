@@ -53,6 +53,8 @@ export const accionTurno = onCall<Record<string, unknown>>(async (req) => {
   const start = accion === 'reprogramar' ? validarInicio(d.start) : null;
   const durationMin = accion === 'reprogramar' && d.durationMin !== undefined ? validarDuracion(d.durationMin) : null;
   const campos = accion === 'editar' ? validarCampos((d.cambios ?? {}) as Record<string, unknown>) : {};
+  // El asistente no lee el motivo: tampoco lo cambia.
+  if (req.auth?.token.rol !== 'medico') delete campos.reason;
   if (accion === 'editar' && campos.patientIds) {
     campos.familyId = await revisarPacientes(org, campos.patientIds, campos.familyId ?? null);
   }

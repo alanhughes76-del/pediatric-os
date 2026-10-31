@@ -68,6 +68,8 @@ export function useFuenteFirebase(): AppState {
   const [sesion, setSesion] = useState<Sesion | null>(null);
   const [org, setOrg] = useState<string | null>(null);
   const [datos, setDatos] = useState<Database>(VACIA);
+  /** Motivo de cada turno (por id de turno): va aparte del turno y solo le llega al médico. */
+  const [motivos, setMotivos] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const uid = sesion?.usuarioId ?? '';
 
@@ -86,7 +88,7 @@ export function useFuenteFirebase(): AppState {
   // Sesión: rol y organización salen de los custom claims (los asigna solo el servidor).
   useEffect(() => onAuthStateChanged(auth, async (u) => {
     setAcceso(null); setCopias({}); setDirecciones([]);
-    if (!u) { setSesion(null); setOrg(null); setDatos(VACIA); setListo(true); return; }
+    if (!u) { setSesion(null); setOrg(null); setDatos(VACIA); setMotivos({}); setListo(true); return; }
     const { claims } = await u.getIdTokenResult();
     const orgId = typeof claims.organizationId === 'string' ? claims.organizationId : null;
     if (claims.rol === 'medico' && orgId) {
@@ -170,6 +172,9 @@ export function useFuenteFirebase(): AppState {
     // Agenda: los turnos y su historial los escribe solo el servidor; acá se leen.
     subs.push(onSnapshot(collection(fs, `organizations/${org}/appointments`), (snap) => {
       setDatos((d) => ({ ...d, appointments: snap.docs.map((x) => ({ id: x.id, ...x.data() }) as Appointment) }));
+    }, fallo));
+    if (medico) subs.push(onSnapshot(collection(fs, `organizations/${org}/motivosTurno`), (snap) => {
+      setMotivos(Object.fromEntries(snap.docs.map((x) => [x.id, String(x.data().reason ?? '')])));
     }, fallo));
     subs.push(onSnapshot(query(collectionGroup(fs, 'history'), where('organizationId', '==', org), orderBy('atMs')), (snap) => {
       setDatos((d) => ({ ...d, appointmentHistory: snap.docs.map((x) => ({ id: x.id, ...x.data() }) as AppointmentChange) }));
@@ -447,10 +452,15 @@ export function useFuenteFirebase(): AppState {
     ? armarVistaFamilia({ copias, guardian: sesion.guardian, addresses: direcciones, doctor: VACIA.doctor, vacia: { ...VACIA, links: linksFamilia } })
     : null), [sesion, copias, direcciones, linksFamilia]);
 
+  const conMotivos = useMemo(
+    () => ({ ...datos, appointments: datos.appointments.map((t) => ({ ...t, reason: motivos[t.id] ?? '' })) }),
+    [datos, motivos],
+  );
+
   return useMemo<AppState>(() => ({
     fuente: 'firebase',
     listo,
-    db: vistaDeFamilia ?? (sesion?.rol === 'asistente' ? vistaAsistente(datos) : datos),
+    db: vistaDeFamilia ?? (sesion?.rol === 'asistente' ? vistaAsistente(conMotivos) : conMotivos),
     sesion,
     usuarioId: uid,
     error,
@@ -521,5 +531,5 @@ export function useFuenteFirebase(): AppState {
     enLote,
     operaciones,
     archivos,
-  }), [archivos, listo, datos, vistaDeFamilia, sesion, uid, error, auth, functions, agregar, actualizar, enLote, operaciones, fallo, segundoFactorPendiente, factores]);
+  }), [archivos, listo, conMotivos, vistaDeFamilia, sesion, uid, error, auth, functions, agregar, actualizar, enLote, operaciones, fallo, segundoFactorPendiente, factores]);
 }

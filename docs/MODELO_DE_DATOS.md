@@ -44,11 +44,12 @@ Estado al 17/10/2026, Etapa 1a. Las reglas están en `firestore.rules` y `storag
 | --- | --- | --- |
 | `…/appointments/{id}` | M, A | **Solo S** (`crearTurno`, `accionTurno`, `reservaCalcom`), con una transacción que impide superponer turnos confirmados |
 | `…/appointments/{id}/history/{h}` (cada cambio, con antes y después) | M, A (también por grupo de colecciones) | Solo S |
+| `…/motivosTurno/{id del turno}` (`reason`: suele decir qué le pasa al chico) | M | Solo S. Va aparte del turno porque el asistente lee `appointments` entero. El asistente puede cargarlo al crear un turno, pero no leerlo ni cambiarlo |
 | `…/agendaDays/{AAAA-MM-DD}` (bloques de los turnos confirmados que empiezan ese día) | M, A | Solo S |
 | `…/blocks/{id}` (períodos bloqueados) | M, A | M, A |
 | `…/inbound/{id}` (registro de lo que entra por los endpoints de Cal.com y de Make, sin datos personales) | M | Solo S |
 
-Turno (`appointments`): `start` (hora de Argentina con `-03:00`), `day`, `durationMin`, `type` (control, urgencia-dia, urgencia-noche, seguimiento, rn, prenatal), `modality`, `familyId` (null mientras está "por identificar"), `patientIds` (hermanos en la misma visita; vacío en un prenatal), `address` (copia de la dirección: cambiarla no toca la guardada), `zone`, `reason`, `opsNotes` (no las ve la familia), `status` (solicitado, pendiente, confirmado, realizado, cancelado, ausente), `origin` (medico, portal, calcom, formulario), `cancelReason`, `onTheWayAt`, `calBookingUid`, `porIdentificar` (contacto de quien reservó por Cal.com sin DNI conocido).
+Turno (`appointments`): `start` (hora de Argentina con `-03:00`), `day`, `durationMin`, `type` (control, urgencia-dia, urgencia-noche, seguimiento, rn, prenatal), `modality`, `familyId` (null mientras está "por identificar"), `patientIds` (hermanos en la misma visita; vacío en un prenatal), `address` (copia de la dirección: cambiarla no toca la guardada), `zone`, `opsNotes` (no las ve la familia), `status` (solicitado, pendiente, confirmado, realizado, cancelado, ausente), `origin` (medico, portal, calcom, formulario), `cancelReason`, `onTheWayAt`, `calBookingUid`, `porIdentificar` (contacto de quien reservó por Cal.com sin DNI conocido).
 
 Superposición: entre dos turnos confirmados tiene que quedar al menos el buffer de traslado. La transacción lee el `agendaDays` del día y de sus vecinos; si dos confirmaciones llegan a la vez, Firestore reintenta una y esa ve el lugar ocupado. Cancelado y ausente liberan el horario. La lógica común está en `shared/agenda.ts`.
 

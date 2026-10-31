@@ -16,8 +16,9 @@ const ORG = 'org-demo';
 const FAMILIA = 'f-turnos';
 const P1 = 'p-turnos-1';
 const P2 = 'p-turnos-2';
-// Lunes 2 de noviembre de 2026, dentro del horario de atención.
-const DIA = '2026-11-02';
+// Lunes 1 de noviembre de 2027, dentro del horario de atención. Lejos de hoy: la prueba del portal
+// pide visitas para pasado mañana en esta misma organización.
+const DIA = '2027-11-01';
 const a = (hhmm: string, dia = DIA) => `${dia}T${hhmm}:00-03:00`;
 const URL_CAL = 'http://127.0.0.1:5001/demo-pediatric-os/southamerica-east1/reservaCalcom';
 const SECRETO_CAL = 'solo-para-el-emulador';
@@ -101,14 +102,14 @@ describe('superposición de turnos confirmados', () => {
   });
 
   test('reprogramar deja rastro en el historial y mueve el bloque', async () => {
-    await llamar('accionTurno', { id: segundo, accion: 'reprogramar', start: a('16:00', '2026-11-03'), aceptarAvisos: true });
-    expect(await turno(segundo)).toMatchObject({ status: 'confirmado', start: a('16:00', '2026-11-03'), day: '2026-11-03' });
+    await llamar('accionTurno', { id: segundo, accion: 'reprogramar', start: a('16:00', '2027-11-02'), aceptarAvisos: true });
+    expect(await turno(segundo)).toMatchObject({ status: 'confirmado', start: a('16:00', '2027-11-02'), day: '2027-11-02' });
     const h = await historial(segundo);
     expect(h.map((x) => x.action)).toEqual(['crear', 'confirmar', 'reprogramar']);
     expect(h[2].before).toMatchObject({ start: a('10:30'), status: 'confirmado' });
-    expect(h[2].after).toMatchObject({ start: a('16:00', '2026-11-03'), status: 'confirmado' });
+    expect(h[2].after).toMatchObject({ start: a('16:00', '2027-11-02'), status: 'confirmado' });
     expect((await fs.doc(`organizations/${ORG}/agendaDays/${DIA}`).get()).data()!.bloques[segundo]).toBeUndefined();
-    expect((await fs.doc(`organizations/${ORG}/agendaDays/2026-11-03`).get()).data()!.bloques[segundo]).toBeDefined();
+    expect((await fs.doc(`organizations/${ORG}/agendaDays/2027-11-02`).get()).data()!.bloques[segundo]).toBeDefined();
     const cancelado = await historial(primero);
     expect(cancelado.at(-1)).toMatchObject({ action: 'cancelar', reason: 'La familia viaja' });
   });
@@ -119,6 +120,36 @@ describe('superposición de turnos confirmados', () => {
     // Identificadores, horario, modalidad, tipo de visita y a quién avisar: ni la dirección ni nada clínico.
     expect(Object.keys(eventos[0].data).sort()).toEqual(['appointmentId', 'destinatarios', 'durationMin', 'familyId', 'modality', 'pacientes', 'patientIds', 'start', 'tipoVisita']);
     expect(eventos.find((e) => e.type === 'turno.confirmado')?.plantilla).toBe('confirmacion_turno');
+  });
+});
+
+describe('motivo del turno', () => {
+  const motivo = async (id: string) => (await fs.doc(`organizations/${ORG}/motivosTurno/${id}`).get()).data()?.reason;
+  const accionDe = (app: FirebaseApp, datos: unknown) => httpsCallable(getFunctions(app, 'southamerica-east1'), 'accionTurno')(datos);
+  const dia = '2027-11-02';
+  let asistente: FirebaseApp;
+  let id = '';
+
+  beforeAll(async () => { asistente = await cliente('asistente-turnos', 'asistente'); });
+  afterAll(async () => { await deleteApp(asistente); });
+
+  test('va aparte: el turno, que lee el asistente, no lo lleva', async () => {
+    id = (await llamar('crearTurno', { start: a('10:00', dia), type: 'control', patientIds: [P1], address: { text: 'Libertador 2210', locality: 'Olivos' }, reason: 'Fiebre desde ayer', confirmar: true })).id!;
+    expect((await turno(id)).reason).toBeUndefined();
+    expect(await motivo(id)).toBe('Fiebre desde ayer');
+  });
+  test('el asistente edita el turno sin tocarlo, aunque lo mande', async () => {
+    await accionDe(asistente, { id, accion: 'editar', cambios: { opsNotes: 'Timbre 3.º A', reason: 'Otro' } });
+    expect(await turno(id)).toMatchObject({ opsNotes: 'Timbre 3.º A' });
+    expect(await motivo(id)).toBe('Fiebre desde ayer');
+  });
+  test('otra acción no lo borra', async () => {
+    await llamar('accionTurno', { id, accion: 'reprogramar', start: a('11:00', dia), aceptarAvisos: true });
+    expect(await motivo(id)).toBe('Fiebre desde ayer');
+  });
+  test('el médico lo cambia', async () => {
+    await llamar('accionTurno', { id, accion: 'editar', cambios: { reason: 'Control de fiebre' } });
+    expect(await motivo(id)).toBe('Control de fiebre');
   });
 });
 

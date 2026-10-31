@@ -114,7 +114,12 @@ export async function guardarTurno(p: {
     }
 
     // ---- Escrituras ----
-    tx.set(ref, despues);
+    // El motivo suele decir qué le pasa al chico: va aparte, porque el asistente lee el turno entero.
+    const { reason, ...turno } = despues;
+    tx.set(ref, turno);
+    if (reason !== undefined) {
+      tx.set(db().doc(`${base}/motivosTurno/${ref.id}`), { organizationId: org, reason, updatedBy: uid, updatedAt: isoArgentina() });
+    }
     // Bloques ocupados: sale del día anterior, entra en el nuevo si ocupa lugar.
     const cambiados = new Set<string>();
     const previos = antes ? bloquesPorDia.get(antes.day) : undefined;
